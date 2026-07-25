@@ -1,0 +1,13 @@
+{
+  "name": "rensou-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ニュース連想力トレーニングゲーム（Flask + yfinance）",
+  "scripts": {
+    "dev": "./serve.sh",
+    "record": "./record.sh",
+    "check": "bash -c 'source .venv/bin/activate && python server.py --check'",
+    "font": "./fetch_font.sh",
+    "test": "bash -c 'source .venv/bin/activate 2>/dev/null; python3 test_server.py'"
+  }
+}

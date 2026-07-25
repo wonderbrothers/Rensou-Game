@@ -1,0 +1,7 @@
+/* 自己ホスト版 Material Symbols Rounded（Googleフォントより後に読み込むため優先される） */
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-style: normal;
+  font-weight: 400 700;
+  src: url('material-symbols-rounded.woff2') format('woff2');
+}

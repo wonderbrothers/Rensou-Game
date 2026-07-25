@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RENSOU GAME｜ニュース連想力トレーニングゲーム</title>
+<meta name="description" content="最新の経済ニュースから市場への波及を6ステップで読み解く連想力トレーニングゲーム。本質→一次影響→相対優位→二次影響→逆シナリオ→検証ポイントの型を、クイズ形式で楽しく身につける。">
+<meta name="keywords" content="連想ゲーム,経済ニュース,株式投資,思考訓練,アナリスト,クイズ">
+<meta name="author" content="RENSOU GAME">
+<meta name="robots" content="index,follow">
+<meta name="application-name" content="RENSOU GAME">
+
+<!-- OGP -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RENSOU GAME">
+<meta property="og:title" content="RENSOU GAME｜ニュース連想力トレーニングゲーム">
+<meta property="og:description" content="経済ニュースから市場への波及を6ステップで読み解く連想力トレーニングゲーム。">
+<meta property="og:image" content="images/icon-512.png">
+<meta property="og:locale" content="ja_JP">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="RENSOU GAME｜ニュース連想力トレーニングゲーム">
+<meta name="twitter:description" content="経済ニュースから市場への波及を6ステップで読み解く連想力トレーニングゲーム。">
+<meta name="twitter:image" content="images/icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts/local.css">
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f3c732">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="images/icon-180.png">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" href="images/icon-192.png" sizes="192x192">
+</head>
+<body>
+<div class="wrap">
+  <div class="deco" aria-hidden="true"></div>
+
+  <header class="hd">
+    <h1><img class="logo" id="homeLink" src="images/logo.svg" alt="連想ゲーム" title="トップへ戻る"></h1>
+    <p class="tag">ニュースから描く、経済のつながり地図。</p>
+    <img class="hero" src="images/hero.png" alt="連想ゲームのなかまたち">
+  </header>
+
+  <div id="loader" class="loader hidden">
+    <p>データを自動で読み込めませんでした。<br><b>data フォルダ内のJSONファイル</b>を選択してください（複数可・index.json は不要）。</p>
+    <label><span class="ms">folder_open</span> ファイルを選択<input type="file" id="filePick" accept=".json" multiple></label>
+  </div>
+
+  <div id="home" class="hidden">
+    <div class="navrow">
+      <button class="btn ghost sm" id="patternsBtn"><span class="ms">menu_book</span> パターン図鑑</button>
+      <button class="btn ghost sm" id="statsBtn"><span class="ms">leaderboard</span> 成績表</button>
+      <button class="btn ghost sm" id="notesBtn"><span class="ms">edit_note</span> 間違いノート</button>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="list" id="list"></div>
+  </div>
+
+  <div id="stage" class="hidden">
+    <div class="top">
+      <button class="back" id="backBtn">← 一覧へ</button>
+      <div class="score" id="scoreBox"></div>
+    </div>
+    <div id="stageBody"></div>
+  </div>
+
+  <footer>
+    <p class="disc">これは思考訓練であり、投資助言ではありません。</p>
+    <p class="copy">&copy;WONDER BROTHERS INC.</p>
+  </footer>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

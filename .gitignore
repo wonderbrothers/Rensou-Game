@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.cache_prices.json
+.DS_Store
+node_modules/
+fonts/material-symbols-rounded.woff2
+
+# 非公開（作問ガイド等）
+CONTENT_GUIDE.md
+*.private.md
