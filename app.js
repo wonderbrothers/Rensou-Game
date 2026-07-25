@@ -155,55 +155,143 @@ $("filePick").addEventListener("change", async ev => {
 });
 
 /* ---------- home ---------- */
-function renderHome() {
-  sessions.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+const PAGE = 12;                 // 1回に表示する件数
+let shown = PAGE;                // 現在の表示件数
+let keyword = "";                // キーワード検索
+let unplayedOnly = false;        // 未プレイのみ
+let sortDesc = true;             // true = 新しい順
+let io = null;                   // 無限スクロール用オブザーバ
 
+function playedIds() {
+  return new Set(store.results.map(r => r.id));
+}
+
+function filteredSessions() {
+  const done = playedIds();
+  const kw = keyword.trim().toLowerCase();
+  let list = sessions.filter(s => {
+    if (activeCat && !(s.categories || []).includes(activeCat)) return false;
+    if (unplayedOnly && done.has(s.id)) return false;
+    if (kw) {
+      const hay = [
+        s.news.headline, s.news.essence, s.news.source, s.date,
+        ...(s.categories || []),
+        ...(s.calls || []).map(c => `${c.name} ${c.ticker}`)
+      ].join(" ").toLowerCase();
+      if (!hay.includes(kw)) return false;
+    }
+    return true;
+  });
+  list.sort((a, b) => sortDesc
+    ? (b.date || "").localeCompare(a.date || "")
+    : (a.date || "").localeCompare(b.date || ""));
+  return list;
+}
+
+function cardHTML(s, i) {
+  const tags = (s.categories || []).map(c => `<span class="cat">${c}</span>`).join("");
+  const src = s.news.source ? `<span class="src">${ic("newspaper")} ${s.news.source}</span>` : "";
+  const done = playedIds().has(s.id) ? `<span class="doneb">${ic("check_circle", 1)} 挑戦済み</span>` : "";
+  return `
+    <div class="badges"><span class="bd">${ic("calendar_month")} ${s.date || ""}</span>${src}${tags}${done}</div>
+    <h3>${s.news.headline}</h3>
+    <p class="es">${s.news.essence || ""}</p>
+    <div class="row">
+      <button class="btn primary" data-a="play" data-i="${i}">挑戦する ${ic("rocket_launch")}</button>
+      <button class="btn ghost" data-a="ans" data-i="${i}">結果を見る ${ic("visibility")}</button>
+    </div>`;
+}
+
+function renderToolbar() {
   const cats = [...new Set(sessions.flatMap(s => s.categories || []))];
+  const tb = $("toolbar");
+  tb.innerHTML = `
+    <div class="searchrow">
+      <label class="searchbox">
+        <span class="ms">search</span>
+        <input type="search" id="kw" placeholder="見出し・銘柄名などで検索" value="${keyword.replace(/"/g, "&quot;")}">
+      </label>
+      <button class="chip tgl${unplayedOnly ? " active" : ""}" id="unplayed">${ic("radio_button_unchecked")} 未プレイのみ</button>
+      <button class="chip tgl" id="sortBtn">${ic(sortDesc ? "arrow_downward" : "arrow_upward")} ${sortDesc ? "新しい順" : "古い順"}</button>
+    </div>`;
+  const kwInput = $("kw");
+  kwInput.oninput = () => { keyword = kwInput.value; shown = PAGE; renderList(); };
+  $("unplayed").onclick = () => { unplayedOnly = !unplayedOnly; shown = PAGE; renderHome(true); };
+  $("sortBtn").onclick = () => { sortDesc = !sortDesc; shown = PAGE; renderHome(true); };
+
   const filt = $("filters");
   filt.innerHTML = "";
   if (cats.length) {
     const all = document.createElement("button");
     all.className = "chip" + (activeCat === null ? " active" : "");
     all.textContent = "すべて";
-    all.onclick = () => { activeCat = null; renderHome(); };
+    all.onclick = () => { activeCat = null; shown = PAGE; renderHome(true); };
     filt.appendChild(all);
     cats.forEach(c => {
       const b = document.createElement("button");
       b.className = "chip" + (activeCat === c ? " active" : "");
       b.textContent = c;
-      b.onclick = () => { activeCat = (activeCat === c ? null : c); renderHome(); };
+      b.onclick = () => { activeCat = (activeCat === c ? null : c); shown = PAGE; renderHome(true); };
       filt.appendChild(b);
     });
   }
+}
 
+function renderList() {
   const list = $("list");
+  const view = filteredSessions();
+  const slice = view.slice(0, shown);
+
   list.innerHTML = "";
-  sessions.forEach((s, i) => {
-    if (activeCat && !(s.categories || []).includes(activeCat)) return;
-    const tags = (s.categories || []).map(c => `<span class="cat">${c}</span>`).join("");
-    const src = s.news.source ? `<span class="src">${ic("newspaper")} ${s.news.source}</span>` : "";
+  slice.forEach(s => {
     const d = document.createElement("div");
     d.className = "scard";
-    d.innerHTML = `
-      <div class="badges"><span class="bd">${ic("calendar_month")} ${s.date || ""}</span>${src}${tags}</div>
-      <h3>${s.news.headline}</h3>
-      <p class="es">${s.news.essence || ""}</p>
-      <div class="row">
-        <button class="btn primary" data-a="play" data-i="${i}">挑戦する ${ic("rocket_launch")}</button>
-        <button class="btn ghost" data-a="ans" data-i="${i}">結果を見る ${ic("visibility")}</button>
-      </div>`;
+    d.innerHTML = cardHTML(s, sessions.indexOf(s));
     list.appendChild(d);
   });
-  if (!list.children.length) {
-    list.innerHTML = `<p class="empty">このカテゴリの問題はまだありません ${ic("inbox")}</p>`;
+
+  if (!slice.length) {
+    list.innerHTML = `<p class="empty">条件に合うニュースが見つかりませんでした ${ic("inbox")}</p>`;
   }
-  list.onclick = ev => {
+
+  // 件数表示と無限スクロールの番人
+  const foot = $("listFoot");
+  if (view.length > slice.length) {
+    foot.innerHTML = `<div class="sentinel" id="sentinel"><span class="ms spin">progress_activity</span> 読み込み中…</div>`;
+    observeSentinel();
+  } else {
+    foot.innerHTML = view.length
+      ? `<p class="listcount">${view.length}件をすべて表示しました</p>`
+      : "";
+  }
+}
+
+function observeSentinel() {
+  const el = $("sentinel");
+  if (!el) return;
+  if (io) io.disconnect();
+  io = new IntersectionObserver(entries => {
+    if (entries.some(e => e.isIntersecting)) {
+      shown += PAGE;
+      renderList();
+    }
+  }, { rootMargin: "200px" });
+  io.observe(el);
+}
+
+function renderHome(keepScroll) {
+  const y = keepScroll ? window.scrollY : 0;
+  renderToolbar();
+  renderList();
+
+  $("list").onclick = ev => {
     const b = ev.target.closest("button");
     if (!b) return;
     const s = sessions[+b.dataset.i];
     if (b.dataset.a === "ans") showAnswers(s); else startPlay(s);
   };
   show("home");
+  if (keepScroll) window.scrollTo(0, y);
 }
 $("backBtn").onclick = () => renderHome();
 $("homeLink").onclick = () => renderHome();
