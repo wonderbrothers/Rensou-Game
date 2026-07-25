@@ -9,6 +9,7 @@
     "record": "./record.sh",
     "check": "bash -c 'source .venv/bin/activate && python server.py --check'",
     "font": "./fetch_font.sh",
-    "test": "bash -c 'source .venv/bin/activate 2>/dev/null; python3 test_server.py'"
+    "test": "bash -c 'source .venv/bin/activate 2>/dev/null; python3 test_server.py'",
+    "build": "bash -c 'source .venv/bin/activate && python build_static.py'"
   }
 }

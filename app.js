@@ -116,7 +116,7 @@ function showStorageNotice() {
 /* ---------- loading ---------- */
 async function boot() {
   try {
-    sessions = await fetch("/api/sessions").then(r => { if (!r.ok) throw 0; return r.json(); });
+    sessions = await fetch("api/sessions").then(r => { if (!r.ok) throw 0; return r.json(); });
     renderHome();
     showStorageNotice();
   } catch (e) {
@@ -216,7 +216,7 @@ function showPatterns() {
 /* ---------- play ---------- */
 function prefetchCalls(s) {
   return (s.calls && s.calls.length)
-    ? fetch(`/api/calls/${s.id}`)
+    ? fetch(`api/calls/${s.id}`)
         .then(r => { if (!r.ok) throw 0; return r.json(); })
         .catch(() => null)
     : null;
@@ -592,7 +592,7 @@ async function loadCallStats(force) {
   for (const s of sessions) {
     if (!s.calls || !s.calls.length) continue;
     try {
-      const d = await fetch(`/api/calls/${s.id}`).then(r => { if (!r.ok) throw 0; return r.json(); });
+      const d = await fetch(`api/calls/${s.id}`).then(r => { if (!r.ok) throw 0; return r.json(); });
       d.calls.forEach(c => {
         if (!c.eval) return;
         const e = c.eval;
