@@ -190,7 +190,11 @@ function filteredSessions() {
 
 function cardHTML(s, i) {
   const tags = (s.categories || []).map(c => `<span class="cat">${c}</span>`).join("");
-  const src = s.news.source ? `<span class="src">${ic("newspaper")} ${s.news.source}</span>` : "";
+  const src = s.news.source
+    ? (s.news.source_url
+      ? `<a class="src link" href="${s.news.source_url}" target="_blank" rel="noopener noreferrer" title="出典を開く">${ic("newspaper")} ${s.news.source} ${ic("open_in_new")}</a>`
+      : `<span class="src">${ic("newspaper")} ${s.news.source}</span>`)
+    : "";
   const done = playedIds().has(s.id) ? `<span class="doneb">${ic("check_circle", 1)} 挑戦済み</span>` : "";
   return `
     <div class="badges"><span class="bd">${ic("calendar_month")} ${s.date || ""}</span>${src}${tags}${done}</div>
