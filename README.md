@@ -1,4 +1,4 @@
-# 連想ゲーム 🎯
+# Rensou Game 🎯（連想ゲーム）
 
 ニュースを起点に「①本質 → ②一次影響− → ③相対優位＋ → ④二次影響 → ⑤逆シナリオ → ⑥検証」の6ステップで連想力を鍛えるWebアプリ。
 
@@ -7,7 +7,7 @@
 ### かんたん起動（推奨）
 
 ```bash
-cd ~/Claude/Projects/GS-Game
+cd Rensou-Game
 npm run dev        # または ./serve.sh
 ```
 
@@ -29,7 +29,7 @@ chmod +x serve.sh
 ### 手動起動（serve.shを使わない場合）
 
 ```bash
-cd ~/Claude/Projects/GS-Game
+cd Rensou-Game
 python3 -m venv .venv                # 初回のみ
 source .venv/bin/activate
 pip install -r requirements.txt     # 初回のみ

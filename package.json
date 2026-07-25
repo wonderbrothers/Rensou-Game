@@ -2,6 +2,7 @@
   "name": "rensou-game",
   "version": "1.0.0",
   "private": true,
+  "repository": "Rensou-Game",
   "description": "ニュース連想力トレーニングゲーム（Flask + yfinance）",
   "scripts": {
     "dev": "./serve.sh",
