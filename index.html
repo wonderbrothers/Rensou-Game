@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fonts/local.css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f3c732">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -47,7 +47,7 @@
   </header>
 
   <div id="loader" class="loader hidden">
-    <p>データを自動で読み込めませんでした。<br><b>data フォルダ内のJSONファイル</b>を選択してください（複数可・index.json は不要）。</p>
+    <p>データを自動で読み込めませんでした。<span class="errnote"></span><br><b>data フォルダ内のJSONファイル</b>を選択してください（複数可・index.json は不要）。</p>
     <label><span class="ms">folder_open</span> ファイルを選択<input type="file" id="filePick" accept=".json" multiple></label>
   </div>
 
@@ -74,6 +74,6 @@
     <p class="copy">&copy;WONDER BROTHERS INC.</p>
   </footer>
 </div>
-<script src="app.js"></script>
+<script src="app.js?v=2"></script>
 </body>
 </html>

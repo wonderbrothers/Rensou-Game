@@ -114,12 +114,33 @@ function showStorageNotice() {
 }
 
 /* ---------- loading ---------- */
+/* Flask（動的API）でも GitHub Pages（静的ファイル）でも動くよう、
+   ベースURLをドキュメント基準で解決し、拡張子ありもフォールバックで試す */
+function apiUrl(p) {
+  return new URL(p, document.baseURI).href;
+}
+
+async function apiGet(p) {
+  let lastErr;
+  for (const u of [apiUrl(p), apiUrl(p + ".json")]) {
+    try {
+      const r = await fetch(u, { cache: "no-cache" });
+      if (r.ok) return await r.json();
+      lastErr = new Error(`${r.status} ${u}`);
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error("fetch failed");
+}
+
 async function boot() {
   try {
-    sessions = await fetch("api/sessions").then(r => { if (!r.ok) throw 0; return r.json(); });
+    sessions = await apiGet("api/sessions");
     renderHome();
     showStorageNotice();
   } catch (e) {
+    console.error("[連想ゲーム] データ取得に失敗:", e);
+    const note = document.querySelector("#loader .errnote");
+    if (note) note.textContent = `（${e.message}）`;
     show("loader");
   }
 }
@@ -216,9 +237,7 @@ function showPatterns() {
 /* ---------- play ---------- */
 function prefetchCalls(s) {
   return (s.calls && s.calls.length)
-    ? fetch(`api/calls/${s.id}`)
-        .then(r => { if (!r.ok) throw 0; return r.json(); })
-        .catch(() => null)
+    ? apiGet(`api/calls/${s.id}`).catch(() => null)
     : null;
 }
 
@@ -592,7 +611,7 @@ async function loadCallStats(force) {
   for (const s of sessions) {
     if (!s.calls || !s.calls.length) continue;
     try {
-      const d = await fetch(`api/calls/${s.id}`).then(r => { if (!r.ok) throw 0; return r.json(); });
+      const d = await apiGet(`api/calls/${s.id}`);
       d.calls.forEach(c => {
         if (!c.eval) return;
         const e = c.eval;

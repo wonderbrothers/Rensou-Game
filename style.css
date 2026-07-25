@@ -301,3 +301,5 @@ footer{margin-top:36px;font-size:11.5px;color:var(--muted);border-top:2px dashed
 /* confetti */
 .confetti{position:fixed;top:-30px;font-size:22px;animation:fall linear forwards;pointer-events:none;z-index:99;}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:.8;}}
+
+.errnote{display:inline-block;color:var(--muted);font-size:11.5px;margin-left:4px;}
