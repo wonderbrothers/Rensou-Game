@@ -295,13 +295,19 @@ function renderHome(keepScroll) {
     if (b.dataset.a === "ans") showAnswers(s); else startPlay(s);
   };
   show("home");
+  setNav("home");
   if (keepScroll) window.scrollTo(0, y);
+}
+function setNav(name) {
+  document.querySelectorAll(".gnav-item").forEach(b =>
+    b.classList.toggle("active", b.dataset.nav === name));
 }
 $("backBtn").onclick = () => renderHome();
 $("homeLink").onclick = () => renderHome();
-$("statsBtn").onclick = () => showStats();
-$("notesBtn").onclick = () => showNotes();
-$("patternsBtn").onclick = () => showPatterns();
+$("homeBtn").onclick = () => renderHome();
+$("statsBtn").onclick = () => { setNav("stats"); showStats(); };
+$("notesBtn").onclick = () => { setNav("notes"); showNotes(); };
+$("patternsBtn").onclick = () => { setNav("patterns"); showPatterns(); };
 
 /* ---------- 連想パターン図鑑 ---------- */
 function showPatterns() {
@@ -346,6 +352,7 @@ function startPlay(s) {
   cur = s; idx = 0; live = 0; sessionAnswers = [];
   callsPromise = prefetchCalls(s);
   show("stage");
+  setNav(null);
   renderQ();
 }
 
@@ -432,6 +439,7 @@ function showAnswers(s) {
   cur = s;
   callsPromise = prefetchCalls(s);
   show("stage");
+  setNav(null);
   $("scoreBox").innerHTML = "";
   let h = `<div class="stepno">解答一覧</div>
     <div class="evt">${ic("newspaper")} ${s.news.source ? s.news.source + "｜" : ""}${s.news.headline}</div>`;
