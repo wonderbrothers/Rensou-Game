@@ -611,7 +611,7 @@ function buildOneChart(c) {
   svg += `<text x="${L - 7}" y="${T + 8}" text-anchor="end" font-size="10.5" fill="#9aa0ab">${max.toFixed(1)}%</text>`;
   svg += `<text x="${L - 7}" y="${H - B}" text-anchor="end" font-size="10.5" fill="#9aa0ab">${min.toFixed(1)}%</text>`;
   let newsIdx = isos.findIndex(iso => iso >= (c.called_at || ""));
-  if (newsIdx < 0) newsIdx = 0;
+  if (newsIdx < 0) newsIdx = n - 1;   // ニュース日が履歴の後（休場中など）→ 右端に置く
   const nx = x(newsIdx);
   svg += `<line x1="${nx.toFixed(1)}" x2="${nx.toFixed(1)}" y1="${T}" y2="${H - B}" stroke="#f4693c" stroke-width="1.5" stroke-dasharray="3 4"/>`;
 
@@ -638,32 +638,45 @@ function buildOneChart(c) {
     }
   }
 
-  // T+5 / T+20 の判定日マーカー（色分け）
+  // T+5 / T+20 の判定日マーカー（到達済みの時だけ描く）
+  const drawnMarkers = [];
   [[5, "#a58bd8", "T+5"], [20, "#5cb85c", "T+20"]].forEach(([nDays, col, label]) => {
     const j = newsIdx + nDays;
     if (j < n) {
       const tx = x(j);
       svg += `<line x1="${tx.toFixed(1)}" x2="${tx.toFixed(1)}" y1="${T}" y2="${H - B}" stroke="${col}" stroke-width="1.5" stroke-dasharray="2 4"/>`;
       svg += `<text x="${tx.toFixed(1)}" y="${T + 9}" text-anchor="middle" font-size="9.5" font-weight="bold" fill="${col}">${label}</text>`;
+      drawnMarkers.push([col, label]);
     }
   });
 
   const d = vals.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
   svg += `<path d="${d}" fill="none" stroke="${lineColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
   svg += `<circle cx="${x(n - 1).toFixed(1)}" cy="${y(chg).toFixed(1)}" r="4.5" fill="${dotFill}" stroke="#fff" stroke-width="2"/>`;
-  svg += `<text x="${L}" y="${H - 6}" font-size="10.5" fill="#9aa0ab">${dates[0]}</text>`;
-  if (newsIdx >= n - 2) {
-    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#f4693c" font-weight="bold">${dates[newsIdx]} ニュース</text>`;
+  // 日付ラベル: ニュースラベルが左端・右端に寄る時は通常の日付と重ならないよう出し分ける
+  const newsLabel = `${dates[newsIdx]} ニュース`;
+  const nearLeft = nx < L + 80;          // 左端の日付ラベルと重なる位置
+  const nearRight = nx > W - R - 80;     // 右端の日付ラベルと重なる位置
+  if (!nearLeft) {
+    svg += `<text x="${L}" y="${H - 6}" font-size="10.5" fill="#9aa0ab">${dates[0]}</text>`;
+  }
+  if (nearRight) {
+    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#f4693c" font-weight="bold">${newsLabel}</text>`;
+  } else if (nearLeft) {
+    svg += `<text x="${L}" y="${H - 6}" font-size="10.5" fill="#f4693c" font-weight="bold">${newsLabel}</text>`;
+    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#9aa0ab">${dates[n - 1]}</text>`;
   } else {
-    svg += `<text x="${nx.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="10.5" fill="#f4693c" font-weight="bold">${dates[newsIdx]} ニュース</text>`;
+    svg += `<text x="${nx.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="10.5" fill="#f4693c" font-weight="bold">${newsLabel}</text>`;
     svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#9aa0ab">${dates[n - 1]}</text>`;
   }
   svg += `</svg>`;
 
   const sign = chg > 0 ? "+" : "";
   const chgBadge = `<span class="chg ${chg >= 0 ? "cpos" : "cneg"}">${sign}${chg.toFixed(2)}%</span>`;
+  const markerLegend = drawnMarkers
+    .map(([col, label]) => `<span class="lg"><i style="background:${col}"></i>${label}</span>`).join("");
   const legend = hasBench
-    ? `<div class="legend"><span class="lg"><i style="background:#2e3a67"></i>${c.name}</span><span class="lg"><i style="background:#56b7e6"></i>${c.bench || "ベンチマーク"}</span><span class="lg"><i style="background:#a58bd8"></i>T+5</span><span class="lg"><i style="background:#5cb85c"></i>T+20</span></div>`
+    ? `<div class="legend"><span class="lg"><i style="background:#2e3a67"></i>${c.name}</span><span class="lg"><i style="background:#56b7e6"></i>${c.bench || "ベンチマーク"}</span>${markerLegend}</div>`
     : "";
   return `<div class="chartwrap">
     <div class="chead2"><b class="ct2">${ic("show_chart")} 騰落率（ニュース日の終値 = 0%）</b>${chgBadge}</div>
