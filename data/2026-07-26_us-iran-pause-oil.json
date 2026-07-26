@@ -1,6 +1,6 @@
 {
-  "id": "2026-07-27_us-iran-pause-oil",
-  "date": "2026-07-27",
+  "id": "2026-07-26_us-iran-pause-oil",
+  "date": "2026-07-26",
   "categories": [
     "地政学",
     "原油・コモディティ"
@@ -18,7 +18,7 @@
       "direction": "+",
       "basis": "燃料コスト低下に加え、中東リスク後退で国際線の運航・需要も戻る二重の受益側",
       "price_at_call": 2787.0,
-      "called_at": "2026-07-27"
+      "called_at": "2026-07-26"
     },
     {
       "ticker": "9503.T",
@@ -26,7 +26,7 @@
       "direction": "+",
       "basis": "燃料調達コストの低下が採算に直結する、原油・LNG安の受益側",
       "price_at_call": 2366.5,
-      "called_at": "2026-07-27"
+      "called_at": "2026-07-26"
     },
     {
       "ticker": "XOM",
@@ -34,7 +34,7 @@
       "direction": "-",
       "basis": "原油価格が売上・利益に直結する上流の直撃側。リスクプレミアム剥落の逆風",
       "price_at_call": 156.94,
-      "called_at": "2026-07-27"
+      "called_at": "2026-07-26"
     }
   ],
   "questions": [
