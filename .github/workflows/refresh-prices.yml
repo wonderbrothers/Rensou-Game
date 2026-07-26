@@ -1,0 +1,80 @@
+name: Refresh price snapshots
+
+# 遊びコールの株価スナップショット（api/）を定期的に再生成してコミットする。
+# GitHub Pages は「ブランチから配信」なので、このコミットで自動的に再デプロイされる。
+# ＝ 手元で npm run build しなくても、答え合わせの現在値が自動更新される。
+#
+# コンテンツ（新しいニュース）の追加は従来どおり手元の npm run build で行う。
+# このワークフローが行うのは「既存ニュースの現在値・履歴の再取得」だけ。
+
+on:
+  schedule:
+    # 平日 21:30 UTC = 翌 06:30 JST。日本・米国どちらの引け後にも回る。
+    # 頻度を変えたいときはこの cron を編集する（例: 毎時 = '0 * * * *'）。
+    - cron: '30 21 * * 1-5'
+  workflow_dispatch: {}   # Actions画面の「Run workflow」から手動実行も可能
+
+# GITHUB_TOKEN にコミット＆push権限を与える
+permissions:
+  contents: write
+
+# 同時実行を1本に制限（cronと手動が重なっても競合しない）
+concurrency:
+  group: refresh-prices
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Rebuild price snapshots (api/)
+        run: python build_static.py
+
+      - name: Guard against a bad snapshot
+        run: |
+          # Yahoo の一時障害などで大半がエラーのスナップショットを公開しないための安全弁。
+          # エラー率が5割以上なら異常とみなし、コミットを見送る（前回の正常版を維持）。
+          python3 - <<'PY'
+          import json, glob, os
+          tot = err = 0
+          for f in glob.glob('api/calls/*'):
+              for c in json.load(open(f, encoding='utf-8')).get('calls', []):
+                  tot += 1
+                  if c.get('status') == 'error':
+                      err += 1
+          ratio = (err / tot) if tot else 1.0
+          print(f"calls={tot} errors={err} error_ratio={ratio:.0%}")
+          with open(os.environ['RUNNER_TEMP'] + '/guard', 'w') as fp:
+              fp.write('ok' if ratio < 0.5 else 'skip')
+          PY
+
+      - name: Commit & push if changed
+        run: |
+          if [ "$(cat "$RUNNER_TEMP/guard")" != "ok" ]; then
+            echo "⚠ エラー率が高いためコミットを見送りました（前回の正常なスナップショットを維持）"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # 株価スナップショット(api/)と、初回記録された基準価格(data/)だけを対象にする
+          git add -A -- api data
+          if git diff --cached --quiet; then
+            echo "・差分なし（更新なし）"
+            exit 0
+          fi
+          git commit -m "chore: 株価スナップショットを更新 ($(date -u '+%Y-%m-%d %H:%M UTC'))"
+          # 手元pushや他コミットと衝突しないよう、push前にリモートを取り込む
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push
+          echo "✓ 更新をpushしました（GitHub Pagesが再デプロイされます）"

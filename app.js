@@ -348,6 +348,20 @@ function shuffle(arr) {
   return a;
 }
 
+/* 解説内の {A}{B}{C}{D} を表示順のラベルに変換する。
+   order[disp] = 元の選択肢index。元index → 表示ラベルの対応で置換する。
+   order 省略時は元の並び順（A=0,B=1…）でそのまま表示。 */
+const IDENT = [0, 1, 2, 3, 4];
+function subMarks(reason, order) {
+  if (!reason) return reason || "";
+  const map = {};
+  (order || IDENT).forEach((orig, disp) => { map[orig] = MARKS[disp]; });
+  return reason.replace(/\{([A-E])\}/g, (m, L) => {
+    const v = map[L.charCodeAt(0) - 65];
+    return v !== undefined ? v : L;
+  });
+}
+
 function startPlay(s) {
   cur = s; idx = 0; live = 0; sessionAnswers = [];
   callsPromise = prefetchCalls(s);
@@ -400,7 +414,7 @@ function choose(disp) {
     st: q.step, q: q.q, ok,
     chosen: q.options[orig], corr: q.options[q.correct], reason: q.reason
   });
-  $("fbTxt").innerHTML = `<b>${ok ? `正解 ${ic("check_circle", 1)}` : `不正解 ${ic("cancel", 1)}`}</b> ${q.reason}`;
+  $("fbTxt").innerHTML = `<b>${ok ? `正解 ${ic("check_circle", 1)}` : `不正解 ${ic("cancel", 1)}`}</b> ${subMarks(q.reason, order)}`;
   $("fb").classList.add("show");
   $("nx").classList.add("show");
 }
@@ -448,7 +462,7 @@ function showAnswers(s) {
     q.options.forEach((o, k) => {
       h += `<div class="aopt${k === q.correct ? " ok" : ""}"><span class="mk">${MARKS[k]}</span><span>${o}</span>${k === q.correct ? '<span class="abadge">正解</span>' : ""}</div>`;
     });
-    h += `<div class="areason"><b>解説</b>${q.reason}</div></div>`;
+    h += `<div class="areason"><b>解説</b>${subMarks(q.reason)}</div></div>`;
   });
   if (s.learning) h += `<div class="band chk"><b>${ic("lightbulb", 1)} 今回の学び</b>${s.learning}</div>`;
   if (s.calls && s.calls.length) h += `<div class="calls" id="callsBox"></div>`;
@@ -836,7 +850,7 @@ function showNotes() {
         <div class="aq">${w.q}</div>
         <div class="aopt"><span class="mk"><span class="ms">close</span></span><span>${w.chosen}</span><span class="abadge" style="background:#f4693c;">あなた</span></div>
         <div class="aopt ok"><span class="mk"><span class="ms">check</span></span><span>${w.corr}</span><span class="abadge">正解</span></div>
-        <div class="areason"><b>解説</b>${w.reason}</div>
+        <div class="areason"><b>解説</b>${subMarks(w.reason)}</div>
         ${hasSession ? `<div class="row" style="margin-top:10px;"><button class="btn ghost sm" data-retry="${w.id}">${ic("rocket_launch")} このニュースを解き直す</button></div>` : ""}
       </div>`;
     });
