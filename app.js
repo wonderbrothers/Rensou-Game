@@ -370,6 +370,13 @@ function startPlay(s) {
   renderQ();
 }
 
+function glossaryHTML(q) {
+  const g = q.glossary || [];
+  if (!g.length) return "";
+  const items = g.map(t => `<div class="gterm"><b>${t.t}</b><span>${t.d}</span></div>`).join("");
+  return `<details class="glossary"><summary>${ic("menu_book")} 用語解説（${g.length}）</summary><div class="gbody">${items}</div></details>`;
+}
+
 function renderQ() {
   answered = false;
   const q = cur.questions[idx];
@@ -380,6 +387,7 @@ function renderQ() {
     <div class="stepno">${q.step}</div>
     <div class="evt">${ic("newspaper")} ${cur.news.source ? cur.news.source + "｜" : ""}${cur.news.headline}</div>
     <div class="qq">${q.q}</div><div class="opts" id="opts"></div>
+    ${glossaryHTML(q)}
     <div class="analyst" id="fb"><div class="who"><img class="av" src="images/analyst.png" alt="" width="38" height="38"><b>シニアアナリストより</b></div><p id="fbTxt"></p></div>
     <button class="next" id="nx">${idx === cur.questions.length - 1 ? `結果を見る ${ic("celebration")}` : `次へ ${ic("arrow_forward")}`}</button>`;
   const opts = $("opts");
@@ -462,6 +470,7 @@ function showAnswers(s) {
     q.options.forEach((o, k) => {
       h += `<div class="aopt${k === q.correct ? " ok" : ""}"><span class="mk">${MARKS[k]}</span><span>${o}</span>${k === q.correct ? '<span class="abadge">正解</span>' : ""}</div>`;
     });
+    h += glossaryHTML(q);
     h += `<div class="areason"><b>解説</b>${subMarks(q.reason)}</div></div>`;
   });
   if (s.learning) h += `<div class="band chk"><b>${ic("lightbulb", 1)} 今回の学び</b>${s.learning}</div>`;
@@ -475,6 +484,17 @@ function showAnswers(s) {
 }
 
 /* ---------- 遊びコール（T+N固定・市場相対で答え合わせ） ---------- */
+const CALL_INTRO = "「もしこのニュースで一つ賭けるなら」というシニアアナリスト役の予想です。＋は「上がるかも」、−は「下がるかも」の向きだけを当てにいく遊びで、投資助言ではありません。";
+
+function judgeLegendHTML() {
+  return `<details class="glossary"><summary>${ic("help")} 判定の見方（的中・外れ・横ばい）</summary><div class="gbody">
+    <div class="gterm"><b>${ic("target")} 的中</b><span>予想した向きに、しかも市場平均より強く動いた。＋予想なら市場超え、−予想なら市場割れ。</span></div>
+    <div class="gterm"><b>${ic("cancel")} 外れ</b><span>予想と逆に動いた。株価が上がっても「−（下がる）」予想なら外れになる——上がった＝的中ではない。</span></div>
+    <div class="gterm"><b>${ic("trending_flat")} 横ばい</b><span>市場平均との差が±1%以内で、勝ち負けがはっきりしない状態。</span></div>
+    <div class="gterm"><b>なぜ市場平均と比べる？</b><span>地合いで全体が上がっただけでは実力とは言えないため、市場平均（ベンチマーク）を引いた相対リターンで判定します。</span></div>
+  </div></details>`;
+}
+
 function judgeBadge(rel, dir) {
   if (Math.abs(rel) <= 1) return `<span class="vb flat">${ic("trending_flat")} 横ばい</span>`;
   const hit = (dir === "+" && rel > 0) || (dir === "-" && rel < 0);
@@ -494,7 +514,8 @@ async function loadCalls() {
   try {
     const d = await callsPromise;
     if (!d) throw 0;
-    let h = `<b class="ct">${ic("casino")} シニアアナリストの遊びコール</b>`;
+    let h = `<b class="ct">${ic("casino")} シニアアナリストの遊びコール</b>
+      <p class="cnote callintro">${CALL_INTRO}</p>`;
     d.calls.forEach(c => {
       const yen = c.ticker.endsWith(".T") ? "¥"
         : (c.ticker.endsWith(".KS") || c.ticker.endsWith(".KQ")) ? "₩" : "$";
@@ -523,7 +544,8 @@ async function loadCalls() {
       if (c.history && c.history.length > 1 && c.price_at_call) h += buildOneChart(c);
       h += `</div>`;
     });
-    h += `<p class="cnote">※ あくまで遊び。判定は市場全体（ベンチマーク）に対する相対リターンで行う——地合いで上がっただけでは的中にならない。T+5/T+20は営業日ベースの固定検証期間。</p>`;
+    h += judgeLegendHTML();
+    h += `<p class="cnote">※ T+5／T+20は、ニュースから5・20営業日後の固定の答え合わせタイミング。あくまで遊びで、投資助言ではありません。</p>`;
     box.innerHTML = h;
   } catch (e) {
     box.querySelector(".cnote").textContent = "株価を取得できませんでした（サーバー未起動またはオフライン）";
@@ -790,6 +812,7 @@ function renderCSView() {
     <div class="statcard cstat${on("flat")}" data-cs="flat"><b>${ic("trending_flat")} ${flat}</b><span>横ばい</span></div>
     <div class="statcard cstat${on("decided")}" data-cs="decided"><b>${rate}%</b><span>的中率</span></div>
   </div>`;
+  h += judgeLegendHTML();
   if (csStatus !== "all") {
     const label = { hit: "的中", miss: "外れ", flat: "横ばい", decided: "判定済み（的中＋外れ）" }[csStatus];
     h += `<p class="cnote" style="margin-bottom:10px;">${ic("filter_alt")} 「${label}」で絞り込み中。<button class="linkbtn" id="csClear">解除</button></p>`;
