@@ -137,6 +137,7 @@ def main():
     print(f"✓ api/sessions        ({len(sessions)}件)")
 
     ok = ng = 0
+    bad_calls = []   # 株価を取得できなかった銘柄（push前に潰すための警告用）
     for d in sessions:
         sid = d.get("id")
         if not sid:
@@ -146,6 +147,10 @@ def main():
             write(os.path.join(OUT, "calls", sid), payload)
             ok += 1
             print(f"✓ api/calls/{sid}")
+            for c in payload.get("calls", []):
+                if c.get("status") == "error" or not c.get("price_at_call"):
+                    bad_calls.append((sid, c.get("ticker", "?"),
+                                      c.get("name", ""), c.get("message", "")))
         except Exception as e:
             ng += 1
             print(f"✗ api/calls/{sid}  {e}")
@@ -156,7 +161,21 @@ def main():
     stamp_assets()
 
     print(f"\n完了: {ok}件成功 / {ng}件失敗　株価スナップショット: {generated_at}")
-    print("公開反映: ./sync-public.sh && cd ../Rensou-Game-public && git push")
+
+    if bad_calls:
+        print("\n" + "=" * 56)
+        print(f"⚠ 株価を取得できなかった銘柄が {len(bad_calls)} 件あります（push前に確認）:")
+        for sid, ticker, name, msg in bad_calls:
+            print(f"   ✗ {ticker}  {name}  … {sid}")
+            if msg:
+                print(f"      {msg}")
+        print("  対処のヒント:")
+        print("   ・上場廃止/持株会社移行などでコードが変わった → data/ のtickerを更新")
+        print("   ・yfinanceが安定配信しない小型株 → 別銘柄に差し替え、または許容")
+        print("   ・一時的なYahoo側の欠落 → 基準価格は未記録なので次回ビルドで自動再取得")
+        print("=" * 56)
+
+    print("\n公開反映: ./sync-public.sh && cd ../Rensou-Game-public && git push")
 
 
 if __name__ == "__main__":
