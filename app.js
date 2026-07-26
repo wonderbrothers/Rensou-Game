@@ -137,7 +137,13 @@ async function apiGet(p) {
 
 async function boot() {
   try {
-    sessions = await apiGet("api/sessions");
+    // 一覧は軽量インデックスから（記事が増えても読み込みが重くならない）。
+    // 旧構成（api/index が無い環境）では従来の全件JSONへフォールバック。
+    try {
+      sessions = await apiGet("api/index");
+    } catch (_) {
+      sessions = await apiGet("api/sessions");
+    }
     renderHome();
     showStorageNotice();
   } catch (e) {
@@ -146,6 +152,20 @@ async function boot() {
     if (note) note.textContent = `（${e.message}）`;
     show("loader");
   }
+}
+
+/* 記事の完全データ（questions等）を必要時に取得して差し込む。
+   インデックス由来のセッションは questions を持たないため、
+   プレイ・解答表示の直前にこの関数で埋める。 */
+async function ensureDetail(s) {
+  if (!s || s.questions) return s;
+  const d = await apiGet(`api/session/${s.id}`);
+  Object.assign(s, d);
+  return s;
+}
+
+function hasCalls(s) {
+  return (s.calls && s.calls.length) || s.has_calls;
 }
 
 $("filePick").addEventListener("change", async ev => {
@@ -179,7 +199,8 @@ function filteredSessions() {
       const hay = [
         s.news.headline, s.news.essence, s.news.source, s.date,
         ...(s.categories || []),
-        ...(s.calls || []).map(c => `${c.name} ${c.ticker}`)
+        ...(s.calls || []).map(c => `${c.name} ${c.ticker}`),
+        ...(s.call_names || [])
       ].join(" ").toLowerCase();
       if (!hay.includes(kw)) return false;
     }
@@ -291,10 +312,11 @@ function renderHome(keepScroll) {
   renderToolbar();
   renderList();
 
-  $("list").onclick = ev => {
+  $("list").onclick = async ev => {
     const b = ev.target.closest("button");
     if (!b) return;
     const s = sessions[+b.dataset.i];
+    try { await ensureDetail(s); } catch (e) { alert("記事の読み込みに失敗しました。通信環境をご確認ください。"); return; }
     if (b.dataset.a === "ans") showAnswers(s); else startPlay(s);
   };
   show("home");
@@ -313,10 +335,21 @@ $("notesBtn").onclick = () => { setNav("notes"); showNotes(); };
 $("patternsBtn").onclick = () => { setNav("patterns"); showPatterns(); };
 
 /* ---------- 連想パターン図鑑 ---------- */
-function showPatterns() {
+let patternsCache = null;
+async function showPatterns() {
   show("stage");
   $("scoreBox").innerHTML = "";
-  const items = sessions.filter(s => s.learning);
+  // learning を持つ記事だけの軽量API。無ければ手元のセッション（ファイル読み込み時など）から
+  let items = sessions.filter(s => s.learning);
+  if (!items.length) {
+    if (!patternsCache) {
+      try { patternsCache = await apiGet("api/patterns"); } catch (_) { patternsCache = []; }
+    }
+    items = patternsCache.map(p => {
+      const s = sessions.find(x => x.id === p.id);
+      return { ...p, news: s ? s.news : { headline: "" } };
+    });
+  }
   let h = `<div class="stepno">${ic("menu_book")} 連想パターン図鑑</div>
     <p class="cnote" style="margin-bottom:14px;">これまでのニュースで学んだ汎用パターン ${items.length} 件。ニュースを見たらまずここの「型」に当てはまるか考える。</p>`;
   if (!items.length) {
@@ -326,7 +359,7 @@ function showPatterns() {
       const tags = (s.categories || []).map(c => `<span class="cat">${c}</span>`).join("");
       h += `<div class="anscard">
         <div class="badges"><span class="bd">${ic("calendar_month")} ${s.date || ""}</span>${tags}</div>
-        <p class="cnote" style="margin:2px 0 8px;">${s.news.headline}</p>
+        <p class="cnote" style="margin:2px 0 8px;">${(s.news && s.news.headline) || ""}</p>
         <div class="areason" style="background:var(--yellow-soft);"><b style="color:#a9861f;">${ic("lightbulb", 1)} パターン</b>${s.learning}</div>
       </div>`;
     });
@@ -548,7 +581,7 @@ async function loadCalls() {
       h += `</div>`;
     });
     h += judgeLegendHTML();
-    h += `<p class="cnote">※ T+5／T+20は、ニュースから5・20営業日後の固定の答え合わせタイミング。あくまで遊びで、投資助言ではありません。</p>`;
+    h += `<p class="cnote">※ T+5／T+20は、ニュースから5・20営業日後の固定の答え合わせタイミング。あくまで遊びで、投資助言ではありません。${d.frozen ? "<br>❄ このニュースはT+20の判定が確定済みです（株価は判定時点のもの）。" : ""}</p>`;
     box.innerHTML = h;
   } catch (e) {
     box.querySelector(".cnote").textContent = "株価を取得できませんでした（サーバー未起動またはオフライン）";
@@ -748,7 +781,7 @@ async function loadCallStats(force) {
   $("csNote").textContent = "集計中…（全ニュースの株価を取得しています）";
   const rows = [];
   for (const s of sessions) {
-    if (!s.calls || !s.calls.length) continue;
+    if (!hasCalls(s)) continue;
     try {
       const d = await apiGet(`api/calls/${s.id}`);
       d.calls.forEach(c => {
@@ -885,17 +918,25 @@ function showNotes() {
   const rb = $("reviewBtn");
   if (rb) rb.onclick = () => startWrongReview();
   $("stageBody").querySelectorAll("[data-retry]").forEach(b => {
-    b.onclick = () => {
+    b.onclick = async () => {
       const s = sessions.find(x => x.id === b.dataset.retry);
-      if (s) startPlay(s);
+      if (!s) return;
+      try { await ensureDetail(s); } catch (e) { return; }
+      startPlay(s);
     };
   });
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 /* ---------- 復習モード（間違えた問題だけを横断出題） ---------- */
-function startWrongReview() {
+async function startWrongReview() {
   const wrongs = getWrongs();
+  // 間違いに関係する記事の詳細をまとめて取得（未取得分のみ）
+  const ids = [...new Set(wrongs.map(w => w.id))];
+  await Promise.all(ids.map(id => {
+    const s = sessions.find(x => x.id === id);
+    return s ? ensureDetail(s).catch(() => null) : null;
+  }));
   const qs = [];
   const seen = new Set();
   wrongs.forEach(w => {
@@ -903,7 +944,7 @@ function startWrongReview() {
     if (seen.has(k)) return;
     seen.add(k);
     const s = sessions.find(x => x.id === w.id);
-    if (!s) return;
+    if (!s || !s.questions) return;
     const q = s.questions.find(qq => qq.q === w.q);
     if (q) qs.push(q);
   });

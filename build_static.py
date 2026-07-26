@@ -30,6 +30,56 @@ def load_sessions():
     return out
 
 
+def summary_of(d):
+    """一覧表示に必要な最小限のメタデータ（api/index 用）"""
+    news = d.get("news", {})
+    return {
+        "id": d["id"],
+        "date": d.get("date", ""),
+        "categories": d.get("categories", []),
+        "news": {k: news[k] for k in ("source", "headline", "source_url", "essence")
+                 if news.get(k) is not None},
+        "has_calls": bool(d.get("calls")),
+        "call_names": [f"{c.get('name', '')} {c.get('ticker', '')}"
+                       for c in d.get("calls", [])],   # 銘柄名でのキーワード検索用
+        "q_n": len(d.get("questions", [])),
+    }
+
+
+def is_frozen(payload):
+    """全コールのT+20判定が確定し、エラーが無いスナップショットか。
+
+    凍結されたニュースの株価は以後再取得しない（答え合わせは確定済みのため）。
+    これにより日々の取得対象が「直近の未確定ニュースの銘柄」だけに絞られ、
+    記事数が増えてもyfinanceへのリクエスト量が頭打ちになる。
+    """
+    calls = payload.get("calls") or []
+    if not calls:
+        return False
+    for c in calls:
+        if c.get("status") == "error" or not c.get("price_at_call"):
+            return False
+        t20 = (c.get("eval") or {}).get("t20") or {}
+        if t20.get("status") != "done":
+            return False
+    return True
+
+
+def load_previous_payloads():
+    """前回ビルドの api/calls/* を読み込む（凍結判定・再利用のため）"""
+    prev = {}
+    calls_dir = os.path.join(OUT, "calls")
+    if not os.path.isdir(calls_dir):
+        return prev
+    for fn in os.listdir(calls_dir):
+        try:
+            with open(os.path.join(calls_dir, fn), encoding="utf-8") as fp:
+                prev[fn] = json.load(fp)
+        except Exception:
+            pass
+    return prev
+
+
 def build_calls(d, generated_at):
     """server.calls() と同じ構造を組み立てる（ファイルへの書き戻しも行う）"""
     call_list = d.get("calls", [])
@@ -130,18 +180,35 @@ def main():
         print("✗ data/ にニュースJSONがありません")
         return
 
+    # 前回スナップショットを読み、T+20確定済み（凍結）のものは再利用する
+    prev = load_previous_payloads()
+    frozen_ids = {sid for sid, p in prev.items() if p.get("frozen") or is_frozen(p)}
+
     if os.path.isdir(OUT):
         shutil.rmtree(OUT)
 
+    # --- 静的APIの生成 ---
+    # api/sessions      : 全記事の完全な配列（互換用・旧クライアント向け）
+    # api/index         : 一覧用の軽量メタデータ（本命。記事が増えても軽い）
+    # api/session/<id>  : 記事ごとの完全なJSON（プレイ・解答時に取得）
+    # api/patterns      : 連想パターン図鑑用（id/date/categories/learning）
     write(os.path.join(OUT, "sessions"), sessions)
-    print(f"✓ api/sessions        ({len(sessions)}件)")
+    write(os.path.join(OUT, "index"), [summary_of(d) for d in sessions])
+    for d in sessions:
+        write(os.path.join(OUT, "session", d["id"]), d)
+    write(os.path.join(OUT, "patterns"),
+          [{"id": d["id"], "date": d.get("date", ""),
+            "categories": d.get("categories", []), "learning": d["learning"]}
+           for d in sessions if d.get("learning")])
+    print(f"✓ api/sessions + api/index + api/session/* + api/patterns ({len(sessions)}件)")
 
-    # 全ユニーク銘柄＋ベンチマーク指数を1リクエストに束ねて先読みする。
-    # 以降の fetch_* はこのストアを参照するため、Yahooへのリクエスト数が
-    # 銘柄数に比例せず、レート制限（429）に当たりにくくなる。
+    # 未確定（凍結されていない）ニュースの銘柄だけを一括で先読みする。
+    # 凍結済みは前回スナップショットを再利用するため取得ゼロ。
     tickers = set()
     earliest = datetime.date.today().isoformat()
     for d in sessions:
+        if d.get("id") in frozen_ids:
+            continue
         nd = d.get("date") or earliest
         for c in d.get("calls", []):
             tickers.add(c["ticker"])
@@ -149,7 +216,8 @@ def main():
             if nd < earliest:
                 earliest = nd
     if tickers:
-        print(f"→ 株価を一括取得中…（{len(tickers)}銘柄, {earliest}〜）")
+        print(f"→ 株価を一括取得中…（未確定 {len(tickers)}銘柄, {earliest}〜"
+              f"／凍結済み {len(frozen_ids)}件はスキップ）")
         prefetch_all(sorted(tickers), earliest)
 
     ok = ng = 0
@@ -159,7 +227,16 @@ def main():
         if not sid:
             continue
         try:
+            if sid in frozen_ids:
+                payload = prev[sid]
+                payload["frozen"] = True
+                write(os.path.join(OUT, "calls", sid), payload)
+                ok += 1
+                print(f"❄ api/calls/{sid} （T+20確定・凍結を再利用）")
+                continue
             payload = build_calls(d, generated_at)
+            if is_frozen(payload):
+                payload["frozen"] = True   # 次回ビルドから再取得しない
             write(os.path.join(OUT, "calls", sid), payload)
             ok += 1
             print(f"✓ api/calls/{sid}")
