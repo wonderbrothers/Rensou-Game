@@ -9,6 +9,9 @@ let callsPromise = null;   // 遊びコールの株価: スタート直後に先
 const $ = id => document.getElementById(id);
 function show(id) {
   ["loader", "home", "stage"].forEach(v => $(v).classList.toggle("hidden", v !== id));
+  // タイトルとHeroイメージはHOME（と読み込み画面）のみ表示する
+  const hd = document.querySelector("header.hd");
+  if (hd) hd.classList.toggle("hidden", id === "stage");
 }
 
 /* ---------- ローカル保存（成績・間違いノート・コール成績キャッシュ） ---------- */

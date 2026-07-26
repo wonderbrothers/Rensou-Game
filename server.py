@@ -9,6 +9,8 @@ import datetime
 import glob
 import json
 import os
+import random
+import time
 
 from flask import Flask, jsonify, send_from_directory
 
@@ -68,8 +70,74 @@ def sessions():
     return jsonify(out)
 
 
+def _with_retry(fn, tries=3, base=1.5):
+    """一時的な失敗（レート制限・接続断）を指数バックオフで再試行する。
+
+    Yahoo は 429 Too Many Requests や接続リセットを断続的に返すことがある。
+    恒久的な失敗（銘柄が存在しない等）はリトライしても無駄なのでそのまま上げる。
+    """
+    for i in range(tries):
+        try:
+            return fn()
+        except Exception as e:
+            msg = str(e)
+            transient = any(k in msg for k in (
+                "429", "Too Many Requests", "curl", "Connection",
+                "timed out", "Timeout", "temporarily", "50"))
+            if i == tries - 1 or not transient:
+                raise
+            time.sleep(base * (2 ** i) + random.random())
+
+
+# ---------- 一括取得ストア ----------
+# build_static.py が prefetch_all() で全銘柄の日次終値を1リクエストにまとめて取得し、
+# ここに格納する。以降の fetch_price / fetch_price_on / fetch_history はまず
+# このストアを参照し、無い銘柄だけ従来どおり個別に取得する（Flaskサーバー単体でも動く）。
+_BULK = {}   # ticker -> [{"d","iso","p"}, ...]（日付昇順）
+
+
+def prefetch_all(tickers, start_str):
+    """全銘柄の日次終値を yf.download 一括で取得して _BULK に格納する。
+
+    銘柄ごとに1件ずつ叩くとN×リクエストになるが、これなら実質1リクエスト。
+    失敗しても例外は投げず、取れた銘柄だけ格納する（残りは個別取得にフォールバック）。
+    """
+    import yfinance as yf
+    if not tickers:
+        return
+    start = (datetime.date.fromisoformat(start_str)
+             - datetime.timedelta(days=10)).isoformat()
+    end = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
+    try:
+        df = _with_retry(lambda: yf.download(
+            tickers=list(tickers), start=start, end=end,
+            group_by="ticker", auto_adjust=True,
+            threads=True, progress=False))
+    except Exception as e:
+        print(f"  (一括取得に失敗、個別取得にフォールバック: {e})")
+        return
+    if df is None or df.empty:
+        return
+    for t in tickers:
+        try:
+            closes = df[t]["Close"] if len(tickers) > 1 else df["Close"]
+            closes = closes.dropna()
+            if not len(closes):
+                continue
+            _BULK[t] = [{"d": i.strftime("%m/%d"),
+                         "iso": i.strftime("%Y-%m-%d"),
+                         "p": round(float(v), 2)}
+                        for i, v in closes.items()]
+        except Exception:
+            continue
+    print(f"  一括取得: {len(_BULK)}/{len(tickers)} 銘柄")
+
+
 def fetch_price(ticker: str) -> float:
     """現在（直近）の株価"""
+    rows = _BULK.get(ticker)
+    if rows:
+        return rows[-1]["p"]
     import yfinance as yf
     tk = yf.Ticker(ticker)
     try:
@@ -78,22 +146,33 @@ def fetch_price(ticker: str) -> float:
             return float(p)
     except Exception:
         pass
-    h = tk.history(period="5d")
-    if len(h):
+
+    def _hist():
+        h = tk.history(period="5d")
+        if not len(h):
+            raise RuntimeError(f"price unavailable: {ticker}")
         return float(h["Close"].iloc[-1])
-    raise RuntimeError(f"price unavailable: {ticker}")
+    return _with_retry(_hist)
 
 
 def fetch_price_on(ticker: str, date_str: str) -> float:
     """指定日（ニュース日付）の終値。休場日はその直前の営業日終値。"""
+    rows = _BULK.get(ticker)
+    if rows:
+        upto = [r for r in rows if r["iso"] <= date_str]
+        if upto:
+            return upto[-1]["p"]
     import yfinance as yf
     d0 = datetime.date.fromisoformat(date_str)
     start = d0 - datetime.timedelta(days=10)
     end = d0 + datetime.timedelta(days=1)
-    h = yf.Ticker(ticker).history(start=start.isoformat(), end=end.isoformat())
-    if len(h):
+
+    def _hist():
+        h = yf.Ticker(ticker).history(start=start.isoformat(), end=end.isoformat())
+        if not len(h):
+            raise RuntimeError(f"price unavailable on {date_str}: {ticker}")
         return float(h["Close"].iloc[-1])
-    raise RuntimeError(f"price unavailable on {date_str}: {ticker}")
+    return _with_retry(_hist)
 
 
 def bench_symbol(ticker: str):
@@ -143,13 +222,19 @@ def compute_eval(hist, bhist, called_at):
 def fetch_history(ticker: str, start_str: str):
     """ニュース日の7日前→現在の日次終値（損益グラフ用）。
     ニュース当日でも文脈が見えるよう、少し手前から取得する。"""
-    import yfinance as yf
     start = datetime.date.fromisoformat(start_str) - datetime.timedelta(days=7)
+    rows = _BULK.get(ticker)
+    if rows:
+        return [r for r in rows if r["iso"] >= start.isoformat()]
+    import yfinance as yf
     end = datetime.date.today() + datetime.timedelta(days=1)
-    h = yf.Ticker(ticker).history(start=start.isoformat(), end=end.isoformat())
-    return [{"d": i.strftime("%m/%d"), "iso": i.strftime("%Y-%m-%d"),
-             "p": round(float(row["Close"]), 2)}
-            for i, row in h.iterrows()]
+
+    def _hist():
+        h = yf.Ticker(ticker).history(start=start.isoformat(), end=end.isoformat())
+        return [{"d": i.strftime("%m/%d"), "iso": i.strftime("%Y-%m-%d"),
+                 "p": round(float(row["Close"]), 2)}
+                for i, row in h.iterrows()]
+    return _with_retry(_hist)
 
 
 @app.route("/api/calls/<sid>")

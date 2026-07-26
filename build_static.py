@@ -14,7 +14,7 @@ import re
 import shutil
 
 from server import (DATA, BASE, bench_symbol, cached, compute_eval,
-                    fetch_history, fetch_price, fetch_price_on)
+                    fetch_history, fetch_price, fetch_price_on, prefetch_all)
 
 OUT = os.path.join(BASE, "api")
 
@@ -135,6 +135,22 @@ def main():
 
     write(os.path.join(OUT, "sessions"), sessions)
     print(f"✓ api/sessions        ({len(sessions)}件)")
+
+    # 全ユニーク銘柄＋ベンチマーク指数を1リクエストに束ねて先読みする。
+    # 以降の fetch_* はこのストアを参照するため、Yahooへのリクエスト数が
+    # 銘柄数に比例せず、レート制限（429）に当たりにくくなる。
+    tickers = set()
+    earliest = datetime.date.today().isoformat()
+    for d in sessions:
+        nd = d.get("date") or earliest
+        for c in d.get("calls", []):
+            tickers.add(c["ticker"])
+            tickers.add(bench_symbol(c["ticker"])[0])
+            if nd < earliest:
+                earliest = nd
+    if tickers:
+        print(f"→ 株価を一括取得中…（{len(tickers)}銘柄, {earliest}〜）")
+        prefetch_all(sorted(tickers), earliest)
 
     ok = ng = 0
     bad_calls = []   # 株価を取得できなかった銘柄（push前に潰すための警告用）
