@@ -269,6 +269,9 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .statcard{background:var(--paper);border-radius:18px;box-shadow:var(--shadow);padding:14px 10px;text-align:center;}
 .statcard b{display:block;font-size:24px;color:var(--coral);}
 .statcard span{font-size:11.5px;color:var(--sub);font-weight:700;}
+.statcard.cstat{cursor:pointer;border:2px solid transparent;transition:border-color .15s,transform .1s,box-shadow .15s;}
+.statcard.cstat:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(46,58,103,.16);}
+.statcard.cstat.on{border-color:var(--coral);background:var(--coral-soft);}
 .sbarrow{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
 .sblabel{flex:0 0 96px;font-size:12.5px;font-weight:800;}
 .sbar{flex:1;height:12px;background:var(--sky-soft);border-radius:99px;overflow:hidden;}

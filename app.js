@@ -733,10 +733,16 @@ function marketOf(t) {
   return "米国";
 }
 
-let csRows = [], csAsof = null, csMarket = "all";
+let csRows = [], csAsof = null, csMarket = "all", csStatus = "all";
+
+function callStatus(r) {
+  if (Math.abs(r.rel) <= 1) return "flat";
+  if ((r.dir === "+" && r.rel > 0) || (r.dir === "-" && r.rel < 0)) return "hit";
+  return "miss";
+}
 
 function renderCallStats(rows, asof) {
-  csRows = rows; csAsof = asof; csMarket = "all";
+  csRows = rows; csAsof = asof; csMarket = "all"; csStatus = "all";
   renderCSView();
 }
 
@@ -763,16 +769,26 @@ function renderCSView() {
   });
   const decided = hit + miss;
   const rate = decided ? Math.round(hit / decided * 100) : 0;
+  const on = k => csStatus === k ? " on" : "";
   h += `<div class="statgrid">
-    <div class="statcard"><b>${ic("target")} ${hit}</b><span>的中</span></div>
-    <div class="statcard"><b>${ic("cancel")} ${miss}</b><span>外れ</span></div>
-    <div class="statcard"><b>${ic("trending_flat")} ${flat}</b><span>横ばい</span></div>
-    <div class="statcard"><b>${rate}%</b><span>的中率</span></div>
+    <div class="statcard cstat${on("hit")}" data-cs="hit"><b>${ic("target")} ${hit}</b><span>的中</span></div>
+    <div class="statcard cstat${on("miss")}" data-cs="miss"><b>${ic("cancel")} ${miss}</b><span>外れ</span></div>
+    <div class="statcard cstat${on("flat")}" data-cs="flat"><b>${ic("trending_flat")} ${flat}</b><span>横ばい</span></div>
+    <div class="statcard cstat${on("decided")}" data-cs="decided"><b>${rate}%</b><span>的中率</span></div>
   </div>`;
-  if (decided < 30) {
+  if (csStatus !== "all") {
+    const label = { hit: "的中", miss: "外れ", flat: "横ばい", decided: "判定済み（的中＋外れ）" }[csStatus];
+    h += `<p class="cnote" style="margin-bottom:10px;">${ic("filter_alt")} 「${label}」で絞り込み中。<button class="linkbtn" id="csClear">解除</button></p>`;
+  } else if (decided < 30) {
     h += `<p class="cnote" style="margin-bottom:10px;">${ic("info")} 判定済み ${decided} 件。サンプルが30件に満たない的中率は偶然と区別がつきません——数字よりも「なぜ外れたか（織り込み済み？逆シナリオ発動？）」を読むのが本番です。</p>`;
   }
-  rows.forEach(r => {
+  const listRows = csStatus === "all" ? rows
+    : csStatus === "decided" ? rows.filter(r => callStatus(r) !== "flat")
+    : rows.filter(r => callStatus(r) === csStatus);
+  if (!listRows.length) {
+    h += `<p class="empty">該当する銘柄がありません。</p>`;
+  }
+  listRows.forEach(r => {
     const s = r.rel > 0 ? "+" : "";
     h += `<div class="hrow"><span class="hname">${r.name}<small class="hnews">${r.news}</small></span>
       <span class="hwin">${r.market || ""}・${r.win}</span>
@@ -780,8 +796,13 @@ function renderCSView() {
   });
   $("csBody").innerHTML = h;
   $("csBody").querySelectorAll("[data-m]").forEach(b => {
-    b.onclick = () => { csMarket = b.dataset.m; renderCSView(); };
+    b.onclick = () => { csMarket = b.dataset.m; csStatus = "all"; renderCSView(); };
   });
+  $("csBody").querySelectorAll("[data-cs]").forEach(b => {
+    b.onclick = () => { csStatus = csStatus === b.dataset.cs ? "all" : b.dataset.cs; renderCSView(); };
+  });
+  const clr = $("csClear");
+  if (clr) clr.onclick = () => { csStatus = "all"; renderCSView(); };
   if (csAsof) $("csNote").textContent = `最終集計: ${csAsof.toLocaleString("ja-JP")}（結果はこの端末に保存されます）`;
 }
 
