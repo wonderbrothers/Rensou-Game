@@ -15,7 +15,8 @@ import shutil
 import subprocess
 
 from server import (DATA, BASE, bench_symbol, cached, compute_eval,
-                    fetch_history, fetch_price, fetch_price_on, prefetch_all)
+                    fetch_history, fetch_price, fetch_price_on, prefetch_all,
+                    summary_of)
 
 OUT = os.path.join(BASE, "api")
 
@@ -29,22 +30,6 @@ def load_sessions():
             out.append(json.load(fp))
     out.sort(key=lambda s: (s.get("date", ""), s.get("id", "")), reverse=True)
     return out
-
-
-def summary_of(d):
-    """一覧表示に必要な最小限のメタデータ（api/index 用）"""
-    news = d.get("news", {})
-    return {
-        "id": d["id"],
-        "date": d.get("date", ""),
-        "categories": d.get("categories", []),
-        "news": {k: news[k] for k in ("source", "headline", "source_url", "essence")
-                 if news.get(k) is not None},
-        "has_calls": bool(d.get("calls")),
-        "call_names": [f"{c.get('name', '')} {c.get('ticker', '')}"
-                       for c in d.get("calls", [])],   # 銘柄名でのキーワード検索用
-        "q_n": len(d.get("questions", [])),
-    }
 
 
 def is_frozen(payload):

@@ -59,15 +59,59 @@ def static_files(p):
     return send_from_directory(BASE, p)
 
 
-@app.route("/api/sessions")
-def sessions():
+def load_all_sessions():
     out = []
     for f in sorted(glob.glob(os.path.join(DATA, "*.json"))):
         if os.path.basename(f) == "index.json":
             continue
         with open(f, encoding="utf-8") as fp:
             out.append(json.load(fp))
-    return jsonify(out)
+    out.sort(key=lambda s: (s.get("date", ""), s.get("id", "")), reverse=True)
+    return out
+
+
+def summary_of(d):
+    """一覧表示に必要な最小限のメタデータ（api/index 用）。build_static.py も利用する"""
+    news = d.get("news", {})
+    return {
+        "id": d["id"],
+        "date": d.get("date", ""),
+        "categories": d.get("categories", []),
+        "news": {k: news[k] for k in ("source", "headline", "source_url", "essence")
+                 if news.get(k) is not None},
+        "has_calls": bool(d.get("calls")),
+        "call_names": [f"{c.get('name', '')} {c.get('ticker', '')}"
+                       for c in d.get("calls", [])],
+        "q_n": len(d.get("questions", [])),
+    }
+
+
+@app.route("/api/sessions")
+def sessions():
+    return jsonify(load_all_sessions())
+
+
+@app.route("/api/index")
+def api_index():
+    """一覧用の軽量インデックス（静的ビルドの api/index と同形）。
+    ルートが静的ファイルより優先されるため、devサーバーでは常に data/ の最新を返す"""
+    return jsonify([summary_of(d) for d in load_all_sessions()])
+
+
+@app.route("/api/session/<sid>")
+def api_session(sid):
+    path = os.path.join(DATA, f"{sid}.json")
+    if not os.path.exists(path):
+        return jsonify({"error": "session not found"}), 404
+    with open(path, encoding="utf-8") as fp:
+        return jsonify(json.load(fp))
+
+
+@app.route("/api/patterns")
+def api_patterns():
+    return jsonify([{"id": d["id"], "date": d.get("date", ""),
+                     "categories": d.get("categories", []), "learning": d["learning"]}
+                    for d in load_all_sessions() if d.get("learning")])
 
 
 def _with_retry(fn, tries=3, base=1.5):
@@ -358,13 +402,47 @@ def check_data(verify_tickers=True):
         qs = d.get("questions", [])
         if len(qs) != 6:
             errs.append(f"questionsが6問でない ({len(qs)}問)")
+        correct_positions = []
         for i, q in enumerate(qs):
-            if len(q.get("options", [])) < 2:
+            opts = q.get("options", [])
+            if len(opts) < 2:
                 errs.append(f"Q{i+1}: 選択肢不足")
-            elif not (0 <= q.get("correct", -1) < len(q["options"])):
+                continue
+            c = q.get("correct", -1)
+            if not (0 <= c < len(opts)):
                 errs.append(f"Q{i+1}: correctが範囲外")
+                continue
+            correct_positions.append(c)
             if not q.get("reason"):
                 errs.append(f"Q{i+1}: reasonが空")
+                continue
+
+            # --- 文字数バイアス（正解が長いと当てられてしまうメタ攻略の防止） ---
+            ls = [len(o) for o in opts]
+            spread = max(ls) - min(ls)
+            margin = ls[c] - max(l for j, l in enumerate(ls) if j != c)
+            if spread > 6:
+                errs.append(f"Q{i+1}: 選択肢の文字数差が{spread}字（6字以内に。lens={ls}）")
+            if ls[c] == max(ls) and ls.count(max(ls)) == 1 and margin > 2:
+                errs.append(f"Q{i+1}: 正解が単独最長で+{margin}字突出（2字以内に。詳細はreasonへ）")
+
+            # --- reason内の選択肢参照はトークン必須（シャッフル対応） ---
+            for m in re.finditer(r'(?<![A-Za-z&{])([A-E])(?![A-Za-z}])', q["reason"]):
+                errs.append(f"Q{i+1}: reasonに生の選択肢参照 '{m.group(1)}'（{{A}}形式で書く）")
+                break
+            for m in re.finditer(r'\{([A-E])\}', q["reason"]):
+                if ord(m.group(1)) - 65 >= len(opts):
+                    errs.append(f"Q{i+1}: トークン{{{m.group(1)}}}が選択肢数を超えている")
+
+            # --- 用語解説 ---
+            if not q.get("glossary"):
+                errs.append(f"Q{i+1}: glossary（用語解説）がない")
+
+        # --- 正解位置の分散（同一位置の3連続以上は禁止） ---
+        for i in range(len(correct_positions) - 2):
+            if correct_positions[i] == correct_positions[i+1] == correct_positions[i+2]:
+                errs.append(f"correctがQ{i+1}〜Q{i+3}で同じ位置に3連続")
+                break
         # ティッカー
         for c in d.get("calls", []):
             t = c.get("ticker", "")
