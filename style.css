@@ -410,23 +410,24 @@ footer{margin-top:36px;font-size:11.5px;color:var(--muted);border-top:2px dashed
 
 /* 背景: ピーチ→スカイ→ラベンダーのグラデ＋にじむ色の円 */
 body{background:
-  radial-gradient(420px 420px at 88% -4%, rgba(244,105,60,.12), transparent 70%),
-  radial-gradient(400px 400px at -6% 96%, rgba(86,183,230,.14), transparent 70%),
-  radial-gradient(320px 320px at 62% 44%, rgba(165,139,216,.11), transparent 70%),
-  linear-gradient(135deg,#fdf3ec 0%,#eef4fd 46%,#f3edfa 100%);
+  radial-gradient(560px 560px at 85% 0%, rgba(244,105,60,.22), transparent 70%),
+  radial-gradient(520px 520px at 2% 28%, rgba(86,183,230,.24), transparent 70%),
+  radial-gradient(500px 500px at 68% 55%, rgba(165,139,216,.20), transparent 70%),
+  radial-gradient(440px 440px at 22% 92%, rgba(255,201,60,.18), transparent 70%),
+  linear-gradient(135deg,#fbe9dd 0%,#e2edfc 46%,#ebe0f8 100%);
   background-attachment:fixed;}
 
 /* ガラス面（共通レシピ） */
 .gnav,.searchbox,.chip,.scard,.loader,.qq,.opt,.anscard,.statcard,.titlecard,
 .score,.glossary,.csdetail,.chartwrap,.calls,.calbox{
-  background:rgba(255,255,255,.55);
-  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
-  border:1px solid rgba(255,255,255,.85);
+  background:rgba(255,255,255,.38);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.72);
   box-shadow:0 10px 30px rgba(46,58,103,.10);}
 
 /* グローバルメニュー */
 .gnav{border-radius:999px;}
-.gnav-item:hover{background:rgba(255,255,255,.65);}
+.gnav-item:hover{background:rgba(255,255,255,.5);}
 .gnav-item.active{background:rgba(255,255,255,.92);color:var(--coral-deep);
   box-shadow:0 2px 10px rgba(46,58,103,.12);}
 
@@ -446,25 +447,25 @@ a.src:hover{background:rgba(86,183,230,.30);}
   box-shadow:0 8px 20px rgba(244,105,60,.35);}
 .btn.primary:hover,.next:hover{box-shadow:0 12px 26px rgba(244,105,60,.42);}
 .btn.primary:active,.next:active{box-shadow:0 3px 10px rgba(244,105,60,.30);}
-.btn.ghost{background:rgba(255,255,255,.6);
+.btn.ghost{background:rgba(255,255,255,.42);
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
   border:1px solid rgba(255,255,255,.9);color:#2a6db3;}
-.btn.ghost:hover{background:rgba(255,255,255,.82);}
+.btn.ghost:hover{background:rgba(255,255,255,.62);}
 
 /* プレイ画面の選択肢 */
 .opt:hover:not(:disabled){transform:translateY(-3px);
-  box-shadow:0 16px 34px rgba(46,58,103,.16);background:rgba(255,255,255,.72);}
+  box-shadow:0 16px 34px rgba(46,58,103,.16);background:rgba(255,255,255,.58);}
 
 /* 成績表 */
-.csrow:hover{background:rgba(255,255,255,.72);}
+.csrow:hover{background:rgba(255,255,255,.58);}
 .statcard.cstat.on{border-color:var(--coral);background:rgba(244,105,60,.14);}
 
 /* カレンダーモーダル */
 .calov{background:rgba(34,48,79,.35);
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
-.calbox{background:rgba(255,255,255,.78);
+.calbox{background:rgba(255,255,255,.68);
   -webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);}
-.calc{background:rgba(255,255,255,.45);}
+.calc{background:rgba(255,255,255,.38);}
 .calc.has{background:rgba(244,105,60,.16);}
 .calnav{background:rgba(255,255,255,.7);}
 
