@@ -357,14 +357,42 @@ function renderList() {
   }
 }
 
+/* スケルトンカード（無限スクロールの読み込み表示。カードの形のまま光が走る） */
+let loadingMore = false;
+function skeletonCardHTML() {
+  return `
+    <div class="badges"><span class="skl" style="width:86px;height:18px;"></span><span class="skl" style="width:72px;height:18px;"></span><span class="skl" style="width:58px;height:18px;"></span></div>
+    <div class="skl" style="height:16px;margin:6px 0 7px;"></div>
+    <div class="skl" style="height:16px;width:68%;margin-bottom:13px;"></div>
+    <div class="skl" style="height:11px;margin-bottom:7px;"></div>
+    <div class="skl" style="height:11px;margin-bottom:7px;"></div>
+    <div class="skl" style="height:11px;width:55%;margin-bottom:16px;"></div>
+    <div class="row"><span class="skl" style="width:118px;height:40px;border-radius:999px;"></span><span class="skl" style="width:118px;height:40px;border-radius:999px;"></span></div>`;
+}
+
 function observeSentinel() {
   const el = $("sentinel");
   if (!el) return;
   if (io) io.disconnect();
   io = new IntersectionObserver(entries => {
-    if (entries.some(e => e.isIntersecting)) {
-      shown += PAGE;
-      renderList();
+    if (entries.some(e => e.isIntersecting) && !loadingMore) {
+      loadingMore = true;
+      // 次に読み込まれる位置へスケルトンカードを差し込む
+      const list = $("list");
+      const remaining = filteredSessions().length - shown;
+      const n = Math.max(1, Math.min(PAGE, remaining));
+      for (let i = 0; i < n; i++) {
+        const d = document.createElement("div");
+        d.className = "scard skcard";
+        d.innerHTML = skeletonCardHTML();
+        list.appendChild(d);
+      }
+      $("listFoot").innerHTML = "";   // 番人を消して二重発火を防ぐ
+      setTimeout(() => {
+        shown += PAGE;
+        renderList();                  // 実カードで置き換え
+        loadingMore = false;
+      }, 450);
     }
   }, { rootMargin: "200px" });
   io.observe(el);
