@@ -361,6 +361,7 @@ function renderList() {
 let loadingMore = false;
 function skeletonCardHTML() {
   return `
+    <span class="ms spin sksp">progress_activity</span>
     <div class="badges"><span class="skl" style="width:86px;height:18px;"></span><span class="skl" style="width:72px;height:18px;"></span><span class="skl" style="width:58px;height:18px;"></span></div>
     <div class="skl" style="height:16px;margin:6px 0 7px;"></div>
     <div class="skl" style="height:16px;width:68%;margin-bottom:13px;"></div>
@@ -392,9 +393,9 @@ function observeSentinel() {
         shown += PAGE;
         renderList();                  // 実カードで置き換え
         loadingMore = false;
-      }, 450);
+      }, 600);
     }
-  }, { rootMargin: "200px" });
+  }, { rootMargin: "0px" });   // 画面内に入ってから発火（スケルトンが見える位置で出す）
   io.observe(el);
 }
 
@@ -408,7 +409,20 @@ function renderHome(keepScroll) {
     if (!b) return;
     if (b.dataset.cal) { openHomeCalendar(); return; }   // 日付バッヂ → カレンダーモーダル
     const s = sessions[+b.dataset.i];
-    try { await ensureDetail(s); } catch (e) { alert("記事の読み込みに失敗しました。通信環境をご確認ください。"); return; }
+    // 記事データの取得中はボタンにスピナーを表示
+    const orig = b.innerHTML;
+    b.disabled = true;
+    b.innerHTML = `<span class="ms spin">progress_activity</span> 読み込み中…`;
+    try {
+      await ensureDetail(s);
+    } catch (e) {
+      b.disabled = false;
+      b.innerHTML = orig;
+      alert("記事の読み込みに失敗しました。通信環境をご確認ください。");
+      return;
+    }
+    b.disabled = false;
+    b.innerHTML = orig;
     if (b.dataset.a === "ans") showAnswers(s); else startPlay(s);
   };
   show("home");
@@ -1108,7 +1122,12 @@ function showNotes() {
     b.onclick = async () => {
       const s = sessions.find(x => x.id === b.dataset.retry);
       if (!s) return;
-      try { await ensureDetail(s); } catch (e) { return; }
+      const orig = b.innerHTML;
+      b.disabled = true;
+      b.innerHTML = `<span class="ms spin">progress_activity</span> 読み込み中…`;
+      try { await ensureDetail(s); } catch (e) { b.disabled = false; b.innerHTML = orig; return; }
+      b.disabled = false;
+      b.innerHTML = orig;
       startPlay(s);
     };
   });
