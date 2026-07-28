@@ -12,6 +12,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 
 from server import (DATA, BASE, bench_symbol, cached, compute_eval,
                     fetch_history, fetch_price, fetch_price_on, prefetch_all)
@@ -141,6 +142,30 @@ def build_calls(d, generated_at):
     return {"calls": results, "generated_at": generated_at}
 
 
+def stamp_version():
+    """フッターにビルド版数（ビルド日付＋git短縮ハッシュ）を自動刻印する。
+
+    手動でのバージョン上げ忘れを構造的に防ぐ。不具合報告時に「どの版か」を
+    特定でき、キャッシュ由来か修正未反映かの切り分けにも使える。
+    """
+    index = os.path.join(BASE, "index.html")
+    if not os.path.exists(index):
+        return
+    try:
+        h = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=BASE,
+                           capture_output=True, text=True, timeout=10).stdout.strip()
+    except Exception:
+        h = ""
+    ver = "v" + datetime.date.today().strftime("%Y.%m.%d") + (f"-{h}" if h else "")
+    html = open(index, encoding="utf-8").read()
+    new = re.sub(r'<span class="ver">[^<]*</span>',
+                 f'<span class="ver">{ver}</span>', html)
+    if new != html:
+        with open(index, "w", encoding="utf-8") as fp:
+            fp.write(new)
+        print(f"✓ バージョンを刻印: {ver}")
+
+
 def stamp_assets():
     """index.html の app.js / style.css のクエリを内容ハッシュに書き換える。
 
@@ -251,6 +276,7 @@ def main():
     # Pages の Jekyll 処理を無効化（_ 始まりのファイル等をそのまま配信させる）
     open(os.path.join(BASE, ".nojekyll"), "w").close()
 
+    stamp_version()
     stamp_assets()
 
     print(f"\n完了: {ok}件成功 / {ng}件失敗　株価スナップショット: {generated_at}")

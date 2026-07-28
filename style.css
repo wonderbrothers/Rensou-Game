@@ -360,6 +360,7 @@ button.bd:hover,button.hdate:hover{transform:translateY(-1px);box-shadow:0 4px 1
 }
 
 footer .disc{margin:0;}
+.ver{color:var(--muted);font-size:10.5px;margin-left:6px;letter-spacing:.04em;}
 footer .copy{margin:8px 0 0;font-size:11px;letter-spacing:.09em;color:var(--muted);}
 footer{margin-top:36px;font-size:11.5px;color:var(--muted);border-top:2px dashed var(--line);
   padding-top:16px;text-align:center;letter-spacing:.05em;}
