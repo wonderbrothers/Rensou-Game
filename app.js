@@ -273,6 +273,17 @@ function cardHTML(s, i) {
     </div>`;
 }
 
+/* 投稿数付きカレンダーを開き、日付でHOME一覧を絞り込む */
+function openHomeCalendar() {
+  const counts = {};
+  sessions.forEach(s => { if (s.date) counts[s.date] = (counts[s.date] || 0) + 1; });
+  openCalendar(counts, iso => {
+    activeDate = activeDate === iso ? "" : iso;
+    shown = PAGE;
+    renderHome(true);
+  }, "件数をタップするとその日付のニュースだけを表示します");
+}
+
 function renderToolbar() {
   const cats = [...new Set(sessions.flatMap(s => s.categories || []))];
   const tb = $("toolbar");
@@ -284,11 +295,13 @@ function renderToolbar() {
       </label>
       <button class="chip tgl${unplayedOnly ? " active" : ""}" id="unplayed">${ic("radio_button_unchecked")} 未プレイのみ</button>
       <button class="chip tgl" id="sortBtn">${ic(sortDesc ? "arrow_downward" : "arrow_upward")} ${sortDesc ? "新しい順" : "古い順"}</button>
+      <button class="chip tgl${activeDate ? " active" : ""}" id="calBtn" title="カレンダーで日付を選ぶ">${ic("calendar_month")} カレンダー</button>
     </div>`;
   const kwInput = $("kw");
   kwInput.oninput = () => { keyword = kwInput.value; shown = PAGE; renderList(); };
   $("unplayed").onclick = () => { unplayedOnly = !unplayedOnly; shown = PAGE; renderHome(true); };
   $("sortBtn").onclick = () => { sortDesc = !sortDesc; shown = PAGE; renderHome(true); };
+  $("calBtn").onclick = () => openHomeCalendar();
 
   const filt = $("filters");
   filt.innerHTML = "";
@@ -365,16 +378,7 @@ function renderHome(keepScroll) {
   $("list").onclick = async ev => {
     const b = ev.target.closest("button");
     if (!b) return;
-    if (b.dataset.cal) {   // 日付バッヂ → カレンダーモーダル
-      const counts = {};
-      sessions.forEach(s => { if (s.date) counts[s.date] = (counts[s.date] || 0) + 1; });
-      openCalendar(counts, iso => {
-        activeDate = activeDate === iso ? "" : iso;
-        shown = PAGE;
-        renderHome(true);
-      }, "件数をタップするとその日付のニュースだけを表示します");
-      return;
-    }
+    if (b.dataset.cal) { openHomeCalendar(); return; }   // 日付バッヂ → カレンダーモーダル
     const s = sessions[+b.dataset.i];
     try { await ensureDetail(s); } catch (e) { alert("記事の読み込みに失敗しました。通信環境をご確認ください。"); return; }
     if (b.dataset.a === "ans") showAnswers(s); else startPlay(s);
