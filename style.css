@@ -289,6 +289,45 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .statcard.cstat{cursor:pointer;border:2px solid transparent;transition:border-color .15s,transform .1s,box-shadow .15s;}
 .statcard.cstat:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(46,58,103,.16);}
 .statcard.cstat.on{border-color:var(--coral);background:var(--coral-soft);}
+
+/* コール成績: リターンの色分け・行の展開 */
+.relpos{color:#3a9d3a;font-weight:800;}
+.relneg{color:#e0493c;font-weight:800;}
+.csrow{cursor:pointer;transition:background .12s;border-radius:10px;}
+.csrow:hover{background:var(--sky-soft);}
+.csrow .csarrow{font-size:1.1em;vertical-align:-0.2em;color:var(--muted);}
+.csdetail{background:var(--bg);border:1px solid var(--line);border-radius:14px;
+  padding:10px 14px;margin:2px 0 10px;}
+.csdetail .basis{font-size:12px;color:var(--sub);margin:4px 0 6px;}
+.csdetail .verdict{font-size:12px;margin:4px 0;}
+
+/* 日付ボタン（カード内・成績表内） */
+button.bd,button.hdate{border:0;cursor:pointer;font-family:inherit;transition:transform .1s,box-shadow .15s;}
+button.bd:hover,button.hdate:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(46,58,103,.18);}
+.hdbtn{background:var(--sky-soft);color:#2a6db3;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:800;}
+
+/* カレンダーモーダル */
+.calov{position:fixed;inset:0;background:rgba(34,48,79,.45);z-index:60;
+  display:flex;align-items:center;justify-content:center;padding:20px;}
+.calbox{background:var(--paper);border-radius:22px;box-shadow:0 18px 44px rgba(46,58,103,.28);
+  padding:18px;width:min(380px,94vw);}
+.calhd{display:flex;align-items:center;gap:12px;justify-content:center;position:relative;
+  margin-bottom:12px;font-size:15px;color:var(--navy);}
+.calnav{border:0;background:var(--sky-soft);border-radius:10px;width:30px;height:30px;
+  font-size:17px;cursor:pointer;color:var(--navy);font-weight:800;line-height:1;}
+.calnav:hover{background:#cfe4f7;}
+.calx{position:absolute;right:0;top:2px;border:0;background:none;cursor:pointer;color:var(--muted);}
+.calx .ms{font-size:20px;}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.calw{text-align:center;font-size:10.5px;color:var(--muted);font-weight:800;padding:2px 0;}
+.calc{min-height:46px;border-radius:10px;background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;padding:4px 0 3px;}
+.calc.mute{background:transparent;}
+.calc .cd{font-size:11px;color:var(--sub);font-weight:700;line-height:1.2;}
+.calc.has{background:var(--coral-soft);}
+.cn{border:0;background:var(--coral);color:#fff;font-size:10px;font-weight:800;
+  border-radius:999px;padding:1px 7px;cursor:pointer;margin-top:2px;font-family:inherit;}
+.cn:hover{background:var(--coral-deep);}
 .sbarrow{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
 .sblabel{flex:0 0 96px;font-size:12.5px;font-weight:800;}
 .sbar{flex:1;height:12px;background:var(--sky-soft);border-radius:99px;overflow:hidden;}

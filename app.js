@@ -177,6 +177,47 @@ $("filePick").addEventListener("change", async ev => {
   if (loaded.length) { sessions = loaded; renderHome(); }
 });
 
+/* ---------- カレンダーモーダル（共通部品） ----------
+   counts: { "YYYY-MM-DD": 件数 } / onPick(iso): 件数クリック時のコールバック */
+function openCalendar(counts, onPick, note) {
+  const keys = Object.keys(counts).filter(k => counts[k] > 0).sort();
+  let ym = (keys.length ? keys[keys.length - 1] : new Date().toISOString().slice(0, 10)).slice(0, 7);
+  const ov = document.createElement("div");
+  ov.className = "calov";
+  document.body.appendChild(ov);
+  const close = () => ov.remove();
+  const render = () => {
+    const [Y, M] = ym.split("-").map(Number);
+    const startDow = new Date(Y, M - 1, 1).getDay();
+    const daysIn = new Date(Y, M, 0).getDate();
+    let cells = "";
+    for (let i = 0; i < startDow; i++) cells += `<div class="calc mute"></div>`;
+    for (let dd = 1; dd <= daysIn; dd++) {
+      const iso = `${Y}-${String(M).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
+      const cnt = counts[iso] || 0;
+      cells += `<div class="calc${cnt ? " has" : ""}"><span class="cd">${dd}</span>${cnt ? `<button class="cn" data-d="${iso}">${cnt}件</button>` : ""}</div>`;
+    }
+    ov.innerHTML = `<div class="calbox">
+      <div class="calhd"><button class="calnav" data-nav="-1">‹</button><b>${Y}年${M}月</b><button class="calnav" data-nav="1">›</button><button class="calx">${ic("close")}</button></div>
+      <div class="calgrid">${["日", "月", "火", "水", "木", "金", "土"].map(w => `<div class="calw">${w}</div>`).join("")}${cells}</div>
+      <p class="cnote" style="margin:10px 2px 0;">${note || "件数をタップするとその日付で絞り込みます"}</p>
+    </div>`;
+    ov.onclick = e => { if (e.target === ov) close(); };
+    ov.querySelector(".calx").onclick = close;
+    ov.querySelectorAll(".calnav").forEach(b => {
+      b.onclick = () => {
+        const nd = new Date(Y, M - 1 + (+b.dataset.nav), 1);
+        ym = `${nd.getFullYear()}-${String(nd.getMonth() + 1).padStart(2, "0")}`;
+        render();
+      };
+    });
+    ov.querySelectorAll(".cn").forEach(b => {
+      b.onclick = () => { onPick(b.dataset.d); close(); };
+    });
+  };
+  render();
+}
+
 /* ---------- home ---------- */
 const PAGE = 12;                 // 1回に表示する件数
 let shown = PAGE;                // 現在の表示件数
@@ -184,6 +225,7 @@ let keyword = "";                // キーワード検索
 let unplayedOnly = false;        // 未プレイのみ
 let sortDesc = true;             // true = 新しい順
 let io = null;                   // 無限スクロール用オブザーバ
+let activeDate = "";             // 日付フィルタ（カレンダーから設定）
 
 function playedIds() {
   return new Set(store.results.map(r => r.id));
@@ -194,6 +236,7 @@ function filteredSessions() {
   const kw = keyword.trim().toLowerCase();
   let list = sessions.filter(s => {
     if (activeCat && !(s.categories || []).includes(activeCat)) return false;
+    if (activeDate && s.date !== activeDate) return false;
     if (unplayedOnly && done.has(s.id)) return false;
     if (kw) {
       const hay = [
@@ -221,7 +264,7 @@ function cardHTML(s, i) {
     : "";
   const done = playedIds().has(s.id) ? `<span class="doneb">${ic("check_circle", 1)} 挑戦済み</span>` : "";
   return `
-    <div class="badges"><span class="bd">${ic("calendar_month")} ${s.date || ""}</span>${src}${tags}${done}</div>
+    <div class="badges"><button class="bd bdate" data-cal="1" title="カレンダーで絞り込む">${ic("calendar_month")} ${s.date || ""}</button>${src}${tags}${done}</div>
     <h3>${s.news.headline}</h3>
     <p class="es">${s.news.essence || ""}</p>
     <div class="row">
@@ -249,6 +292,13 @@ function renderToolbar() {
 
   const filt = $("filters");
   filt.innerHTML = "";
+  if (activeDate) {
+    const dc = document.createElement("button");
+    dc.className = "chip active";
+    dc.innerHTML = `${ic("calendar_month")} ${activeDate} ${ic("close")}`;
+    dc.onclick = () => { activeDate = ""; shown = PAGE; renderHome(true); };
+    filt.appendChild(dc);
+  }
   if (cats.length) {
     const all = document.createElement("button");
     all.className = "chip" + (activeCat === null ? " active" : "");
@@ -315,6 +365,16 @@ function renderHome(keepScroll) {
   $("list").onclick = async ev => {
     const b = ev.target.closest("button");
     if (!b) return;
+    if (b.dataset.cal) {   // 日付バッヂ → カレンダーモーダル
+      const counts = {};
+      sessions.forEach(s => { if (s.date) counts[s.date] = (counts[s.date] || 0) + 1; });
+      openCalendar(counts, iso => {
+        activeDate = activeDate === iso ? "" : iso;
+        shown = PAGE;
+        renderHome(true);
+      }, "件数をタップするとその日付のニュースだけを表示します");
+      return;
+    }
     const s = sessions[+b.dataset.i];
     try { await ensureDetail(s); } catch (e) { alert("記事の読み込みに失敗しました。通信環境をご確認ください。"); return; }
     if (b.dataset.a === "ans") showAnswers(s); else startPlay(s);
@@ -750,10 +810,16 @@ function showStats() {
     });
     h += `</div>`;
 
-    // 直近のプレイ履歴
-    h += `<div class="anscard"><div class="aq">直近のプレイ</div>`;
-    rs.slice(-8).reverse().forEach(r => {
-      h += `<div class="hrow"><span class="hdate">${(r.at || "").slice(0, 10)}</span><span class="hname">${r.headline}</span><span class="hscore">${r.score}/${r.total}</span></div>`;
+    // 直近のプレイ履歴（日付クリックでカレンダーフィルタ）
+    h += `<div class="anscard"><div class="aq">直近のプレイ${statsDate
+      ? ` <button class="chip active sm" id="pdClear" style="font-size:11px;">${ic("calendar_month")} ${statsDate} ${ic("close")}</button>` : ""}</div>`;
+    const hist = statsDate
+      ? rs.filter(r => (r.at || "").slice(0, 10) === statsDate).reverse()
+      : rs.slice(-8).reverse();
+    if (!hist.length) h += `<p class="cnote">この日付のプレイはありません。</p>`;
+    hist.forEach(r => {
+      const pd = (r.at || "").slice(0, 10);
+      h += `<div class="hrow"><button class="hdate hdbtn" data-pd="${pd}" title="カレンダーで絞り込む">${pd}</button><span class="hname">${r.headline}</span><span class="hscore">${r.score}/${r.total}</span></div>`;
     });
     h += `</div>`;
   }
@@ -773,6 +839,22 @@ function showStats() {
     <button class="linkbtn" id="clearBtn">保存データをすべて削除</button></p>`;
 
   $("stageBody").innerHTML = h;
+  // 直近のプレイ: 日付→カレンダー
+  $("stageBody").querySelectorAll("[data-pd]").forEach(b => {
+    b.onclick = () => {
+      const counts = {};
+      store.results.forEach(r => {
+        const pd = (r.at || "").slice(0, 10);
+        if (pd) counts[pd] = (counts[pd] || 0) + 1;
+      });
+      openCalendar(counts, iso => {
+        statsDate = statsDate === iso ? "" : iso;
+        showStats();
+      }, "件数をタップするとその日付のプレイだけを表示します");
+    };
+  });
+  const pdc = $("pdClear");
+  if (pdc) pdc.onclick = () => { statsDate = ""; showStats(); };
   $("csBtn").onclick = () => loadCallStats(true);
   $("expBtn").onclick = () => exportResults();
   $("impBtn").onclick = () => $("impFile").click();
@@ -803,7 +885,7 @@ async function loadCallStats(force) {
         const w = (e.t20 && e.t20.status === "done") ? { ...e.t20, win: "T+20" }
           : (e.t5 && e.t5.status === "done") ? { ...e.t5, win: "T+5" }
           : { ...e.now, win: "経過中" };
-        rows.push({ news: s.news.headline, name: c.name, dir: c.direction, win: w.win, rel: w.rel, bench: c.bench || "", ticker: c.ticker, market: marketOf(c.ticker) });
+        rows.push({ sid: s.id, news: s.news.headline, name: c.name, dir: c.direction, win: w.win, rel: w.rel, bench: c.bench || "", ticker: c.ticker, market: marketOf(c.ticker) });
       });
     } catch (err) { /* skip */ }
   }
@@ -819,6 +901,10 @@ function marketOf(t) {
 }
 
 let csRows = [], csAsof = null, csMarket = "all", csStatus = "all";
+let csSort = "all";        // "all" | "+" | "-" … コールの向きで並び替え
+let csOpen = null;         // 展開中の行キー "sid|ticker"
+const csDetail = {};       // sid → api/calls payload（詳細展開用キャッシュ）
+let statsDate = "";        // 直近のプレイの日付フィルタ
 
 function callStatus(r) {
   if (Math.abs(r.rel) <= 1) return "flat";
@@ -827,8 +913,30 @@ function callStatus(r) {
 }
 
 function renderCallStats(rows, asof) {
-  csRows = rows; csAsof = asof; csMarket = "all"; csStatus = "all";
+  csRows = rows; csAsof = asof; csMarket = "all"; csStatus = "all"; csSort = "all"; csOpen = null;
   renderCSView();
+}
+
+/* 展開行の詳細（根拠・価格・T+5/T+20・チャート） */
+function csDetailHTML(r) {
+  const p = csDetail[r.sid];
+  if (!p) return "";
+  const c = (p.calls || []).find(x => x.ticker === r.ticker);
+  if (!c) return "";
+  const yen = c.ticker.endsWith(".T") ? "¥"
+    : (c.ticker.endsWith(".KS") || c.ticker.endsWith(".KQ")) ? "₩" : "$";
+  let h = `<div class="csdetail">`;
+  if (c.basis) h += `<p class="basis">${ic("psychology")} ${c.basis}</p>`;
+  if (c.price_at_call && c.current != null) {
+    const sign = c.change_pct > 0 ? "+" : "";
+    h += `<p class="verdict">ニュース時（${c.called_at}）${yen}${c.price_at_call.toLocaleString()} → ${yen}${c.current.toLocaleString()}（${sign}${c.change_pct}%）</p>`;
+  }
+  if (c.eval) {
+    h += `<p class="verdict evalline">${fmtWin(c.eval.t5, "T+5", c.bench, c.direction)}<br>${fmtWin(c.eval.t20, "T+20", c.bench, c.direction)}</p>`;
+  }
+  if (c.history && c.history.length > 1 && c.price_at_call) h += buildOneChart(c);
+  h += `</div>`;
+  return h;
 }
 
 function renderCSView() {
@@ -868,27 +976,61 @@ function renderCSView() {
   } else if (decided < 30) {
     h += `<p class="cnote" style="margin-bottom:10px;">${ic("info")} 判定済み ${decided} 件。サンプルが30件に満たない的中率は偶然と区別がつきません——数字よりも「なぜ外れたか（織り込み済み？逆シナリオ発動？）」を読むのが本番です。</p>`;
   }
-  const listRows = csStatus === "all" ? rows
+  let listRows = csStatus === "all" ? rows
     : csStatus === "decided" ? rows.filter(r => callStatus(r) !== "flat")
     : rows.filter(r => callStatus(r) === csStatus);
+
+  // コールの向きで絞り込み（＋/−の全件を表示。的中も外れも含み、0%だけ除外）
+  h += `<div class="filters" style="justify-content:flex-start;margin:0 0 10px;">
+    <span class="cnote" style="margin:4px 6px 0 0;">絞り込み:</span>
+    <button class="chip${csSort === "all" ? " active" : ""}" data-sort="all">すべて</button>
+    <button class="chip${csSort === "+" ? " active" : ""}" data-sort="+">＋コール（0%除く）</button>
+    <button class="chip${csSort === "-" ? " active" : ""}" data-sort="-">−コール（0%除く）</button>
+  </div>`;
+  if (csSort !== "all") listRows = listRows.filter(r => r.dir === csSort && r.rel !== 0);
+
   if (!listRows.length) {
     h += `<p class="empty">該当する銘柄がありません。</p>`;
   }
-  listRows.forEach(r => {
+  listRows.forEach((r, k) => {
     const s = r.rel > 0 ? "+" : "";
-    h += `<div class="hrow"><span class="hname">${r.name}<small class="hnews">${r.news}</small></span>
+    const relCls = r.rel > 0 ? "relpos" : r.rel < 0 ? "relneg" : "";
+    const key = `${r.sid || ""}|${r.ticker}`;
+    const isOpen = r.sid && csOpen === key;
+    h += `<div class="hrow csrow${isOpen ? " open" : ""}" data-k="${k}" title="タップで詳細を表示">
+      <span class="hname">${r.name}<small class="hnews">${r.news}</small></span>
       <span class="hwin">${r.market || ""}・${r.win}</span>
-      <span class="hscore">${r.dir}コール ${s}${r.rel}% ${judgeBadge(r.rel, r.dir)}</span></div>`;
+      <span class="hscore"><span class="${relCls}">${r.dir}コール ${s}${r.rel}%</span> ${judgeBadge(r.rel, r.dir)} <span class="ms csarrow">${isOpen ? "expand_less" : "expand_more"}</span></span></div>`;
+    if (isOpen) h += csDetailHTML(r);
   });
   $("csBody").innerHTML = h;
   $("csBody").querySelectorAll("[data-m]").forEach(b => {
-    b.onclick = () => { csMarket = b.dataset.m; csStatus = "all"; renderCSView(); };
+    b.onclick = () => { csMarket = b.dataset.m; csStatus = "all"; csOpen = null; renderCSView(); };
   });
   $("csBody").querySelectorAll("[data-cs]").forEach(b => {
-    b.onclick = () => { csStatus = csStatus === b.dataset.cs ? "all" : b.dataset.cs; renderCSView(); };
+    b.onclick = () => { csStatus = csStatus === b.dataset.cs ? "all" : b.dataset.cs; csOpen = null; renderCSView(); };
+  });
+  $("csBody").querySelectorAll("[data-sort]").forEach(b => {
+    b.onclick = () => { csSort = csSort === b.dataset.sort ? "all" : b.dataset.sort; renderCSView(); };
+  });
+  // 銘柄行クリック → チャートと詳細を展開
+  $("csBody").querySelectorAll(".csrow").forEach(el => {
+    el.onclick = async () => {
+      const r = listRows[+el.dataset.k];
+      if (!r || !r.sid) return;   // 旧キャッシュ（sidなし）は「集計する」で更新後に対応
+      const key = `${r.sid}|${r.ticker}`;
+      if (csOpen === key) { csOpen = null; renderCSView(); return; }
+      if (!csDetail[r.sid]) {
+        el.style.opacity = ".6";
+        try { csDetail[r.sid] = await apiGet(`api/calls/${r.sid}`); }
+        catch (e) { el.style.opacity = ""; return; }
+      }
+      csOpen = key;
+      renderCSView();
+    };
   });
   const clr = $("csClear");
-  if (clr) clr.onclick = () => { csStatus = "all"; renderCSView(); };
+  if (clr) clr.onclick = () => { csStatus = "all"; csOpen = null; renderCSView(); };
   if (csAsof) $("csNote").textContent = `最終集計: ${csAsof.toLocaleString("ja-JP")}（結果はこの端末に保存されます）`;
 }
 
