@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # rebase に必要な履歴をすべて取得する
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -61,6 +63,7 @@ jobs:
 
       - name: Commit & push if changed
         run: |
+          set -x                # どのコマンドで落ちたかログに残す
           if [ "$(cat "$RUNNER_TEMP/guard")" != "ok" ]; then
             echo "⚠ エラー率が高いためコミットを見送りました（前回の正常なスナップショットを維持）"
             exit 0
@@ -75,6 +78,7 @@ jobs:
           fi
           git commit -m "chore: 株価スナップショットを更新 ($(date -u '+%Y-%m-%d %H:%M UTC'))"
           # 手元pushや他コミットと衝突しないよう、push前にリモートを取り込む
-          git pull --rebase origin "${GITHUB_REF_NAME}"
+          # autoStash: api/data 以外の未ステージ変更があっても rebase を止めない
+          git -c rebase.autoStash=true pull --rebase origin "${GITHUB_REF_NAME}"
           git push
           echo "✓ 更新をpushしました（GitHub Pagesが再デプロイされます）"
