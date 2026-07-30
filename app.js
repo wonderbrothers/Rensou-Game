@@ -295,13 +295,11 @@ function renderToolbar() {
       </label>
       <button class="chip tgl${unplayedOnly ? " active" : ""}" id="unplayed">${ic("radio_button_unchecked")} 未プレイのみ</button>
       <button class="chip tgl" id="sortBtn">${ic(sortDesc ? "arrow_downward" : "arrow_upward")} ${sortDesc ? "新しい順" : "古い順"}</button>
-      <button class="chip tgl${activeDate ? " active" : ""}" id="calBtn" title="カレンダーで日付を選ぶ">${ic("calendar_month")} カレンダー</button>
     </div>`;
   const kwInput = $("kw");
   kwInput.oninput = () => { keyword = kwInput.value; shown = PAGE; renderList(); };
   $("unplayed").onclick = () => { unplayedOnly = !unplayedOnly; shown = PAGE; renderHome(true); };
   $("sortBtn").onclick = () => { sortDesc = !sortDesc; shown = PAGE; renderHome(true); };
-  $("calBtn").onclick = () => openHomeCalendar();
 
   const filt = $("filters");
   filt.innerHTML = "";
@@ -439,6 +437,7 @@ $("homeBtn").onclick = () => renderHome();
 $("statsBtn").onclick = () => { setNav("stats"); showStats(); };
 $("notesBtn").onclick = () => { setNav("notes"); showNotes(); };
 $("patternsBtn").onclick = () => { setNav("patterns"); showPatterns(); };
+$("calNavBtn").onclick = () => { renderHome(); openHomeCalendar(); };   // HOMEに戻してカレンダーを開く
 
 /* ---------- 連想パターン図鑑 ---------- */
 let patternsCache = null;
