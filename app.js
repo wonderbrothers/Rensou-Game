@@ -29,11 +29,83 @@ const store = {
   },
   setCallStats(v) { localStorage.setItem("rensou_callstats_v2", JSON.stringify(v)); },
   setResults(a) { localStorage.setItem("rensou_results", JSON.stringify(a)); },
+  /* 中断したプレイの途中状態（ページを閉じても続きから再開できるように） */
+  get progress() {
+    try { return JSON.parse(localStorage.getItem("rensou_progress") || "null"); } catch (e) { return null; }
+  },
+  setProgress(v) {
+    try { localStorage.setItem("rensou_progress", JSON.stringify(v)); } catch (e) {}
+  },
+  clearProgress() { localStorage.removeItem("rensou_progress"); },
   clearAll() {
     localStorage.removeItem("rensou_results");
     localStorage.removeItem("rensou_callstats");
+    localStorage.removeItem("rensou_callstats_v2");
+    localStorage.removeItem("rensou_progress");
   }
 };
+
+/* ---------- 中断・再開 ---------- */
+const PROGRESS_TTL = 7 * 24 * 3600 * 1000;   // 7日で失効
+
+function saveProgress() {
+  if (!cur || cur.__review) return;          // 復習モードは保存しない
+  if (idx >= cur.questions.length) return;
+  store.setProgress({
+    id: cur.id, idx, live, answers: sessionAnswers, at: Date.now()
+  });
+}
+
+function validProgress() {
+  const p = store.progress;
+  if (!p || !p.id) return null;
+  if (Date.now() - (p.at || 0) > PROGRESS_TTL) { store.clearProgress(); return null; }
+  const s = sessions.find(x => x.id === p.id);
+  if (!s) return null;
+  return { p, s };
+}
+
+/* 「続きから再開しますか？」のバナーを一覧の先頭に出す */
+function renderResumeBar() {
+  const box = $("resumeBar");
+  if (!box) return;
+  const v = validProgress();
+  if (!v) { box.innerHTML = ""; box.classList.add("hidden"); return; }
+  const { p, s } = v;
+  const total = s.q_n || (s.questions && s.questions.length) || 6;
+  box.classList.remove("hidden");
+  box.innerHTML = `<div class="resume">
+    <div class="rtxt"><b>${ic("history")} 前回の続きから再開できます</b>
+      <small>${s.news.headline}（${p.idx + 1}問目 / ${total}問・正解 ${p.live}）</small></div>
+    <div class="row">
+      <button class="btn primary sm" id="resumeGo">再開する ${ic("play_arrow")}</button>
+      <button class="btn ghost sm" id="resumeDrop">やめる</button>
+    </div>
+  </div>`;
+  $("resumeGo").onclick = async () => {
+    const btn = $("resumeGo");
+    btn.disabled = true;
+    btn.innerHTML = `<span class="ms spin">progress_activity</span> 読み込み中…`;
+    try { await ensureDetail(s); } catch (e) {
+      btn.disabled = false; btn.innerHTML = `再開する ${ic("play_arrow")}`;
+      alert("記事の読み込みに失敗しました。通信環境をご確認ください。");
+      return;
+    }
+    resumePlay(s, p);
+  };
+  $("resumeDrop").onclick = () => { store.clearProgress(); renderResumeBar(); };
+}
+
+function resumePlay(s, p) {
+  cur = s;
+  idx = Math.min(p.idx, s.questions.length - 1);
+  live = p.live || 0;
+  sessionAnswers = p.answers || [];
+  callsPromise = prefetchCalls(s);
+  show("stage");
+  setNav(null);
+  renderQ();
+}
 
 /* ---------- 成績のエクスポート / インポート ---------- */
 function exportResults() {
@@ -267,7 +339,10 @@ function cardHTML(s, i) {
     : "";
   const done = playedIds().has(s.id) ? `<span class="doneb">${ic("check_circle", 1)} 挑戦済み</span>` : "";
   return `
-    <div class="badges"><button class="bd bdate" data-cal="1" title="カレンダーで絞り込む">${ic("calendar_month")} ${s.date || ""}</button>${src}${tags}${done}</div>
+    <div class="chead">
+      ${dateChipHTML(s.date, true)}
+      <div class="badges">${src}${tags}${done}</div>
+    </div>
     <h3>${s.news.headline}</h3>
     <p class="es">${s.news.essence || ""}</p>
     <div class="row">
@@ -520,6 +595,7 @@ function observeSentinel() {
 
 function renderHome(keepScroll) {
   const y = keepScroll ? window.scrollY : 0;
+  renderResumeBar();
   renderToolbar();
   renderList();
 
@@ -558,6 +634,12 @@ $("statsBtn").onclick = () => { setNav("stats"); showStats(); };
 $("notesBtn").onclick = () => { setNav("notes"); showNotes(); };
 $("patternsBtn").onclick = () => { setNav("patterns"); showPatterns(); };
 $("calNavBtn").onclick = () => showCalendar();
+
+// ステップバッヂ（?付き）→ 説明モーダル。再描画されても効くよう委譲で受ける
+$("stageBody").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-step]");
+  if (b) openStepModal(b.dataset.step);
+});
 
 /* ---------- 連想パターン図鑑 ---------- */
 let patternsCache = null;
@@ -631,6 +713,63 @@ function startPlay(s) {
   renderQ();
 }
 
+/* ---------- 6ステップの説明（バッヂの「?」から開く） ---------- */
+const STEP_INFO = {
+  "①": {
+    t: "本質を掴む",
+    d: "見出しの言葉づかいに引っぱられず「何が変わったのか」を一つに絞る段です。材料が複数あるときは、残り全部を説明できる“真犯人”を探します。",
+    tip: "遠い経路ほど賢く聞こえる罠。まず一次の現象に戻る。"
+  },
+  "②": {
+    t: "一次影響",
+    d: "そのニュースが最初に・直接ぶつかる相手を探す段です。（＋）は素直に追い風を受ける側、（−）は直撃で逆風を受ける側を選びます。",
+    tip: "業界名で選ばず、損益のどこに効くか（売上・コスト・金利）で見る。"
+  },
+  "③": {
+    t: "一次影響の逆側／相対優位",
+    d: "②の反対側を探す段です。同じ出来事でも立ち位置で符号が逆になります。「相対優位」は他社より有利になる側、「相対劣後」はその逆。",
+    tip: "『〜になりにくいのは？』と問いが反転することがあるので設問の向きに注意。"
+  },
+  "④": {
+    t: "二次影響（本番）",
+    d: "直接の影響のさらに先へ、サプライチェーン・代替品・金利や為替・規制などを経由して波及する連鎖を追う段です。このゲームの主戦場です。",
+    tip: "もっともらしい文の中の符号ミス・規模感の破綻・時間軸の飛躍を見抜く。"
+  },
+  "⑤": {
+    t: "逆シナリオ",
+    d: "その連想が崩れる条件を探す段です。連想を強める材料（順張り）が罠として混ざるので、「土台を抜くのはどれか」を考えます。",
+    tip: "相場の前提は『誰が動けば崩れるか』で特定する。"
+  },
+  "⑥": {
+    t: "検証ポイント",
+    d: "仮説の急所を直接測れる一次情報を選ぶ段です。粗すぎる指標（日経平均・CPI・VIXなど）では、その仮説だけを切り出せません。",
+    tip: "値動きそのものより、その中身を測る指標を選ぶ。"
+  }
+};
+
+function openStepModal(step) {
+  const key = (step || "").match(/[①②③④⑤⑥]/);
+  const info = key ? STEP_INFO[key[0]] : null;
+  if (!info) return;
+  const ov = document.createElement("div");
+  ov.className = "calov";
+  ov.innerHTML = `<div class="calbox">
+    <div class="calhd"><b>${key[0]} ${info.t}</b><button class="calx">${ic("close")}</button></div>
+    <p style="font-size:13px;line-height:1.85;margin:0 0 10px;">${info.d}</p>
+    <div class="areason"><b>${ic("lightbulb", 1)} 読み方のコツ</b>${info.tip}</div>
+    <p class="modalnote">6ステップ（本質→一次影響→逆側→二次影響→逆シナリオ→検証）で、ニュースから波及を辿る型を身につけます。</p>
+  </div>`;
+  document.body.appendChild(ov);
+  const close = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) close(); };
+  ov.querySelector(".calx").onclick = close;
+}
+
+/* 設問ステップのバッヂ（「?」付き・クリックで説明モーダル） */
+function stepBadgeHTML(step, cls) {
+  return `<button class="${cls || "stepno"} stepq" data-step="${step}" title="このステップの説明">${step} ${ic("help")}</button>`;
+}
+
 function glossaryHTML(q) {
   const g = q.glossary || [];
   if (!g.length) return "";
@@ -640,12 +779,13 @@ function glossaryHTML(q) {
 
 function renderQ() {
   answered = false;
+  saveProgress();                                // 中断しても続きから戻れるよう毎問保存
   const q = cur.questions[idx];
   order = shuffle(q.options.map((_, i) => i));   // 選択肢をシャッフル
   $("scoreBox").innerHTML = `${ic("star", 1)} <b>${live}</b> / ${cur.questions.length}`;
   $("stageBody").innerHTML = `
     <div class="bar"><i style="width:${idx / cur.questions.length * 100}%"></i></div>
-    <div class="stepno">${q.step}</div>
+    ${stepBadgeHTML(q.step)}
     <div class="evt">${ic("newspaper")} ${cur.news.source ? cur.news.source + "｜" : ""}${cur.news.headline}</div>
     <div class="qq">${q.q}</div><div class="opts" id="opts"></div>
     ${glossaryHTML(q)}
@@ -674,9 +814,17 @@ function choose(disp) {
   [...document.querySelectorAll(".opt")].forEach((b, i) => {
     b.disabled = true;
     const o = order[i];
-    if (o === q.correct) b.classList.add("correct");
-    else if (i === disp) b.classList.add("wrong");
-    else b.classList.add("faded");
+    if (o === q.correct) {
+      b.classList.add("correct");
+      b.insertAdjacentHTML("beforeend",
+        `<span class="obadge ok">${ic("check_circle", 1)} 正解</span>`);
+    } else if (i === disp) {
+      b.classList.add("wrong");
+      b.insertAdjacentHTML("beforeend",
+        `<span class="obadge ng">${ic("cancel", 1)} 不正解</span>`);
+    } else {
+      b.classList.add("faded");
+    }
   });
   // 間違いノート用に記録
   sessionAnswers.push({
@@ -686,10 +834,15 @@ function choose(disp) {
   $("fbTxt").innerHTML = `<b>${ok ? `正解 ${ic("check_circle", 1)}` : `不正解 ${ic("cancel", 1)}`}</b> ${subMarks(q.reason, order)}`;
   $("fb").classList.add("show");
   $("nx").classList.add("show");
+  // 回答済みなので「次の問題から」再開できるよう進捗を更新
+  if (idx < cur.questions.length - 1 && !cur.__review) {
+    store.setProgress({ id: cur.id, idx: idx + 1, live, answers: sessionAnswers, at: Date.now() });
+  }
 }
 
 function playResult() {
   const n = cur.questions.length;
+  store.clearProgress();          // 完走したので中断状態は破棄
   // 成績をローカル保存（復習モードは保存しない）
   if (!cur.__review) {
     store.addResult({
@@ -727,7 +880,7 @@ function showAnswers(s) {
   let h = `<div class="stepno">解答一覧</div>
     <div class="evt">${ic("newspaper")} ${s.news.source ? s.news.source + "｜" : ""}${s.news.headline}</div>`;
   s.questions.forEach(q => {
-    h += `<div class="anscard"><div class="ast">${q.step}</div><div class="aq">${q.q}</div>`;
+    h += `<div class="anscard">${stepBadgeHTML(q.step, "ast")}<div class="aq qlabel">${q.q}</div>`;
     q.options.forEach((o, k) => {
       h += `<div class="aopt${k === q.correct ? " ok" : ""}"><span class="mk">${MARKS[k]}</span><span>${o}</span>${k === q.correct ? '<span class="abadge">正解</span>' : ""}</div>`;
     });
@@ -897,7 +1050,8 @@ function buildOneChart(c) {
   svg += `</svg>`;
 
   const sign = chg > 0 ? "+" : "";
-  const chgBadge = `<span class="chg ${chg >= 0 ? "cpos" : "cneg"}">${sign}${chg.toFixed(2)}%</span>`;
+  // 基準はニュース日の終値。「その終値と比べて何%か」を明示する
+  const chgBadge = `<span class="chg ${chg >= 0 ? "cpos" : "cneg"}">${dates[newsIdx]}終値比 ${sign}${chg.toFixed(2)}%</span>`;
   const markerLegend = drawnMarkers
     .map(([col, label]) => `<span class="lg"><i style="background:${col}"></i>${label}</span>`).join("");
   const legend = hasBench
@@ -984,7 +1138,7 @@ function showStats() {
     if (!hist.length) h += `<p class="cnote">この日付のプレイはありません。</p>`;
     hist.forEach(r => {
       const pd = (r.at || "").slice(0, 10);
-      h += `<div class="hrow"><button class="hdate hdbtn" data-pd="${pd}" title="カレンダーで絞り込む">${pd}</button><span class="hname">${r.headline}</span><span class="hscore">${r.score}/${r.total}</span></div>`;
+      h += `<div class="hrow">${dateChipHTML(pd, true, `data-pd="${pd}"`)}<span class="hname">${r.headline}</span><span class="hscore">${r.score}/${r.total}</span></div>`;
     });
     h += `</div>`;
   }
@@ -1075,16 +1229,30 @@ async function loadCallStats(force) {
         const w = (e.t20 && e.t20.status === "done") ? { ...e.t20, win: "T+20" }
           : (e.t5 && e.t5.status === "done") ? { ...e.t5, win: "T+5" }
           : { ...e.now, win: "経過中" };
-        rows.push({ sid: s.id, news: s.news.headline, name: c.name, dir: c.direction, win: w.win, rel: w.rel, bench: c.bench || "", ticker: c.ticker, market: marketOf(c.ticker) });
+        rows.push({ sid: s.id, date: s.date || "", news: s.news.headline, name: c.name, dir: c.direction, win: w.win, rel: w.rel, bench: c.bench || "", ticker: c.ticker, market: marketOf(c.ticker) });
       });
     } catch (err) { /* skip */ }
   }
-  store.setCallStats({ ts: Date.now(), rows });
-  renderCallStats(rows, new Date());
+  const uniq = dedupeCalls(rows);
+  store.setCallStats({ ts: Date.now(), rows: uniq, dupes: rows.length - uniq.length });
+  renderCallStats(uniq, new Date(), rows.length - uniq.length);
   if (btn) {
     btn.disabled = false;
     btn.innerHTML = `集計する ${ic("sync")}`;
   }
+}
+
+/* 同じ日付・同じ銘柄・同じ方向のコールは「同じ1つの賭け」なので1件に集約する。
+   （複数のニュースで同じ銘柄が同じ向きに挙がると、同一の結果が二重計上され的中率が歪む）
+   方向が逆のものは別の材料に基づく別の賭けなので、両方残す。 */
+function dedupeCalls(rows) {
+  const seen = new Set();
+  return rows.filter(r => {
+    const k = `${r.date || ""}|${r.ticker}|${r.dir}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 function marketOf(t) {
@@ -1100,14 +1268,30 @@ let csOpen = null;         // 展開中の行キー "sid|ticker"
 const csDetail = {};       // sid → api/calls payload（詳細展開用キャッシュ）
 let statsDate = "";        // 直近のプレイの日付フィルタ
 
+/* ニュース日付のカレンダー風チップ（YYYY.MM ＋ 日）。
+   clickable=true でカレンダー絞り込みのボタンになる */
+function dateChipHTML(date, clickable, attrs) {
+  if (!date) return "";
+  const [Y, M, D] = date.split("-");
+  if (!D) return "";
+  const inner = `<i>${Y}.${M}</i><b>${+D}</b>`;
+  return clickable
+    ? `<button class="dchip dchipbtn" ${attrs || 'data-cal="1"'} title="カレンダーで絞り込む">${inner}</button>`
+    : `<span class="dchip">${inner}</span>`;
+}
+
 function callStatus(r) {
   if (Math.abs(r.rel) <= 1) return "flat";
   if ((r.dir === "+" && r.rel > 0) || (r.dir === "-" && r.rel < 0)) return "hit";
   return "miss";
 }
 
-function renderCallStats(rows, asof) {
-  csRows = rows; csAsof = asof; csMarket = "all"; csStatus = "all"; csSort = "all"; csOpen = null;
+let csDupes = 0;           // 集約で除外した重複コール数（注記表示用）
+function renderCallStats(rows, asof, dupes) {
+  // 旧キャッシュ（dateを持たない行）でも安全に動くよう、描画時にも集約をかける
+  csRows = dedupeCalls(rows);
+  csDupes = dupes != null ? dupes : rows.length - csRows.length;
+  csAsof = asof; csMarket = "all"; csStatus = "all"; csSort = "all"; csOpen = null;
   renderCSView();
 }
 
@@ -1174,6 +1358,9 @@ function renderCSView() {
   } else if (decided < 30) {
     h += `<p class="cnote" style="margin-bottom:10px;">${ic("info")} 判定済み ${decided} 件。サンプルが30件に満たない的中率は偶然と区別がつきません——数字よりも「なぜ外れたか（織り込み済み？逆シナリオ発動？）」を読むのが本番です。</p>`;
   }
+  if (csDupes > 0) {
+    h += `<p class="cnote" style="margin-bottom:10px;">${ic("filter_alt")} 同じ日に同じ銘柄が同じ向きで複数のニュースに登場した ${csDupes} 件は、同一の賭けとして1件に集約しています（二重計上を防ぐため）。</p>`;
+  }
   let listRows = csStatus === "all" ? rows
     : csStatus === "decided" ? rows.filter(r => callStatus(r) !== "flat")
     : rows.filter(r => callStatus(r) === csStatus);
@@ -1196,9 +1383,10 @@ function renderCSView() {
     const key = `${r.sid || ""}|${r.ticker}`;
     const isOpen = r.sid && csOpen === key;
     h += `<div class="hrow csrow${isOpen ? " open" : ""}" data-k="${k}" title="タップで詳細を表示">
+      ${dateChipHTML(r.date)}
       <span class="hname">${r.name}<small class="hnews">${r.news}</small></span>
       <span class="hwin">${r.market || ""}・${r.win}</span>
-      <span class="hscore"><span class="${relCls}">${r.dir}コール ${s}${r.rel}%</span> ${judgeBadge(r.rel, r.dir)} <span class="ms csarrow">${isOpen ? "expand_less" : "expand_more"}</span></span></div>`;
+      <span class="hscore"><span class="${relCls}">${r.dir}コール 市場相対 ${s}${r.rel}%</span> ${judgeBadge(r.rel, r.dir)} <span class="ms csarrow">${isOpen ? "expand_less" : "expand_more"}</span></span></div>`;
     if (isOpen) h += csDetailHTML(r);
   });
   $("csBody").innerHTML = h;
@@ -1259,7 +1447,7 @@ function showNotes() {
       h += `<div class="anscard">
         <div class="badges"><span class="bd">${w.at}</span><span class="ast" style="margin:0;">${w.st}</span></div>
         <p class="cnote" style="margin:4px 0 6px;">${w.headline}</p>
-        <div class="aq">${w.q}</div>
+        <div class="aq qlabel">${w.q}</div>
         <div class="aopt"><span class="mk"><span class="ms">close</span></span><span>${w.chosen}</span><span class="abadge" style="background:#f4693c;">あなた</span></div>
         <div class="aopt ok"><span class="mk"><span class="ms">check</span></span><span>${w.corr}</span><span class="abadge">正解</span></div>
         <div class="areason"><b>解説</b>${subMarks(w.reason)}</div>
