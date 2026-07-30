@@ -665,9 +665,10 @@ async function showPatterns() {
     items.forEach(s => {
       const tags = (s.categories || []).map(c => `<span class="cat">${c}</span>`).join("");
       h += `<div class="anscard">
-        <div class="badges"><span class="bd">${ic("calendar_month")} ${s.date || ""}</span>${tags}</div>
-        <p class="cnote" style="margin:2px 0 8px;">${(s.news && s.news.headline) || ""}</p>
-        <div class="areason" style="background:var(--yellow-soft);"><b style="color:#a9861f;">${ic("lightbulb", 1)} パターン</b>${s.learning}</div>
+        <div class="chead">${dateChipHTML(s.date)}<div class="cmeta">
+          <div class="badges">${tags}</div>
+          <p class="cnote chl">${(s.news && s.news.headline) || ""}</p></div></div>
+        <div class="areason"><b>${ic("lightbulb", 1)} パターン</b>${s.learning}</div>
       </div>`;
     });
   }
@@ -980,18 +981,18 @@ function buildOneChart(c) {
   const x = i => L + (W - L - R) * (n === 1 ? 0 : i / (n - 1));
   const y = v => T + (H - T - B) * (1 - (v - min) / (max - min));
   const chg = vals[n - 1];
-  const lineColor = "#2e3a67";
-  const dotFill = chg >= 0 ? "#5cb85c" : "#f4693c";
+  const lineColor = "#22304f";
+  const dotFill = chg >= 0 ? "#5bb85b" : "#f3683c";
 
   let svg = `<svg viewBox="0 0 ${W} ${H}" class="plchart" role="img">`;
-  svg += `<line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="#b4b0a4" stroke-width="1.5" stroke-dasharray="5 5"/>`;
-  svg += `<text x="${L - 7}" y="${y(0) + 4}" text-anchor="end" font-size="10.5" fill="#9aa0ab">0%</text>`;
-  svg += `<text x="${L - 7}" y="${T + 8}" text-anchor="end" font-size="10.5" fill="#9aa0ab">${max.toFixed(1)}%</text>`;
-  svg += `<text x="${L - 7}" y="${H - B}" text-anchor="end" font-size="10.5" fill="#9aa0ab">${min.toFixed(1)}%</text>`;
+  svg += `<line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="#8a93a6" stroke-width="1.5" stroke-dasharray="5 5"/>`;
+  svg += `<text x="${L - 7}" y="${y(0) + 4}" text-anchor="end" font-size="10.5" fill="#8a93a6">0%</text>`;
+  svg += `<text x="${L - 7}" y="${T + 8}" text-anchor="end" font-size="10.5" fill="#8a93a6">${max.toFixed(1)}%</text>`;
+  svg += `<text x="${L - 7}" y="${H - B}" text-anchor="end" font-size="10.5" fill="#8a93a6">${min.toFixed(1)}%</text>`;
   let newsIdx = isos.findIndex(iso => iso >= (c.called_at || ""));
   if (newsIdx < 0) newsIdx = n - 1;   // ニュース日が履歴の後（休場中など）→ 右端に置く
   const nx = x(newsIdx);
-  svg += `<line x1="${nx.toFixed(1)}" x2="${nx.toFixed(1)}" y1="${T}" y2="${H - B}" stroke="#f4693c" stroke-width="1.5" stroke-dasharray="3 4"/>`;
+  svg += `<line x1="${nx.toFixed(1)}" x2="${nx.toFixed(1)}" y1="${T}" y2="${H - B}" stroke="#f3683c" stroke-width="1.5" stroke-dasharray="3 4"/>`;
 
   // ベンチマーク線（ニュース日=0%基準）を薄く重ねる
   let hasBench = false;
@@ -1018,7 +1019,7 @@ function buildOneChart(c) {
 
   // T+5 / T+20 の判定日マーカー（到達済みの時だけ描く）
   const drawnMarkers = [];
-  [[5, "#a58bd8", "T+5"], [20, "#5cb85c", "T+20"]].forEach(([nDays, col, label]) => {
+  [[5, "#f33ca7", "T+5"], [20, "#5bb85b", "T+20"]].forEach(([nDays, col, label]) => {
     const j = newsIdx + nDays;
     if (j < n) {
       const tx = x(j);
@@ -1036,16 +1037,16 @@ function buildOneChart(c) {
   const nearLeft = nx < L + 80;          // 左端の日付ラベルと重なる位置
   const nearRight = nx > W - R - 80;     // 右端の日付ラベルと重なる位置
   if (!nearLeft) {
-    svg += `<text x="${L}" y="${H - 6}" font-size="10.5" fill="#9aa0ab">${dates[0]}</text>`;
+    svg += `<text x="${L}" y="${H - 6}" font-size="10.5" fill="#8a93a6">${dates[0]}</text>`;
   }
   if (nearRight) {
-    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#f4693c" font-weight="bold">${newsLabel}</text>`;
+    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#f3683c" font-weight="bold">${newsLabel}</text>`;
   } else if (nearLeft) {
-    svg += `<text x="${L}" y="${H - 6}" font-size="10.5" fill="#f4693c" font-weight="bold">${newsLabel}</text>`;
-    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#9aa0ab">${dates[n - 1]}</text>`;
+    svg += `<text x="${L}" y="${H - 6}" font-size="10.5" fill="#f3683c" font-weight="bold">${newsLabel}</text>`;
+    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#8a93a6">${dates[n - 1]}</text>`;
   } else {
-    svg += `<text x="${nx.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="10.5" fill="#f4693c" font-weight="bold">${newsLabel}</text>`;
-    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#9aa0ab">${dates[n - 1]}</text>`;
+    svg += `<text x="${nx.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="10.5" fill="#f3683c" font-weight="bold">${newsLabel}</text>`;
+    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#8a93a6">${dates[n - 1]}</text>`;
   }
   svg += `</svg>`;
 
@@ -1055,7 +1056,7 @@ function buildOneChart(c) {
   const markerLegend = drawnMarkers
     .map(([col, label]) => `<span class="lg"><i style="background:${col}"></i>${label}</span>`).join("");
   const legend = hasBench
-    ? `<div class="legend"><span class="lg"><i style="background:#2e3a67"></i>${c.name}</span><span class="lg"><i style="background:#56b7e6"></i>${c.bench || "ベンチマーク"}</span>${markerLegend}</div>`
+    ? `<div class="legend"><span class="lg"><i style="background:#22304f"></i>${c.name}</span><span class="lg"><i style="background:#56b7e6"></i>${c.bench || "ベンチマーク"}</span>${markerLegend}</div>`
     : "";
   return `<div class="chartwrap">
     <div class="chead2"><b class="ct2">${ic("show_chart")} 騰落率（ニュース日の終値 = 0%）</b>${chgBadge}</div>
@@ -1445,8 +1446,9 @@ function showNotes() {
     wrongs.slice(0, 50).forEach((w, i) => {
       const hasSession = sessions.some(s => s.id === w.id);
       h += `<div class="anscard">
-        <div class="badges"><span class="bd">${w.at}</span><span class="ast" style="margin:0;">${w.st}</span></div>
-        <p class="cnote" style="margin:4px 0 6px;">${w.headline}</p>
+        <div class="chead">${dateChipHTML(w.at)}<div class="cmeta">
+          <div class="badges"><span class="ast" style="margin:0;">${w.st}</span></div>
+          <p class="cnote chl">${w.headline}</p></div></div>
         <div class="aq qlabel">${w.q}</div>
         <div class="aopt ng"><span class="mk"><span class="ms">close</span></span><span>${w.chosen}</span><span class="abadge ng">あなた</span></div>
         <div class="aopt ok"><span class="mk"><span class="ms">check</span></span><span>${w.corr}</span><span class="abadge">正解</span></div>
@@ -1509,7 +1511,7 @@ async function startWrongReview() {
 /* ---------- confetti ---------- */
 function burstConfetti() {
   const emo = ["celebration", "star", "auto_awesome", "favorite", "cake", "music_note"];
-  const cols = ["#f4693c", "#ffc93c", "#56b7e6", "#a58bd8", "#5cb85c", "#f7a6b9"];
+  const cols = ["#f3683c", "#f33ca7", "#56b7e6", "#a48ad8", "#5bb85b", "#22304f"];
   for (let i = 0; i < 26; i++) {
     const s = document.createElement("span");
     s.className = "confetti";

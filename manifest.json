@@ -3,8 +3,8 @@
   "short_name": "連想ゲーム",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#fbe9dd",
-  "theme_color": "#fbe9dd",
+  "background_color": "#fdece5",
+  "theme_color": "#fdece5",
   "lang": "ja",
   "icons": [
     { "src": "images/icon-192.png", "sizes": "192x192", "type": "image/png" },
