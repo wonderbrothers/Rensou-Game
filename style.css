@@ -114,8 +114,6 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 #stage{max-width:720px;margin:0 auto;}
 #stage.wide{max-width:none;}   /* カレンダー画面はHOMEと同じ幅 */
 .top{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
-.back{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0;font-family:inherit;font-weight:800;}
-.back:hover{color:var(--ink);}
 .score{margin-left:auto;font-size:15px;color:var(--sub);font-weight:800;
   background:var(--paper);border-radius:999px;box-shadow:var(--shadow);padding:4px 16px;}
 .score b{color:var(--coral);font-size:17px;}

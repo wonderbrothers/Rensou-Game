@@ -552,7 +552,6 @@ function setNav(name) {
   document.querySelectorAll(".gnav-item").forEach(b =>
     b.classList.toggle("active", b.dataset.nav === name));
 }
-$("backBtn").onclick = () => renderHome();
 $("homeLink").onclick = () => renderHome();
 $("homeBtn").onclick = () => renderHome();
 $("statsBtn").onclick = () => { setNav("stats"); showStats(); };
