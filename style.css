@@ -203,7 +203,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .areason b{display:block;font-size:11.5px;color:#2a6db3;margin-bottom:2px;}
 
 /* 用語解説・判定凡例（折りたたみ） */
-.glossary{margin:10px 0 0;border:1px solid var(--line);border-radius:14px;background:var(--paper);overflow:hidden;}
+.glossary{margin:10px 0 14px;border:1px solid var(--line);border-radius:14px;background:var(--paper);overflow:hidden;}
 .glossary>summary{list-style:none;cursor:pointer;padding:9px 13px;font-size:12px;font-weight:800;
   color:var(--navy);display:flex;align-items:center;gap:5px;user-select:none;}
 .glossary>summary::-webkit-details-marker{display:none;}
@@ -292,6 +292,13 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .relpos{color:#3a9d3a;font-weight:800;}
 .relneg{color:#e0493c;font-weight:800;}
 .csrow{cursor:pointer;transition:background .12s;border-radius:10px;}
+/* 幅の狭い端末: 上段=銘柄・ニュース（縦積み）／下段=バッヂ類と矢印を左右に配分 */
+@media(max-width:480px){
+  .csrow{flex-wrap:wrap;row-gap:5px;justify-content:space-between;}
+  .csrow .hname{flex:0 0 100%;}
+  .csrow .hwin{margin-right:auto;}
+  .csrow .hscore{display:flex;align-items:center;gap:8px;margin-left:auto;}
+}
 .csrow:hover{background:var(--sky-soft);}
 .csrow .csarrow{font-size:1.1em;vertical-align:-0.2em;color:var(--muted);}
 .csdetail{background:var(--bg);border:1px solid var(--line);border-radius:14px;
@@ -463,6 +470,8 @@ a.src:hover{background:rgba(86,183,230,.30);}
   box-shadow:0 16px 34px rgba(46,58,103,.16);background:rgba(255,255,255,.58);}
 
 /* 成績表 */
+.titlecard{color:var(--navy);}                 /* ガラス面に合わせ白文字→紺に */
+.titlecard small{color:var(--sub);}
 .csrow:hover{background:rgba(255,255,255,.58);}
 .statcard.cstat.on{border-color:var(--coral);background:rgba(244,105,60,.14);}
 

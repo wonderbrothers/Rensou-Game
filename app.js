@@ -918,8 +918,33 @@ function showStats() {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+/* 集計中のスケルトン（統計カード4枚＋銘柄行の形で光が走る） */
+function csSkeletonHTML() {
+  let cards = "";
+  for (let i = 0; i < 4; i++) {
+    cards += `<div class="statcard">
+      <div class="skl" style="height:24px;width:56%;margin:0 auto 7px;"></div>
+      <div class="skl" style="height:11px;width:74%;margin:0 auto;"></div></div>`;
+  }
+  let rows = "";
+  for (let i = 0; i < 4; i++) {
+    rows += `<div class="hrow"><span style="flex:1;min-width:0;">
+      <div class="skl" style="height:13px;width:38%;margin-bottom:5px;"></div>
+      <div class="skl" style="height:10px;width:72%;"></div></span>
+      <span class="skl" style="width:78px;height:20px;border-radius:99px;flex:none;"></span>
+      <span class="skl" style="width:112px;height:16px;flex:none;"></span></div>`;
+  }
+  return `<div class="statgrid" style="margin-top:12px;">${cards}</div>${rows}`;
+}
+
 async function loadCallStats(force) {
+  const btn = $("csBtn");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="ms spin">progress_activity</span> 集計中…`;
+  }
   $("csNote").textContent = "集計中…（全ニュースの株価を取得しています）";
+  $("csBody").innerHTML = csSkeletonHTML();
   const rows = [];
   for (const s of sessions) {
     if (!hasCalls(s)) continue;
@@ -937,6 +962,10 @@ async function loadCallStats(force) {
   }
   store.setCallStats({ ts: Date.now(), rows });
   renderCallStats(rows, new Date());
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = `集計する ${ic("sync")}`;
+  }
 }
 
 function marketOf(t) {
@@ -986,7 +1015,11 @@ function csDetailHTML(r) {
 }
 
 function renderCSView() {
-  if (!csRows.length) { $("csNote").textContent = "集計できるコールがまだありません。"; return; }
+  if (!csRows.length) {
+    $("csNote").textContent = "集計できるコールがまだありません。";
+    $("csBody").innerHTML = "";
+    return;
+  }
   const all = csRows;
   const markets = ["日本", "韓国", "米国", "その他"].filter(m => all.some(r => (r.market || "その他") === m));
   const rows = csMarket === "all" ? all : all.filter(r => (r.market || "その他") === csMarket);
