@@ -143,8 +143,8 @@ def stamp_version():
         h = ""
     ver = "v" + datetime.date.today().strftime("%Y.%m.%d") + (f"-{h}" if h else "")
     html = open(index, encoding="utf-8").read()
-    new = re.sub(r'<span class="ver">[^<]*</span>',
-                 f'<span class="ver">{ver}</span>', html)
+    new = re.sub(r'<(span|p) class="ver">[^<]*</\1>',
+                 f'<p class="ver">{ver}</p>', html)
     if new != html:
         with open(index, "w", encoding="utf-8") as fp:
             fp.write(new)

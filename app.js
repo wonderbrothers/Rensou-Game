@@ -9,6 +9,7 @@ let callsPromise = null;   // 遊びコールの株価: スタート直後に先
 const $ = id => document.getElementById(id);
 function show(id) {
   ["loader", "home", "stage"].forEach(v => $(v).classList.toggle("hidden", v !== id));
+  $("stage").classList.remove("wide");   // カレンダー画面だけHOME同幅にする（showCalendarで付与）
   // タイトルとHeroイメージはHOME（と読み込み画面）のみ表示する
   const hd = document.querySelector("header.hd");
   if (hd) hd.classList.toggle("hidden", id === "stage");
@@ -195,7 +196,9 @@ function openCalendar(counts, onPick, note) {
     for (let dd = 1; dd <= daysIn; dd++) {
       const iso = `${Y}-${String(M).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
       const cnt = counts[iso] || 0;
-      cells += `<div class="calc${cnt ? " has" : ""}"><span class="cd">${dd}</span>${cnt ? `<button class="cn" data-d="${iso}">${cnt}件</button>` : ""}</div>`;
+      cells += cnt
+        ? `<button class="calc has" data-d="${iso}"><span class="cd">${dd}</span><span class="cn">${cnt}件</span></button>`
+        : `<div class="calc"><span class="cd">${dd}</span></div>`;
     }
     ov.innerHTML = `<div class="calbox">
       <div class="calhd"><button class="calnav" data-nav="-1">‹</button><b>${Y}年${M}月</b><button class="calnav" data-nav="1">›</button><button class="calx">${ic("close")}</button></div>
@@ -211,7 +214,7 @@ function openCalendar(counts, onPick, note) {
         render();
       };
     });
-    ov.querySelectorAll(".cn").forEach(b => {
+    ov.querySelectorAll(".calc[data-d]").forEach(b => {
       b.onclick = () => { onPick(b.dataset.d); close(); };
     });
   };
@@ -273,7 +276,7 @@ function cardHTML(s, i) {
     </div>`;
 }
 
-/* 投稿数付きカレンダーを開き、日付でHOME一覧を絞り込む */
+/* 投稿数付きカレンダーを開き、日付でHOME一覧を絞り込む（カード内の日付バッヂ用） */
 function openHomeCalendar() {
   const counts = {};
   sessions.forEach(s => { if (s.date) counts[s.date] = (counts[s.date] || 0) + 1; });
@@ -284,8 +287,128 @@ function openHomeCalendar() {
   }, "件数をタップするとその日付のニュースだけを表示します");
 }
 
+/* ---------- カレンダー画面（月表示＋選択日の一覧をその場に出す） ---------- */
+let calYM = "";        // 表示中の年月 "YYYY-MM"
+let calPicked = "";    // 選択中の日付 "YYYY-MM-DD"
+
+function showCalendar() {
+  show("stage");
+  $("stage").classList.add("wide");   // HOMEと同じコンテンツ幅
+  setNav("calendar");
+  $("scoreBox").innerHTML = "";
+  const counts = {};
+  sessions.forEach(s => { if (s.date) counts[s.date] = (counts[s.date] || 0) + 1; });
+  const keys = Object.keys(counts).sort();
+  if (!calYM) calYM = (keys.length ? keys[keys.length - 1] : new Date().toISOString().slice(0, 10)).slice(0, 7);
+
+  const [Y, M] = calYM.split("-").map(Number);
+  const startDow = new Date(Y, M - 1, 1).getDay();
+  const daysIn = new Date(Y, M, 0).getDate();
+  const monthTotal = keys.filter(k => k.startsWith(calYM)).reduce((a, k) => a + counts[k], 0);
+
+  let cells = "";
+  for (let i = 0; i < startDow; i++) cells += `<div class="calc mute"></div>`;
+  for (let dd = 1; dd <= daysIn; dd++) {
+    const iso = `${Y}-${String(M).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
+    const cnt = counts[iso] || 0;
+    const on = iso === calPicked ? " picked" : "";
+    // セル全体をクリック領域にする（薄いオレンジの範囲すべて）
+    cells += cnt
+      ? `<button class="calc has${on}" data-d="${iso}"><span class="cd">${dd}</span><span class="cn">${cnt}件</span></button>`
+      : `<div class="calc"><span class="cd">${dd}</span></div>`;
+  }
+
+  let h = `<div class="stepno">${ic("calendar_month")} カレンダー</div>
+    <div class="anscard">
+      <div class="calhd" style="margin-bottom:12px;">
+        <button class="calnav" data-nav="-1">‹</button><b>${Y}年${M}月</b><button class="calnav" data-nav="1">›</button>
+      </div>
+      <div class="calgrid">${["日", "月", "火", "水", "木", "金", "土"].map(w => `<div class="calw">${w}</div>`).join("")}${cells}</div>
+      <p class="cnote" style="margin-top:10px;">この月のニュース ${monthTotal} 件。日付の件数をタップすると下に一覧が出ます。</p>
+    </div>`;
+
+  if (calPicked) {
+    const list = sessions.filter(s => s.date === calPicked);
+    h += `<div class="row" style="margin:4px 0 12px;align-items:center;">
+      <b style="font-size:14px;">${calPicked} のニュース（${list.length}件）</b>
+      <button class="linkbtn" id="calClear">選択を解除</button></div>
+      <div class="list" id="calList"></div>`;
+  } else {
+    h += `<p class="empty">日付を選ぶとその日のニュースが表示されます ${ic("touch_app")}</p>`;
+  }
+  $("stageBody").innerHTML = h;
+
+  $("stageBody").querySelectorAll(".calnav").forEach(b => {
+    b.onclick = () => {
+      const nd = new Date(Y, M - 1 + (+b.dataset.nav), 1);
+      calYM = `${nd.getFullYear()}-${String(nd.getMonth() + 1).padStart(2, "0")}`;
+      showCalendar();
+    };
+  });
+  $("stageBody").querySelectorAll(".calc[data-d]").forEach(b => {
+    b.onclick = () => { calPicked = calPicked === b.dataset.d ? "" : b.dataset.d; showCalendar(); };
+  });
+  const cc = $("calClear");
+  if (cc) cc.onclick = () => { calPicked = ""; showCalendar(); };
+
+  // 選択日のカードを描画（HOMEと同じカード＋同じ操作）
+  const cl = $("calList");
+  if (cl) {
+    const list = sessions.filter(s => s.date === calPicked);
+    cl.innerHTML = "";
+    list.forEach(s => {
+      const d = document.createElement("div");
+      d.className = "scard";
+      d.innerHTML = cardHTML(s, sessions.indexOf(s));
+      cl.appendChild(d);
+    });
+    cl.onclick = async ev => {
+      const b = ev.target.closest("button");
+      if (!b) return;
+      if (b.dataset.cal) return;      // カレンダー画面では日付バッヂは無効
+      const s = sessions[+b.dataset.i];
+      const orig = b.innerHTML;
+      b.disabled = true;
+      b.innerHTML = `<span class="ms spin">progress_activity</span> 読み込み中…`;
+      try { await ensureDetail(s); }
+      catch (e) { b.disabled = false; b.innerHTML = orig; alert("記事の読み込みに失敗しました。通信環境をご確認ください。"); return; }
+      b.disabled = false;
+      b.innerHTML = orig;
+      if (b.dataset.a === "ans") showAnswers(s); else startPlay(s);
+    };
+  }
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* カテゴリ選択モーダル（タグが増えても一覧を圧迫しない） */
+function openCategoryModal() {
+  const counts = {};
+  sessions.forEach(s => (s.categories || []).forEach(c => { counts[c] = (counts[c] || 0) + 1; }));
+  const cats = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+  const ov = document.createElement("div");
+  ov.className = "calov";
+  ov.innerHTML = `<div class="calbox">
+    <div class="calhd"><b>${ic("sell")} カテゴリで絞り込む</b><button class="calx">${ic("close")}</button></div>
+    <div class="catgrid">
+      <button class="chip${activeCat === null ? " active" : ""}" data-c="">すべて（${sessions.length}）</button>
+      ${cats.map(c => `<button class="chip${activeCat === c ? " active" : ""}" data-c="${c}">${c}（${counts[c]}）</button>`).join("")}
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  const close = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) close(); };
+  ov.querySelector(".calx").onclick = close;
+  ov.querySelectorAll("[data-c]").forEach(b => {
+    b.onclick = () => {
+      activeCat = b.dataset.c || null;
+      shown = PAGE;
+      close();
+      renderHome(true);
+    };
+  });
+}
+
 function renderToolbar() {
-  const cats = [...new Set(sessions.flatMap(s => s.categories || []))];
   const tb = $("toolbar");
   tb.innerHTML = `
     <div class="searchrow">
@@ -293,14 +416,19 @@ function renderToolbar() {
         <span class="ms">search</span>
         <input type="search" id="kw" placeholder="見出し・銘柄名などで検索" value="${keyword.replace(/"/g, "&quot;")}">
       </label>
-      <button class="chip tgl${unplayedOnly ? " active" : ""}" id="unplayed">${ic("radio_button_unchecked")} 未プレイのみ</button>
-      <button class="chip tgl" id="sortBtn">${ic(sortDesc ? "arrow_downward" : "arrow_upward")} ${sortDesc ? "新しい順" : "古い順"}</button>
+      <div class="filtrow">
+        <button class="chip tgl${unplayedOnly ? " active" : ""}" id="unplayed">${ic("radio_button_unchecked")} 未プレイのみ</button>
+        <button class="chip tgl" id="sortBtn">${ic(sortDesc ? "arrow_downward" : "arrow_upward")} ${sortDesc ? "新しい順" : "古い順"}</button>
+        <button class="chip tgl${activeCat ? " active" : ""}" id="catBtn">${ic("sell")} ${activeCat || "カテゴリ"}</button>
+      </div>
     </div>`;
   const kwInput = $("kw");
   kwInput.oninput = () => { keyword = kwInput.value; shown = PAGE; renderList(); };
   $("unplayed").onclick = () => { unplayedOnly = !unplayedOnly; shown = PAGE; renderHome(true); };
   $("sortBtn").onclick = () => { sortDesc = !sortDesc; shown = PAGE; renderHome(true); };
+  $("catBtn").onclick = () => openCategoryModal();
 
+  // 適用中の絞り込みだけをチップで表示（解除用）
   const filt = $("filters");
   filt.innerHTML = "";
   if (activeDate) {
@@ -310,19 +438,12 @@ function renderToolbar() {
     dc.onclick = () => { activeDate = ""; shown = PAGE; renderHome(true); };
     filt.appendChild(dc);
   }
-  if (cats.length) {
-    const all = document.createElement("button");
-    all.className = "chip" + (activeCat === null ? " active" : "");
-    all.textContent = "すべて";
-    all.onclick = () => { activeCat = null; shown = PAGE; renderHome(true); };
-    filt.appendChild(all);
-    cats.forEach(c => {
-      const b = document.createElement("button");
-      b.className = "chip" + (activeCat === c ? " active" : "");
-      b.textContent = c;
-      b.onclick = () => { activeCat = (activeCat === c ? null : c); shown = PAGE; renderHome(true); };
-      filt.appendChild(b);
-    });
+  if (activeCat) {
+    const cc = document.createElement("button");
+    cc.className = "chip active";
+    cc.innerHTML = `${ic("sell")} ${activeCat} ${ic("close")}`;
+    cc.onclick = () => { activeCat = null; shown = PAGE; renderHome(true); };
+    filt.appendChild(cc);
   }
 }
 
@@ -437,7 +558,7 @@ $("homeBtn").onclick = () => renderHome();
 $("statsBtn").onclick = () => { setNav("stats"); showStats(); };
 $("notesBtn").onclick = () => { setNav("notes"); showNotes(); };
 $("patternsBtn").onclick = () => { setNav("patterns"); showPatterns(); };
-$("calNavBtn").onclick = () => { renderHome(); openHomeCalendar(); };   // HOMEに戻してカレンダーを開く
+$("calNavBtn").onclick = () => showCalendar();
 
 /* ---------- 連想パターン図鑑 ---------- */
 let patternsCache = null;
