@@ -1368,9 +1368,9 @@ function renderCSView() {
   // コールの向きで絞り込み（＋/−の全件を表示。的中も外れも含み、0%だけ除外）
   h += `<div class="filters" style="justify-content:flex-start;margin:0 0 10px;">
     <span class="cnote" style="margin:4px 6px 0 0;">絞り込み:</span>
-    <button class="chip${csSort === "all" ? " active" : ""}" data-sort="all">すべて</button>
-    <button class="chip${csSort === "+" ? " active" : ""}" data-sort="+">＋コール（0%除く）</button>
-    <button class="chip${csSort === "-" ? " active" : ""}" data-sort="-">−コール（0%除く）</button>
+    <button class="chip csort${csSort === "all" ? " active" : ""}" data-sort="all">すべて</button>
+    <button class="chip csort pos${csSort === "+" ? " active" : ""}" data-sort="+">＋コール（0%除く）</button>
+    <button class="chip csort neg${csSort === "-" ? " active" : ""}" data-sort="-">−コール（0%除く）</button>
   </div>`;
   if (csSort !== "all") listRows = listRows.filter(r => r.dir === csSort && r.rel !== 0);
 
@@ -1448,7 +1448,7 @@ function showNotes() {
         <div class="badges"><span class="bd">${w.at}</span><span class="ast" style="margin:0;">${w.st}</span></div>
         <p class="cnote" style="margin:4px 0 6px;">${w.headline}</p>
         <div class="aq qlabel">${w.q}</div>
-        <div class="aopt"><span class="mk"><span class="ms">close</span></span><span>${w.chosen}</span><span class="abadge" style="background:#f4693c;">あなた</span></div>
+        <div class="aopt ng"><span class="mk"><span class="ms">close</span></span><span>${w.chosen}</span><span class="abadge ng">あなた</span></div>
         <div class="aopt ok"><span class="mk"><span class="ms">check</span></span><span>${w.corr}</span><span class="abadge">正解</span></div>
         <div class="areason"><b>解説</b>${subMarks(w.reason)}</div>
         ${hasSession ? `<div class="row" style="margin-top:10px;"><button class="btn ghost sm" data-retry="${w.id}">${ic("rocket_launch")} このニュースを解き直す</button></div>` : ""}

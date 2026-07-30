@@ -23,6 +23,14 @@
   --pink:#f7a6b9;
   --pink-soft:#fdeef2;
   --navy:#2e3a67;
+  /* --- セマンティックカラー（意味で使い分ける） ---
+     coral = プライマリ（ブランド・CTA・アクティブ状態）
+     green = ポジティブ（正解・的中・プラス）
+     red   = ネガティブ（不正解・外れ・マイナス）※コーラルと混同しない濃い赤 */
+  --red:#c9372c;
+  --red-deep:#a82a21;
+  --red-soft:#fae9e7;
+  --green-deep:#2f7a2f;
   --shadow:0 10px 24px rgba(46,58,103,.10);
 }
 *{box-sizing:border-box;}
@@ -150,7 +158,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
   font-size:11px;font-weight:800;border-radius:999px;padding:3px 11px;white-space:nowrap;}
 .obadge .ms{font-size:1.05em;}
 .obadge.ok{background:var(--green);color:#fff;}
-.obadge.ng{background:var(--coral);color:#fff;}
+.obadge.ng{background:var(--red);color:#fff;}
 .opt .mk{flex:none;width:30px;height:30px;border-radius:50%;color:#fff;
   display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13.5px;}
 .opt:nth-child(1) .mk{background:var(--coral);}
@@ -159,8 +167,8 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .opt:nth-child(4) .mk{background:var(--green);}
 .opt.correct{background:var(--green-soft);color:#2f7a2f;animation:pop .3s ease;}
 .opt.correct .mk{background:var(--green);}
-.opt.wrong{background:var(--coral-soft);color:var(--coral-deep);animation:shake .35s ease;}
-.opt.wrong .mk{background:var(--coral);}
+.opt.wrong{background:var(--red-soft);color:var(--red-deep);animation:shake .35s ease;}
+.opt.wrong .mk{background:var(--red);}
 .opt.faded{opacity:.4;}
 @keyframes pop{0%{transform:scale(1);}50%{transform:scale(1.04);}100%{transform:scale(1);}}
 @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
@@ -210,6 +218,8 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
   display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;}
 .aopt.ok{background:var(--green-soft);border-color:var(--green);color:#2f7a2f;}
 .aopt.ok .mk{background:var(--green);}
+.aopt.ng{background:var(--red-soft);border-color:var(--red);color:var(--red-deep);}
+.aopt.ng .mk{background:var(--red);}
 .abadge{margin-left:auto;flex:none;white-space:nowrap;font-size:11px;font-weight:800;background:var(--green);color:#fff;
   border-radius:999px;padding:1px 11px;}
 .areason{background:var(--sky-soft);border-radius:14px;padding:9px 13px;font-size:12.5px;margin-top:8px;}
@@ -249,9 +259,10 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .verdict.rec{color:#2f7a2f;}
 .verdict.err{color:var(--coral-deep);}
 .vb{font-size:11.5px;font-weight:800;border-radius:999px;padding:2px 11px;margin-left:6px;white-space:nowrap;}
-.vb.hit{background:var(--green-soft);color:#2f7a2f;}
-.vb.miss{background:var(--coral-soft);color:var(--coral-deep);}
+.vb.hit{background:var(--green-soft);color:var(--green-deep);}
+.vb.miss{background:var(--red-soft);color:var(--red-deep);}
 .vb.flat{background:#f2f1ec;color:var(--sub);}
+.abadge.ng{background:var(--red);}
 .cnote{font-size:11.5px;color:var(--muted);margin:10px 0 0;}
 
 /* 騰落率チャート（銘柄ごと） */
@@ -260,7 +271,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .ct2{font-size:12px;color:var(--sub);}
 .chg{margin-left:auto;flex:none;white-space:nowrap;font-size:13px;font-weight:800;border-radius:999px;padding:2px 13px;color:#fff;}
 .chg.cpos{background:var(--green);}
-.chg.cneg{background:var(--coral);}
+.chg.cneg{background:var(--red);}
 .plchart{width:100%;height:auto;display:block;}
 .legend{display:flex;flex-wrap:wrap;gap:14px;margin:4px 0 4px;}
 .lg{font-size:11.5px;font-weight:800;color:var(--sub);display:flex;align-items:center;gap:5px;}
@@ -299,13 +310,27 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .statcard{background:var(--paper);border-radius:18px;box-shadow:var(--shadow);padding:14px 10px;text-align:center;}
 .statcard b{display:block;font-size:24px;color:var(--coral);}
 .statcard span{font-size:11.5px;color:var(--sub);font-weight:700;}
+/* コール絞り込みチップ: ＋=ポジティブ緑 / −=ネガティブ赤 / すべて=プライマリ */
+.chip.csort.pos{color:var(--green-deep);}
+.chip.csort.neg{color:var(--red);}
+.chip.csort.pos.active{background:var(--green);color:#fff;}
+.chip.csort.neg.active{background:var(--red);color:#fff;}
+.chip.csort.active{background:var(--coral);color:#fff;}
+
 .statcard.cstat{cursor:pointer;border:2px solid transparent;transition:border-color .15s,transform .1s,box-shadow .15s;}
+/* 統計カード: 数字と選択状態も意味の色に揃える */
+.statcard.cstat[data-cs="hit"] b{color:var(--green-deep);}
+.statcard.cstat[data-cs="miss"] b{color:var(--red);}
+.statcard.cstat[data-cs="flat"] b{color:var(--sub);}
+.statcard.cstat.on[data-cs="hit"]{border-color:var(--green);background:var(--green-soft);}
+.statcard.cstat.on[data-cs="miss"]{border-color:var(--red);background:var(--red-soft);}
+.statcard.cstat.on[data-cs="flat"]{border-color:var(--muted);background:rgba(154,160,171,.14);}
 .statcard.cstat:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(46,58,103,.16);}
 .statcard.cstat.on{border-color:var(--coral);background:var(--coral-soft);}
 
 /* コール成績: リターンの色分け・行の展開 */
-.relpos{color:#3a9d3a;font-weight:800;}
-.relneg{color:#e0493c;font-weight:800;}
+.relpos{color:var(--green-deep);font-weight:800;}
+.relneg{color:var(--red);font-weight:800;}
 .csrow{cursor:pointer;transition:background .12s;}
 /* ニュース日付のカレンダー風チップ */
 .dchip{flex:none;width:46px;border-radius:9px;overflow:hidden;text-align:center;
