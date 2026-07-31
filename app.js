@@ -1346,7 +1346,7 @@ function showStats() {
 
   // アナリストの遊びコール成績
   h += `<div class="anscard" id="callStatsBox"><div class="aq">${ic("casino")} 遊びコールの通算成績（市場相対・T+20優先）</div>
-    <p class="cnote" id="csNote">株価データから集計します。</p>
+    <p class="cnote" id="csNote" style="margin-bottom:12px;">株価データから集計します。</p>
     <div class="row"><button class="btn ghost" id="csBtn">集計する ${ic("sync")}</button></div>
     <div id="csBody"></div></div>`;
 

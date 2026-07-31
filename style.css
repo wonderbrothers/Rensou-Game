@@ -331,8 +331,10 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .relneg{color:var(--neg);font-weight:800;}
 .csrow{cursor:pointer;transition:background .12s;}
 /* ニュース日付のカレンダー風チップ */
-.dchip{flex:none;width:46px;border-radius:9px;overflow:hidden;text-align:center;
-  background:var(--paper);box-shadow:0 3px 10px rgba(34,48,79,.14);line-height:1;}
+/* 日付チップ: 縦横同寸の正方形 */
+.dchip{flex:none;width:46px;height:46px;border-radius:9px;overflow:hidden;text-align:center;
+  background:var(--paper);box-shadow:0 3px 10px rgba(34,48,79,.14);line-height:1;
+  display:flex;flex-direction:column;}
 /* カード見出し行: 日付チップ＋バッヂ類 */
 .chead{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}
 .chead .badges{margin-bottom:0;flex:1;min-width:0;padding-top:2px;}
@@ -340,12 +342,13 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .chead .cmeta{flex:1;min-width:0;}
 .chead .cmeta .badges{margin-bottom:4px;padding-top:2px;}
 .chead .cmeta .chl{margin:0;line-height:1.6;}
-.dchipbtn{border:0;padding:0;font-family:inherit;cursor:pointer;display:block;
+.dchipbtn{border:0;padding:0;font-family:inherit;cursor:pointer;
   transition:transform .12s,box-shadow .15s;}
 .dchipbtn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(34,48,79,.22);}
 .dchip i{display:block;background:var(--ink);color:#fff;font-style:normal;
-  font-size:9.5px;font-weight:800;padding:3px 0;letter-spacing:.02em;}
-.dchip b{display:block;font-size:19px;color:var(--ink);padding:3px 0 4px;}
+  font-size:9px;font-weight:800;padding:3px 0;letter-spacing:.02em;flex:none;}
+.dchip b{display:flex;align-items:center;justify-content:center;flex:1;
+  font-size:19px;color:var(--ink);padding:0;}
 /* 幅の狭い端末: 上段=銘柄・ニュース（縦積み）／下段=バッヂ類と矢印を左右に配分 */
 @media(max-width:480px){
   .csrow{flex-wrap:wrap;row-gap:5px;justify-content:space-between;}
