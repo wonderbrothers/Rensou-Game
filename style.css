@@ -614,8 +614,10 @@ div.skl{display:block;}
 
 /* ===== スマホ: 画面下部に浮かせたピル型ボトムナビ（左右下に余白） ===== */
 @media(max-width:640px){
+  /* iOS26のフローティングタブバー準拠: 画面端から左右・下とも21pt inset。
+     ホームインジケータ領域の上にそのまま浮かせる（safe-area分を足さない） */
   .gnav{position:fixed;z-index:70;
-    left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));
+    left:21px;right:21px;bottom:21px;
     width:auto;max-width:none;margin:0;padding:6px;
     border-radius:26px;
     border:1px solid rgba(255,255,255,.85);
@@ -629,6 +631,6 @@ div.skl{display:block;}
   .gnav-item .gt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
   .gnav-item.active{background:var(--pri-soft);color:var(--pri-deep);box-shadow:none;}
   /* 浮かせたナビの下に本文が隠れないよう余白を確保 */
-  .wrap{padding-bottom:calc(96px + env(safe-area-inset-bottom));}
-  .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
+  .wrap{padding-bottom:96px;}
+  .toastbox{bottom:96px;}
 }
