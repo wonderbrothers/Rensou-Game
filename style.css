@@ -7,10 +7,10 @@
      カラーパレット（この6色とそのトーンのみ使用する）
        ベーステキスト  #22304F  --ink
        プライマリ      #F3683C  --pri  （CTA・ブランド・アクティブ）
-       ポジティブ      #5BB85B  --pos  （正解・的中・プラス）
-       ネガティブ      #A48AD8  --neg  （不正解・外れ・マイナス）
-       補助            #56B7E6  --sup  （情報・リンク・ベンチマーク）
-       アクセント      #F33CA7  --acc  （学び・強調・彩り）
+       ポジティブ      #00c734  --pos  （正解・的中・プラス）
+       ネガティブ      #f33c6d  --neg  （不正解・外れ・マイナス）
+       補助            #00b0f3  --sup  （情報・リンク・ベンチマーク）
+       アクセント      #a48ad8  --acc  （学び・強調・彩り）
      ============================================================ */
   --ink:#22304f;
   --ink-2:#556075;          /* ベースの明トーン: 補足テキスト */
@@ -20,12 +20,12 @@
   --paper:#ffffff;
   --bg:#fdf3ee;
 
-  --pri:#f3683c;  --pri-deep:#c94f27;  --pri-soft:#fdece5;
-  --pos:#5bb85b;  --pos-deep:#367f36;  --pos-soft:#e9f6e9;
-  --neg:#a48ad8;  --neg-deep:#6f52ab;  --neg-soft:#f1ecfa;
-  --sup:#56b7e6;  --sup-deep:#1f7bab;  --sup-soft:#e7f4fc;
-  --acc:#f33ca7;  --acc-deep:#c01d7d;  --acc-soft:#fde7f4;
-  --hl:#f3c732;   --hl-deep:#a9861f;   --hl-soft:#fdf3d6;   /* 強調イエロー（濃い面の見出し・称号・星） */
+  --pri:#f3683c;  --pri-deep:#e64616;  --pri-soft:#f9e8e6;
+  --pos:#00c734;  --pos-deep:#008c1b;  --pos-soft:#eaffeb;
+  --neg:#f33c6d;  --neg-deep:#df1152;  --neg-soft:#fee4ea;
+  --sup:#00b0f3;  --sup-deep:#008fd2;  --sup-soft:#e0f6fd;
+  --acc:#a48ad8;  --acc-deep:#6f52ab;  --acc-soft:#f1ecfa;
+  --hl:#f3c23c;   --hl-deep:#eb8423;   --hl-soft:#fefde8;   /* 強調イエロー（濃い面の見出し・称号・星） */
 
 }
 *{box-sizing:border-box;}
@@ -121,7 +121,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 /* 進捗バー */
 .bar{height:16px;background:var(--paper);border-radius:99px;box-shadow:inset 0 2px 5px rgba(34,48,79,.08);overflow:hidden;margin:10px 0 20px;}
 .bar>i{display:block;height:100%;border-radius:99px;width:0;transition:.4s;
-  background:linear-gradient(90deg,var(--acc),var(--pri));}
+  background:linear-gradient(90deg,var(--pri),var(--pri-deep));}
 
 .stepno{display:inline-block;font-size:12.5px;color:#fff;font-weight:800;letter-spacing:.06em;
   background:var(--ink);border-radius:999px;padding:4px 16px;margin-bottom:10px;}
@@ -386,7 +386,7 @@ button.calc:active{transform:translateY(0);}
 .sbarrow{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
 .sblabel{flex:0 0 96px;font-size:12.5px;font-weight:800;}
 .sbar{flex:1;height:12px;background:rgba(34,48,79,.08);border-radius:99px;overflow:hidden;}
-.sbar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--acc),var(--pri));}
+.sbar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--pri),var(--pri-deep));}
 .sbpct{flex:0 0 96px;font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:right;}
 .hrow{display:flex;align-items:center;gap:10px;padding:10px 0;font-size:13px;border-top:1px solid rgba(34,48,79,.12);}
 .hrow:first-of-type{border-top:0;}
@@ -551,9 +551,10 @@ a.src:hover{background:rgba(86,183,230,.30);}
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
 .modalnote{font-size:12px;color:var(--ink-2);line-height:1.8;margin:10px 0 0;}
 .calbox .cnote{color:var(--ink-2);}
-.calbox{background:rgba(255,255,255,.68);
-  -webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);}
-.calc{background:rgba(255,255,255,.38);}
+.calbox{background:var(--paper);
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  border-color:rgba(34,48,79,.08);}
+.calc{background:rgba(34,48,79,.04);}
 .calc.has{background:rgba(34,48,79,.10);}
 /* カレンダー画面: 選択中の日付 */
 .calc.picked{outline:2px solid var(--ink);outline-offset:-2px;background:rgba(34,48,79,.20);}
