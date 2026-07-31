@@ -497,8 +497,13 @@ footer{margin-top:36px;font-size:11.5px;color:var(--ink-3);border-top:2px dashed
 /* 背景: ピーチ→スカイ→ラベンダーのグラデ＋にじむ色の円 */
 /* iOSはbackground-attachment:fixedが効かないため、固定レイヤーで全画面に敷く
    （PWAのステータスバー裏・セーフエリアまで背景が届く） */
-body{background:#fdece5;}
+/* キャンバス（オーバースクロールやセーフエリアで露出する面）は
+   グラデーション終端と同じ色にして、地の色が出ないようにする */
+html{background:#ece4fa;}
+body{background:#ece4fa;min-height:100vh;min-height:100dvh;}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  /* 100dvh で iOS のツールバー出入りにも追従させる */
+  height:100vh;height:100dvh;
   background:
   radial-gradient(560px 560px at 85% 0%, rgba(243,104,60,.22), transparent 70%),
   radial-gradient(520px 520px at 2% 28%, rgba(86,183,230,.24), transparent 70%),
@@ -630,6 +635,17 @@ div.skl{display:block;}
   .gnav-item .ms{font-size:20px;}
   .gnav-item .gt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
   .gnav-item.active{background:var(--pri-soft);color:var(--pri-deep);box-shadow:none;}
+
+  /* 下スクロール中は縮小: ラベルを隠してアイコンだけのコンパクト表示に */
+  .gnav{transition:padding .22s ease,border-radius .22s ease,
+    left .22s ease,right .22s ease,transform .22s ease;}
+  .gnav-item{transition:padding .22s ease;}
+  .gnav .gt{transition:opacity .18s ease,max-height .22s ease,margin .22s ease;
+    max-height:14px;opacity:1;}
+  .gnav.mini{left:26%;right:26%;padding:4px;border-radius:22px;}
+  .gnav.mini .gnav-item{padding:8px 2px;}
+  .gnav.mini .gt{max-height:0;opacity:0;margin:0;overflow:hidden;}
+  .gnav.mini .ms{font-size:22px;}
   /* 浮かせたナビの下に本文が隠れないよう余白を確保 */
   .wrap{padding-bottom:96px;}
   .toastbox{bottom:96px;}

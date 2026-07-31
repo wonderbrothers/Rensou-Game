@@ -45,6 +45,29 @@ const store = {
   }
 };
 
+/* ---------- ボトムナビの自動縮小（スマホ） ----------
+   下スクロール中はアイコンのみのコンパクト表示にしてコンテンツを邪魔しない。
+   上スクロール・停止・最上部ではラベル付きに戻す。 */
+function initNavShrink() {
+  const nav = document.querySelector(".gnav");
+  if (!nav) return;
+  let last = window.scrollY;
+  let idle = null;
+  const set = compact => nav.classList.toggle("mini", compact);
+  window.addEventListener("scroll", () => {
+    const y = window.scrollY;
+    const dy = y - last;
+    if (Math.abs(dy) > 6) {                       // 微細な揺れは無視
+      if (dy > 0 && y > 80) set(true);            // 下へ → 縮小
+      else if (dy < 0) set(false);                // 上へ → 復帰
+      last = y;
+    }
+    if (y <= 80) set(false);                      // 最上部では常に通常表示
+    clearTimeout(idle);
+    idle = setTimeout(() => set(false), 1200);    // 手が止まったら戻す
+  }, { passive: true });
+}
+
 /* ---------- トースト通知 ----------
    PWAには再読み込みボタンが無いため、更新はこのトーストから手動で行う */
 function showToast({ icon, title, body, actionLabel, onAction, key }) {
@@ -337,6 +360,7 @@ async function boot() {
     showStorageNotice();
     checkNewArticles(sessions);
     initServiceWorker();
+    initNavShrink();
   } catch (e) {
     console.error("[連想ゲーム] データ取得に失敗:", e);
     const note = document.querySelector("#loader .errnote");
