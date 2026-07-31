@@ -76,8 +76,22 @@ function showToast({ icon, title, body, actionLabel, onAction, key }) {
 /* ---------- Service Worker（更新はユーザーが手動で実行） ---------- */
 let swWaiting = null;
 
+/* ローカル開発（npm run dev）ではSWのキャッシュで編集が反映されなくなるため無効化し、
+   既に登録済みのSWとキャッシュも解除する */
+function isLocalDev() {
+  return ["localhost", "127.0.0.1", "0.0.0.0"].includes(location.hostname)
+    || /^192\.168\./.test(location.hostname);
+}
+
 function initServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
+  if (isLocalDev()) {
+    navigator.serviceWorker.getRegistrations()
+      .then(rs => rs.forEach(r => r.unregister()))
+      .catch(() => {});
+    if (window.caches) caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(() => {});
+    return;
+  }
   navigator.serviceWorker.register("sw.js").then(reg => {
     // 既に新しい版が待機している場合
     if (reg.waiting && navigator.serviceWorker.controller) notifyAppUpdate(reg.waiting);
@@ -436,11 +450,7 @@ function filteredSessions() {
 
 function cardHTML(s, i) {
   const tags = (s.categories || []).map(c => `<span class="cat">${c}</span>`).join("");
-  const src = s.news.source
-    ? (s.news.source_url
-      ? `<a class="src link" href="${s.news.source_url}" target="_blank" rel="noopener noreferrer" title="出典を開く">${ic("newspaper")} ${s.news.source} ${ic("open_in_new")}</a>`
-      : `<span class="src">${ic("newspaper")} ${s.news.source}</span>`)
-    : "";
+  const src = srcBadgeHTML(s.news);
   const done = playedIds().has(s.id) ? `<span class="doneb">${ic("check_circle", 1)} 挑戦済み</span>` : "";
   return `
     <div class="chead">
@@ -451,7 +461,7 @@ function cardHTML(s, i) {
     <p class="es">${s.news.essence || ""}</p>
     <div class="row">
       <button class="btn primary" data-a="play" data-i="${i}">挑戦する ${ic("rocket_launch")}</button>
-      <button class="btn ghost" data-a="ans" data-i="${i}">結果を見る ${ic("visibility")}</button>
+      <button class="btn ghost" data-a="ans" data-i="${i}">正解をみる ${ic("visibility")}</button>
     </div>`;
 }
 
@@ -732,8 +742,9 @@ function setNav(name) {
   document.querySelectorAll(".gnav-item").forEach(b =>
     b.classList.toggle("active", b.dataset.nav === name));
 }
-$("homeLink").onclick = () => renderHome();
-$("homeBtn").onclick = () => renderHome();
+const goHome = () => { renderHome(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+$("homeLink").onclick = goHome;
+$("homeBtn").onclick = goHome;
 $("statsBtn").onclick = () => { setNav("stats"); showStats(); };
 $("notesBtn").onclick = () => { setNav("notes"); showNotes(); };
 $("patternsBtn").onclick = () => { setNav("patterns"); showPatterns(); };
@@ -891,7 +902,7 @@ function renderQ() {
   $("stageBody").innerHTML = `
     <div class="bar"><i style="width:${idx / cur.questions.length * 100}%"></i></div>
     ${stepBadgeHTML(q.step)}
-    <div class="evt">${ic("newspaper")} ${cur.news.source ? cur.news.source + "｜" : ""}${cur.news.headline}</div>
+    <div class="evt">${srcBadgeHTML(cur.news)}<span class="evth">${cur.news.headline}</span></div>
     <div class="qq">${q.q}</div><div class="opts" id="opts"></div>
     ${glossaryHTML(q)}
     <div class="analyst" id="fb"><div class="who"><img class="av" src="images/analyst.png" alt="" width="38" height="38"><b>シニアアナリストより</b></div><p id="fbTxt"></p></div>
@@ -983,7 +994,7 @@ function showAnswers(s) {
   setNav(null);
   $("scoreBox").innerHTML = "";
   let h = `<div class="stepno">解答一覧</div>
-    <div class="evt">${ic("newspaper")} ${s.news.source ? s.news.source + "｜" : ""}${s.news.headline}</div>`;
+    <div class="evt">${srcBadgeHTML(s.news)}<span class="evth">${s.news.headline}</span></div>`;
   s.questions.forEach(q => {
     h += `<div class="anscard">${stepBadgeHTML(q.step, "ast")}<div class="aq qlabel">${q.q}</div>`;
     q.options.forEach((o, k) => {
@@ -1372,6 +1383,15 @@ let csSort = "all";        // "all" | "+" | "-" … コールの向きで並び�
 let csOpen = null;         // 展開中の行キー "sid|ticker"
 const csDetail = {};       // sid → api/calls payload（詳細展開用キャッシュ）
 let statsDate = "";        // 直近のプレイの日付フィルタ
+
+/* 出典バッヂ（source_url があればリンク・無ければただのバッヂ）。
+   HOMEのカード／プレイ画面／解答一覧で共通に使う */
+function srcBadgeHTML(news) {
+  if (!news || !news.source) return "";
+  return news.source_url
+    ? `<a class="src link" href="${news.source_url}" target="_blank" rel="noopener noreferrer" title="出典を開く">${ic("newspaper")} ${news.source} ${ic("open_in_new")}</a>`
+    : `<span class="src">${ic("newspaper")} ${news.source}</span>`;
+}
 
 /* ニュース日付のカレンダー風チップ（YYYY.MM ＋ 日）。
    clickable=true でカレンダー絞り込みのボタンになる */

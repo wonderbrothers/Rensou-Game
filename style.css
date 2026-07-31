@@ -123,6 +123,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .score{margin-left:auto;font-size:15px;color:var(--ink-2);font-weight:800;
   background:var(--paper);border-radius:999px;box-shadow:var(--shadow);padding:4px 16px;}
 .score b{color:var(--pri);font-size:17px;}
+.score .ms{color:var(--hl);}   /* スコアの星は強調イエロー */
 .score:empty{display:none;}   /* スコアが無い画面（解答一覧・成績表など）では器ごと隠す */
 
 /* 進捗バー */
@@ -138,7 +139,9 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .stepq:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(34,48,79,.30);}
 .stepq .ms{font-size:1.05em;opacity:.85;}
 .ast.stepq{margin-bottom:8px;}
-.evt{font-size:14px;color:var(--ink-2);margin-bottom:14px;line-height:1.7;font-weight:700;}
+.evt{display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+  font-size:14px;color:var(--ink-2);margin-bottom:14px;line-height:1.7;font-weight:700;}
+.evt .evth{flex:1;min-width:0;}
 .qq{font-size:18px;font-weight:800;margin:6px 0 18px;line-height:1.7;color:var(--ink);
   background:var(--paper);border-radius:20px;box-shadow:var(--shadow);padding:14px 18px;}
 /* 設問の頭に「Q.」を付ける（プレイ画面・解答一覧・間違いノート共通） */
@@ -420,8 +423,6 @@ button.calc:active{transform:translateY(0);}
   .btn{padding:10px 16px;font-size:13px;}
   .navrow{justify-content:center;}
   .logo{width:min(260px,80vw);}
-  .gnav{width:100%;justify-content:flex-start;}
-  .gnav-item{padding:7px 10px;font-size:10px;}
 }
 
 footer .disc{margin:0;}
@@ -608,4 +609,26 @@ div.skl{display:block;}
 @media(max-width:420px){
   .toast{flex-wrap:wrap;}
   .toast .tact{width:100%;justify-content:flex-end;}
+}
+
+
+/* ===== スマホ: 画面下部に浮かせたピル型ボトムナビ（左右下に余白） ===== */
+@media(max-width:640px){
+  .gnav{position:fixed;z-index:70;
+    left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));
+    width:auto;max-width:none;margin:0;padding:6px;
+    border-radius:26px;
+    border:1px solid rgba(255,255,255,.85);
+    background:rgba(255,255,255,.72);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    backdrop-filter:blur(20px) saturate(180%);
+    box-shadow:0 10px 30px rgba(34,48,79,.18);
+    justify-content:space-around;overflow:visible;}
+  .gnav-item{flex:1 1 0;min-width:0;border-radius:20px;padding:7px 2px;font-size:10px;gap:2px;}
+  .gnav-item .ms{font-size:20px;}
+  .gnav-item .gt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+  .gnav-item.active{background:var(--pri-soft);color:var(--pri-deep);box-shadow:none;}
+  /* 浮かせたナビの下に本文が隠れないよう余白を確保 */
+  .wrap{padding-bottom:calc(96px + env(safe-area-inset-bottom));}
+  .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
 }
