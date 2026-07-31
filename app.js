@@ -773,12 +773,73 @@ $("statsBtn").onclick = () => { setNav("stats"); showStats(); };
 $("notesBtn").onclick = () => { setNav("notes"); showNotes(); };
 $("patternsBtn").onclick = () => { setNav("patterns"); showPatterns(); };
 $("calNavBtn").onclick = () => showCalendar();
+$("guideBtn").onclick = () => showGuide();
 
 // ステップバッヂ（?付き）→ 説明モーダル。再描画されても効くよう委譲で受ける
 $("stageBody").addEventListener("click", ev => {
   const b = ev.target.closest("[data-step]");
   if (b) openStepModal(b.dataset.step);
 });
+
+/* ---------- 遊び方（ゲームの目的と進め方） ---------- */
+function showGuide() {
+  show("stage");
+  setNav(null);
+  $("scoreBox").innerHTML = "";
+  const steps = ["①", "②", "③", "④", "⑤", "⑥"].map(k => {
+    const s = STEP_INFO[k];
+    return `<div class="gstep"><b>${k} ${s.t}</b><span>${s.d}</span></div>`;
+  }).join("");
+
+  $("stageBody").innerHTML = `
+    <div class="stepno">${ic("videogame_asset")} 遊び方</div>
+
+    <div class="anscard">
+      <div class="aq">${ic("target")} このゲームの目的</div>
+      <p class="gtxt">ニュースを読んで「次に何が起きるか」を連想する力を鍛えるトレーニングです。
+      正解を当てることより、<b>なぜその連想が筋が良いのか／なぜ他は違うのか</b>を掴むことが目的。
+      絶妙に間違えそうな選択肢とシニアアナリストの解説を通して、
+      ニュースの深読みと、波及する銘柄の肌感を身につけます。</p>
+      <p class="cnote">これは思考訓練であり、投資助言ではありません。</p>
+    </div>
+
+    <div class="anscard">
+      <div class="aq">${ic("route")} 1本のニュースを6ステップで読む</div>
+      <p class="gtxt">1つのニュースにつき6問。表層から一段ずつ深く潜っていきます。</p>
+      <div class="gsteps">${steps}</div>
+    </div>
+
+    <div class="anscard">
+      <div class="aq">${ic("sports_esports")} 遊び方の流れ</div>
+      <ol class="gflow">
+        <li><b>ニュースを選ぶ</b>：HOMEのカードから「挑戦する」。答えを先に見たいときは「正解をみる」。</li>
+        <li><b>4択に答える</b>：選択肢はシャッフルされ、文字数も揃えてあるので、勘や見た目では当たりません。</li>
+        <li><b>解説を読む</b>：シニアアナリストが正解の理由と、各選択肢がなぜ罠なのかを解説します。</li>
+        <li><b>用語を確認</b>：知らない言葉は設問下の「用語解説」で確認できます。</li>
+        <li><b>答え合わせを見る</b>：結果画面で、そのニュースに関連する銘柄の株価の動きを確認します。</li>
+      </ol>
+    </div>
+
+    <div class="anscard">
+      <div class="aq">${ic("casino")} 遊びコール（株価の答え合わせ）</div>
+      <p class="gtxt">${CALL_INTRO}</p>
+      ${judgeLegendHTML()}
+    </div>
+
+    <div class="anscard">
+      <div class="aq">${ic("menu_book")} 記録と復習</div>
+      <p class="gtxt"><b>成績表</b>でカテゴリ別・ステップ別の正答率が見えるので、自分の弱点が分かります。
+      間違えた問題は<b>間違いノート</b>に自動で貯まり、まとめて解き直せます。
+      学んだ「型」は<b>パターン図鑑</b>に蓄積され、次のニュースを読むときの引き出しになります。</p>
+      <p class="cnote">${ic("lock")} 成績はこの端末のブラウザ内にのみ保存されます（サーバー送信なし）。</p>
+    </div>
+
+    <div class="row" style="justify-content:center;margin-top:6px;">
+      <button class="btn primary" id="guideStart">ニュースを見る ${ic("rocket_launch")}</button>
+    </div>`;
+  $("guideStart").onclick = () => { renderHome(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
 /* ---------- 連想パターン図鑑 ---------- */
 let patternsCache = null;
