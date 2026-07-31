@@ -99,6 +99,13 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 
 .scard h3{margin:2px 0 6px;font-size:15px;line-height:1.65;}
 .scard .es{font-size:12.5px;color:var(--ink-2);margin:0 0 14px;flex:1;}
+/* カードのボタン: 全ブレイクポイントで横並び・カード幅いっぱいに二等分。
+   収まらない時は折り返さず、文字とアイコンを縮めて収める */
+.scard>.row{flex-wrap:nowrap;gap:10px;}
+.scard>.row .btn{flex:1 1 0;min-width:0;padding:12px 10px;white-space:nowrap;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  font-size:clamp(11px,3.1vw,14px);}
+.scard>.row .btn .ms{font-size:clamp(13px,3.6vw,17px);flex:none;}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
 .btn{border-radius:999px;padding:12px 24px;font-size:14px;font-weight:800;cursor:pointer;
   font-family:inherit;border:none;transition:.15s;}
