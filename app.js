@@ -45,6 +45,108 @@ const store = {
   }
 };
 
+/* ---------- トースト通知 ----------
+   PWAには再読み込みボタンが無いため、更新はこのトーストから手動で行う */
+function showToast({ icon, title, body, actionLabel, onAction, key }) {
+  const box = $("toastBox") || (() => {
+    const d = document.createElement("div");
+    d.id = "toastBox";
+    d.className = "toastbox";
+    document.body.appendChild(d);
+    return d;
+  })();
+  if (key && box.querySelector(`[data-key="${key}"]`)) return;   // 同種の重複を防ぐ
+  const t = document.createElement("div");
+  t.className = "toast";
+  if (key) t.dataset.key = key;
+  t.innerHTML = `<span class="ms ticon">${icon || "info"}</span>
+    <div class="ttxt"><b>${title}</b>${body ? `<small>${body}</small>` : ""}</div>
+    <div class="tact">
+      ${actionLabel ? `<button class="btn primary sm tgo">${actionLabel}</button>` : ""}
+      <button class="tclose" aria-label="閉じる"><span class="ms">close</span></button>
+    </div>`;
+  box.appendChild(t);
+  requestAnimationFrame(() => t.classList.add("show"));
+  const close = () => { t.classList.remove("show"); setTimeout(() => t.remove(), 250); };
+  t.querySelector(".tclose").onclick = close;
+  const go = t.querySelector(".tgo");
+  if (go) go.onclick = () => { close(); onAction && onAction(); };
+}
+
+/* ---------- Service Worker（更新はユーザーが手動で実行） ---------- */
+let swWaiting = null;
+
+function initServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.register("sw.js").then(reg => {
+    // 既に新しい版が待機している場合
+    if (reg.waiting && navigator.serviceWorker.controller) notifyAppUpdate(reg.waiting);
+    // 新しい版を見つけたとき
+    reg.addEventListener("updatefound", () => {
+      const sw = reg.installing;
+      if (!sw) return;
+      sw.addEventListener("statechange", () => {
+        // controller があるとき = 初回インストールではなく「更新」
+        if (sw.state === "installed" && navigator.serviceWorker.controller) notifyAppUpdate(sw);
+      });
+    });
+    // 復帰時にも更新を確認（PWAは長時間開きっぱなしになりやすい）
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) reg.update().catch(() => {});
+    });
+    setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
+  }).catch(() => {});
+
+  // 新しいSWが有効化されたら1度だけリロード
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloading) return;
+    reloading = true;
+    location.reload();
+  });
+}
+
+function notifyAppUpdate(worker) {
+  swWaiting = worker;
+  showToast({
+    key: "app-update",
+    icon: "system_update_alt",
+    title: "アプリが更新されました",
+    body: "新しい版に切り替えるには更新してください。",
+    actionLabel: "更新する",
+    onAction: () => {
+      if (swWaiting) swWaiting.postMessage({ type: "SKIP_WAITING" });
+      else location.reload();
+    }
+  });
+}
+
+/* 新着ニュースの検知（前回見た記事IDと比較して差分を知らせる） */
+function checkNewArticles(list) {
+  try {
+    const ids = list.map(s => s.id);
+    const seen = JSON.parse(localStorage.getItem("rensou_seen_ids") || "null");
+    if (!seen) { localStorage.setItem("rensou_seen_ids", JSON.stringify(ids)); return; }
+    const fresh = ids.filter(id => !seen.includes(id));
+    localStorage.setItem("rensou_seen_ids", JSON.stringify(ids));
+    if (!fresh.length) return;
+    const first = list.find(s => s.id === fresh[0]);
+    showToast({
+      key: "news-new",
+      icon: "newspaper",
+      title: `${fresh.length}件のニュースが配信されました`,
+      body: first ? first.news.headline : "",
+      actionLabel: "見る",
+      onAction: () => {
+        keyword = ""; activeCat = null; activeDate = ""; unplayedOnly = false;
+        sortDesc = true; shown = PAGE;
+        renderHome();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+  } catch (e) { /* 保存領域が使えない環境では何もしない */ }
+}
+
 /* ---------- 中断・再開 ---------- */
 const PROGRESS_TTL = 7 * 24 * 3600 * 1000;   // 7日で失効
 
@@ -219,6 +321,8 @@ async function boot() {
     }
     renderHome();
     showStorageNotice();
+    checkNewArticles(sessions);
+    initServiceWorker();
   } catch (e) {
     console.error("[連想ゲーム] データ取得に失敗:", e);
     const note = document.querySelector("#loader .errnote");

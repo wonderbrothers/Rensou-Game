@@ -151,6 +151,31 @@ def stamp_version():
         print(f"✓ バージョンを刻印: {ver}")
 
 
+def stamp_sw():
+    """sw.js のキャッシュ版数を、アプリ本体の内容ハッシュで更新する。
+
+    この文字列が変わると Service Worker が「新しい版」として認識され、
+    アプリ側に更新トーストが出る。逆に中身が変わっていなければ版数も変わらず、
+    無用な更新通知は出ない。
+    """
+    sw = os.path.join(BASE, "sw.js")
+    if not os.path.exists(sw):
+        return
+    h = hashlib.md5()
+    for name in ("index.html", "app.js", "style.css"):
+        p = os.path.join(BASE, name)
+        if os.path.exists(p):
+            h.update(open(p, "rb").read())
+    ver = h.hexdigest()[:12]
+    src = open(sw, encoding="utf-8").read()
+    new = re.sub(r'const CACHE_VERSION = "[^"]*";',
+                 f'const CACHE_VERSION = "{ver}";', src)
+    if new != src:
+        with open(sw, "w", encoding="utf-8") as fp:
+            fp.write(new)
+        print(f"✓ sw.js のキャッシュ版数を更新: {ver}")
+
+
 def stamp_assets():
     """index.html の app.js / style.css のクエリを内容ハッシュに書き換える。
 
@@ -263,6 +288,7 @@ def main():
 
     stamp_version()
     stamp_assets()
+    stamp_sw()   # ← app.js/style.css のハッシュ更新後に実行する
 
     print(f"\n完了: {ok}件成功 / {ng}件失敗　株価スナップショット: {generated_at}")
 
