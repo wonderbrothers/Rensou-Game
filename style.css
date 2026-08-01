@@ -215,7 +215,9 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .aopt{display:flex;gap:10px;align-items:center;border:2px solid var(--line);border-radius:16px;
   padding:8px 12px;margin-bottom:7px;font-size:13px;font-weight:700;background:var(--paper);}
 .aopt>span:nth-child(2){flex:1;min-width:0;}
-.aopt .mk{flex:none;width:24px;height:24px;border-radius:50%;background:var(--sup);color:#fff;
+/* 既定（＝正解でも自分の回答でもない選択肢）はグレーで一段落とす */
+.aopt{color:var(--ink-2);}
+.aopt .mk{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ink-3);color:#fff;
   display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;}
 .aopt.ok{background:var(--pos-soft);border-color:var(--pos);color:var(--pos-deep);}
 .aopt.ok .mk{background:var(--pos);}
