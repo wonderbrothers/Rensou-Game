@@ -87,6 +87,8 @@ function initTheme() {
 function toggleSettings() {
   const open = document.getElementById("settingsOv");
   if (open) { (open._close || (() => open.remove()))(); return; }
+  // ギアはモーダルより前面にあるので、別のモーダルが開いたままになるのを防ぐ
+  document.querySelectorAll(".calov").forEach(o => (o._close || (() => o.remove()))());
   openSettings();
 }
 
@@ -341,6 +343,7 @@ function renderResumeBar() {
 }
 
 function resumePlay(s, p) {
+  pushBack();
   cur = s;
   idx = Math.min(p.idx, s.questions.length - 1);
   live = p.live || 0;
@@ -348,6 +351,7 @@ function resumePlay(s, p) {
   callsPromise = prefetchCalls(s);
   show("stage");
   setNav(null);
+  markView("play", () => resumePlay(s, p));
   renderQ();
 }
 
@@ -427,9 +431,11 @@ function showStorageNotice() {
   bar.innerHTML = `<span>${ic("lock")} 成績・間違いノートは<b>この端末のブラウザ内にのみ</b>保存されます。サーバーや外部への送信はありません。削除はいつでも右上の設定から。</span>
     <button id="noticeOk">OK</button>`;
   document.body.appendChild(bar);
+  document.body.classList.add("has-notice");   // トーストを重ならない位置へ逃がす
   document.getElementById("noticeOk").onclick = () => {
     localStorage.setItem("rensou_notice_ok", "1");
     bar.remove();
+    document.body.classList.remove("has-notice");
   };
 }
 
@@ -614,6 +620,7 @@ function showCalendar() {
   show("stage");
   $("stage").classList.add("wide");   // HOMEと同じコンテンツ幅
   setNav("calendar");
+  markView("calendar", () => showCalendar());
   $("scoreBox").innerHTML = "";
   const counts = {};
   sessions.forEach(s => { if (s.date) counts[s.date] = (counts[s.date] || 0) + 1; });
@@ -866,20 +873,55 @@ function renderHome(keepScroll) {
   };
   show("home");
   setNav("home");
+  markView("home", goHome);
   if (keepScroll) window.scrollTo(0, y);
 }
+/* ---------- 画面の履歴（「戻る」リンク） ----------
+   クイズ・解答一覧はグローバルナビに入口が無いため、一つ前の画面へ戻る導線を用意する。
+   viewNow = いま表示している画面 / backStack = 戻り先の積み重ね。
+   クイズや結果からクイズへ入り直す（もう一度・解き直す）ときは積まない。
+   そうしないと「戻る」が同じ画面をぐるぐる往復してしまう。 */
+let viewNow = null;
+const backStack = [];
+
+function markView(kind, run) {
+  viewNow = { kind, run };
+  const b = $("backBtn");
+  // 戻る導線が要るのは、ナビから直接来られない画面だけ
+  if (b) b.classList.toggle("hidden", !(kind === "play" || kind === "answers"));
+}
+
+function pushBack() {
+  // クイズ内での再挑戦は戻り先を書き換えない（入口の画面を保つ）
+  if (viewNow && viewNow.kind !== "play" && viewNow.kind !== "result") {
+    backStack.push(viewNow);
+  }
+}
+
+function navBack() {
+  const prev = backStack.pop();
+  if (prev) prev.run();
+  else goHome();
+}
+
 function setNav(name) {
   document.querySelectorAll(".gnav-item").forEach(b =>
     b.classList.toggle("active", b.dataset.nav === name));
 }
-const goHome = () => { renderHome(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+const goHome = () => { backStack.length = 0; renderHome(); markView("home", goHome); window.scrollTo({ top: 0, behavior: "smooth" }); };
 $("homeLink").onclick = goHome;
 $("homeBtn").onclick = goHome;
-$("statsBtn").onclick = () => { setNav("stats"); showStats(); };
-$("notesBtn").onclick = () => { setNav("notes"); showNotes(); };
-$("patternsBtn").onclick = () => { setNav("patterns"); showPatterns(); };
-$("calNavBtn").onclick = () => showCalendar();
-$("guideBtn").onclick = () => showGuide();
+const goStats = () => { setNav("stats"); showStats(); markView("stats", goStats); };
+$("statsBtn").onclick = goStats;
+const goNotes = () => { setNav("notes"); showNotes(); markView("notes", goNotes); };
+$("notesBtn").onclick = goNotes;
+const goPatterns = () => { setNav("patterns"); showPatterns(); markView("patterns", goPatterns); };
+$("patternsBtn").onclick = goPatterns;
+const goCalendar = () => { showCalendar(); markView("calendar", goCalendar); };
+$("calNavBtn").onclick = goCalendar;
+const goGuide = () => { showGuide(); markView("guide", goGuide); };
+$("guideBtn").onclick = goGuide;
+$("backBtn").onclick = navBack;
 $("gearBtn").onclick = () => toggleSettings();
 
 // ステップバッヂ（?付き）→ 説明モーダル。再描画されても効くよう委譲で受ける
@@ -1014,10 +1056,12 @@ function subMarks(reason, order) {
 }
 
 function startPlay(s) {
+  pushBack();
   cur = s; idx = 0; live = 0; sessionAnswers = [];
   callsPromise = prefetchCalls(s);
   show("stage");
   setNav(null);
+  markView("play", () => startPlay(s));
   renderQ();
 }
 
@@ -1180,10 +1224,12 @@ function playResult() {
 
 /* ---------- 解答一覧 ---------- */
 function showAnswers(s) {
+  pushBack();
   cur = s;
   callsPromise = prefetchCalls(s);
   show("stage");
   setNav(null);
+  markView("answers", () => showAnswers(s));
   $("scoreBox").innerHTML = "";
   let h = `<div class="stepno">解答一覧</div>
     <div class="evt">${srcBadgeHTML(s.news)}<span class="evth">${s.news.headline}</span></div>`;
@@ -1820,7 +1866,10 @@ async function startWrongReview() {
   };
   callsPromise = null;
   idx = 0; live = 0; sessionAnswers = [];
+  pushBack();                 // 戻り先＝間違いノート（早期returnの後なので空振りしない）
   show("stage");
+  setNav(null);
+  markView("play", () => startWrongReview());
   renderQ();
 }
 

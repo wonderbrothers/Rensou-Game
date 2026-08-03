@@ -311,7 +311,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 
 /* グローバルメニュー（角全丸・浮いたピル） */
 .gnav{display:flex;gap:4px;justify-content:center;flex-wrap:nowrap;
-  width:max-content;max-width:calc(100% - 110px);margin:0 auto 22px;padding:5px;   /* 右上のギアと重ならない幅に抑える */
+  width:max-content;max-width:calc(100% - 220px);margin:0 auto 22px;padding:5px;   /* 左の戻る・右のギアと重ならない幅に抑える（左右110pxずつ確保） */
   background:var(--paper);border:1px solid rgba(var(--fill),.06);
   border-radius:999px;box-shadow:0 8px 22px rgba(var(--sh),.14);
   overflow-x:auto;-webkit-overflow-scrolling:touch;}
@@ -398,7 +398,9 @@ button.bd:hover,button.hdate:hover{transform:translateY(-1px);box-shadow:0 4px 1
 
 
 /* カレンダーモーダル */
-.calov{position:fixed;inset:0;background:var(--ov);z-index:60;
+/* 重なり順: 戻る50 < ボトムナビ70 < モーダル78 < トースト80 < ギア95 < 保存告知100。
+   モーダルはボトムナビを覆う。ギアだけは開閉トグルのためモーダルより前面に置く */
+.calov{position:fixed;inset:0;background:var(--ov);z-index:78;
   display:flex;align-items:center;justify-content:center;padding:20px;}
 .calbox{background:var(--paper);border-radius:22px;box-shadow:0 18px 44px rgba(var(--sh),.28);
   padding:18px;width:min(380px,94vw);}
@@ -696,7 +698,12 @@ div.skl{display:block;}
   .gnav.mini .ms{font-size:22px;}
   /* 浮かせたナビの下に本文が隠れないよう余白を確保 */
   .wrap{padding-bottom:96px;}
+  /* 画面上部に固定した「戻る」「設定」と本文（スコアやロゴ）が重ならないよう、
+     ボタンの高さ（36px）＋間隔ぶん本文の開始位置を下げる */
+  .wrap{padding-top:calc(58px + env(safe-area-inset-top));}
   .toastbox{bottom:96px;}
+  /* 保存告知バナーもボトムナビの上へ逃がす（下部固定どうしの重なりを防ぐ） */
+  .notice{bottom:96px;}
 }
 
 /* ===== 遊び方画面 ===== */
@@ -772,7 +779,7 @@ div.skl{display:block;}
 .navrow{position:relative;display:flex;align-items:center;justify-content:center;
   margin:0 0 22px;}
 .navrow .gnav{margin:0;}
-.gear{position:absolute;top:50%;right:0;transform:translateY(-50%);z-index:75;
+.gear{position:absolute;top:50%;right:0;transform:translateY(-50%);z-index:95;
   width:40px;height:40px;border-radius:50%;border:1px solid var(--glass-line);
   background:var(--glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
   box-shadow:0 6px 18px rgba(var(--sh),.12);
@@ -817,4 +824,30 @@ div.skl{display:block;}
 .setrow.hidden{display:none;}
 @media(max-width:420px){
   .setrow.confirm .crow{width:100%;justify-content:flex-end;}
+}
+
+/* ===== 「戻る」リンク（ナビ行の左端・右端のギアと対になる位置） ===== */
+.backlink{position:absolute;top:50%;left:0;transform:translateY(-50%);z-index:50;
+  display:inline-flex;align-items:center;gap:4px;line-height:1;
+  border:1px solid var(--glass-line);border-radius:999px;padding:9px 16px 9px 13px;
+  background:var(--glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:0 6px 18px rgba(var(--sh),.12);
+  font-family:inherit;font-size:13px;font-weight:800;color:var(--ink-2);cursor:pointer;
+  transition:color .15s,background .15s;}
+.backlink .ms{font-size:18px;vertical-align:0;line-height:1;transition:transform .15s;}
+.backlink:hover{color:var(--pri-deep);background:var(--glass-2);}
+.backlink:hover .ms{transform:translateX(-3px);}
+.backlink.hidden{display:none;}
+/* スマホではナビが画面下に固定されるため、ギアと対称に画面左上へ固定する */
+@media(max-width:640px){
+  .backlink{position:fixed;top:calc(12px + env(safe-area-inset-top));left:14px;
+    transform:none;font-size:12.5px;padding:8px 14px 8px 11px;}
+  .backlink .ms{font-size:17px;}
+}
+
+/* 保存告知バナーとトーストはどちらも画面下部に固定されるため、
+   同時に出たときはトーストをバナーの上へ逃がす */
+body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
+@media(max-width:640px){
+  body.has-notice .toastbox{bottom:176px;}
 }
