@@ -45,6 +45,80 @@ const store = {
   }
 };
 
+/* ---------- テーマ（ライト／ダーク） ----------
+   既定は端末の設定に追従し、ユーザーが切り替えたらその選択をこの端末に保存する。
+   配色は style.css の :root[data-theme="dark"] が持つため、ここでは属性の付け替えだけを行う。
+   ちらつき防止の初期適用は index.html の先頭インラインスクリプトが担当する。 */
+const THEME_KEY = "rensou_theme";
+const THEME_COLOR = { light: "#fdece5", dark: "#151b2b" };
+
+function systemPrefersDark() {
+  return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+}
+function storedTheme() {
+  try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; }
+}
+function isDarkMode() {
+  const t = storedTheme();
+  return t ? t === "dark" : systemPrefersDark();
+}
+function applyTheme(dark) {
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", dark ? THEME_COLOR.dark : THEME_COLOR.light);
+}
+function setDarkMode(dark) {
+  try { localStorage.setItem(THEME_KEY, dark ? "dark" : "light"); } catch (e) {}
+  applyTheme(dark);
+}
+function initTheme() {
+  applyTheme(isDarkMode());
+  // 明示的な選択がない間は端末の設定変更に追従する
+  if (window.matchMedia) {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = e => { if (!storedTheme()) applyTheme(e.matches); };
+    if (mq.addEventListener) mq.addEventListener("change", onChange);
+    else if (mq.addListener) mq.addListener(onChange);
+  }
+}
+
+/* 設定モーダル（右上のギアで開閉する）
+   開いている状態でもう一度ギアを押したら閉じる。Escキーでも閉じる。 */
+function toggleSettings() {
+  const open = document.getElementById("settingsOv");
+  if (open) { (open._close || (() => open.remove()))(); return; }
+  openSettings();
+}
+
+function openSettings() {
+  const ov = document.createElement("div");
+  ov.className = "calov";
+  ov.id = "settingsOv";
+  ov.innerHTML = `<div class="calbox">
+    <div class="calhd"><b>${ic("settings")} 設定</b><button class="calx">${ic("close")}</button></div>
+    <div class="setrow">
+      <span class="sic ms">dark_mode</span>
+      <span class="stx"><b>ダークモード</b><small>暗い配色に切り替えます</small></span>
+      <button class="swi" id="swDark" type="button" role="switch"
+        aria-checked="${isDarkMode()}" aria-label="ダークモード"></button>
+    </div>
+    <p class="modalnote">設定はこの端末のブラウザに保存されます。切り替えていない間は、端末の外観設定（ライト／ダーク）に自動で追従します。</p>
+  </div>`;
+  document.body.appendChild(ov);
+  const onKey = e => { if (e.key === "Escape") close(); };
+  const close = () => { document.removeEventListener("keydown", onKey); ov.remove(); };
+  document.addEventListener("keydown", onKey);
+  ov._close = close;                     // ギアの再クリックからも同じ後始末を通す
+  ov.onclick = e => { if (e.target === ov) close(); };
+  ov.querySelector(".calx").onclick = close;
+  const sw = ov.querySelector("#swDark");
+  sw.onclick = () => {
+    const next = sw.getAttribute("aria-checked") !== "true";
+    sw.setAttribute("aria-checked", String(next));
+    setDarkMode(next);
+  };
+}
+
 /* ---------- ボトムナビの自動縮小（スマホ） ----------
    下スクロール中はアイコンのみのコンパクト表示にしてコンテンツを邪魔しない。
    上スクロール・停止・最上部ではラベル付きに戻す。 */
@@ -348,6 +422,7 @@ async function apiGet(p) {
 }
 
 async function boot() {
+  initTheme();          // 読み込みの成否に関わらずテーマは先に確定させる
   try {
     // 一覧は軽量インデックスから（記事が増えても読み込みが重くならない）。
     // 旧構成（api/index が無い環境）では従来の全件JSONへフォールバック。
@@ -774,6 +849,7 @@ $("notesBtn").onclick = () => { setNav("notes"); showNotes(); };
 $("patternsBtn").onclick = () => { setNav("patterns"); showPatterns(); };
 $("calNavBtn").onclick = () => showCalendar();
 $("guideBtn").onclick = () => showGuide();
+$("gearBtn").onclick = () => toggleSettings();
 
 // ステップバッヂ（?付き）→ 説明モーダル。再描画されても効くよう委譲で受ける
 $("stageBody").addEventListener("click", ev => {
@@ -1181,18 +1257,18 @@ function buildOneChart(c) {
   const x = i => L + (W - L - R) * (n === 1 ? 0 : i / (n - 1));
   const y = v => T + (H - T - B) * (1 - (v - min) / (max - min));
   const chg = vals[n - 1];
-  const lineColor = "#22304f";
-  const dotFill = chg >= 0 ? "#5bb85b" : "#f3683c";
+  const lineColor = "var(--ink)";
+  const dotFill = chg >= 0 ? "var(--pos)" : "var(--pri)";
 
   let svg = `<svg viewBox="0 0 ${W} ${H}" class="plchart" role="img">`;
-  svg += `<line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="#8a93a6" stroke-width="1.5" stroke-dasharray="5 5"/>`;
-  svg += `<text x="${L - 7}" y="${y(0) + 4}" text-anchor="end" font-size="10.5" fill="#8a93a6">0%</text>`;
-  svg += `<text x="${L - 7}" y="${T + 8}" text-anchor="end" font-size="10.5" fill="#8a93a6">${max.toFixed(1)}%</text>`;
-  svg += `<text x="${L - 7}" y="${H - B}" text-anchor="end" font-size="10.5" fill="#8a93a6">${min.toFixed(1)}%</text>`;
+  svg += `<line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="5 5"/>`;
+  svg += `<text x="${L - 7}" y="${y(0) + 4}" text-anchor="end" font-size="10.5" fill="var(--ink-3)">0%</text>`;
+  svg += `<text x="${L - 7}" y="${T + 8}" text-anchor="end" font-size="10.5" fill="var(--ink-3)">${max.toFixed(1)}%</text>`;
+  svg += `<text x="${L - 7}" y="${H - B}" text-anchor="end" font-size="10.5" fill="var(--ink-3)">${min.toFixed(1)}%</text>`;
   let newsIdx = isos.findIndex(iso => iso >= (c.called_at || ""));
   if (newsIdx < 0) newsIdx = n - 1;   // ニュース日が履歴の後（休場中など）→ 右端に置く
   const nx = x(newsIdx);
-  svg += `<line x1="${nx.toFixed(1)}" x2="${nx.toFixed(1)}" y1="${T}" y2="${H - B}" stroke="#f3683c" stroke-width="1.5" stroke-dasharray="3 4"/>`;
+  svg += `<line x1="${nx.toFixed(1)}" x2="${nx.toFixed(1)}" y1="${T}" y2="${H - B}" stroke="var(--pri)" stroke-width="1.5" stroke-dasharray="3 4"/>`;
 
   // ベンチマーク線（ニュース日=0%基準）を薄く重ねる
   let hasBench = false;
@@ -1211,7 +1287,7 @@ function buildOneChart(c) {
       });
       const bd = bvals.map((v, i) => v === null ? "" : `${i && bvals[i - 1] !== null ? "L" : "M"}${x(i).toFixed(1)},${y(Math.max(min, Math.min(max, v))).toFixed(1)}`).join("");
       if (bd) {
-        svg += `<path d="${bd}" fill="none" stroke="#56b7e6" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" opacity=".9"/>`;
+        svg += `<path d="${bd}" fill="none" stroke="var(--sup)" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" opacity=".9"/>`;
         hasBench = true;
       }
     }
@@ -1219,7 +1295,7 @@ function buildOneChart(c) {
 
   // T+5 / T+20 の判定日マーカー（到達済みの時だけ描く）
   const drawnMarkers = [];
-  [[5, "#f33ca7", "T+5"], [20, "#5bb85b", "T+20"]].forEach(([nDays, col, label]) => {
+  [[5, "var(--acc)", "T+5"], [20, "var(--pos)", "T+20"]].forEach(([nDays, col, label]) => {
     const j = newsIdx + nDays;
     if (j < n) {
       const tx = x(j);
@@ -1237,16 +1313,16 @@ function buildOneChart(c) {
   const nearLeft = nx < L + 80;          // 左端の日付ラベルと重なる位置
   const nearRight = nx > W - R - 80;     // 右端の日付ラベルと重なる位置
   if (!nearLeft) {
-    svg += `<text x="${L}" y="${H - 6}" font-size="10.5" fill="#8a93a6">${dates[0]}</text>`;
+    svg += `<text x="${L}" y="${H - 6}" font-size="10.5" fill="var(--ink-3)">${dates[0]}</text>`;
   }
   if (nearRight) {
-    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#f3683c" font-weight="bold">${newsLabel}</text>`;
+    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="var(--pri)" font-weight="bold">${newsLabel}</text>`;
   } else if (nearLeft) {
-    svg += `<text x="${L}" y="${H - 6}" font-size="10.5" fill="#f3683c" font-weight="bold">${newsLabel}</text>`;
-    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#8a93a6">${dates[n - 1]}</text>`;
+    svg += `<text x="${L}" y="${H - 6}" font-size="10.5" fill="var(--pri)" font-weight="bold">${newsLabel}</text>`;
+    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="var(--ink-3)">${dates[n - 1]}</text>`;
   } else {
-    svg += `<text x="${nx.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="10.5" fill="#f3683c" font-weight="bold">${newsLabel}</text>`;
-    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="#8a93a6">${dates[n - 1]}</text>`;
+    svg += `<text x="${nx.toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="10.5" fill="var(--pri)" font-weight="bold">${newsLabel}</text>`;
+    svg += `<text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="10.5" fill="var(--ink-3)">${dates[n - 1]}</text>`;
   }
   svg += `</svg>`;
 
@@ -1256,7 +1332,7 @@ function buildOneChart(c) {
   const markerLegend = drawnMarkers
     .map(([col, label]) => `<span class="lg"><i style="background:${col}"></i>${label}</span>`).join("");
   const legend = hasBench
-    ? `<div class="legend"><span class="lg"><i style="background:#22304f"></i>${c.name}</span><span class="lg"><i style="background:#56b7e6"></i>${c.bench || "ベンチマーク"}</span>${markerLegend}</div>`
+    ? `<div class="legend"><span class="lg"><i style="background:var(--ink)"></i>${c.name}</span><span class="lg"><i style="background:var(--sup)"></i>${c.bench || "ベンチマーク"}</span>${markerLegend}</div>`
     : "";
   return `<div class="chartwrap">
     <div class="chead2"><b class="ct2">${ic("show_chart")} 騰落率（ニュース日の終値 = 0%）</b>${chgBadge}</div>
@@ -1720,7 +1796,7 @@ async function startWrongReview() {
 /* ---------- confetti ---------- */
 function burstConfetti() {
   const emo = ["celebration", "star", "auto_awesome", "favorite", "cake", "music_note"];
-  const cols = ["#f3683c", "#f33ca7", "#56b7e6", "#a48ad8", "#5bb85b", "#22304f"];
+  const cols = ["var(--pri)", "var(--pos)", "var(--sup)", "var(--acc)", "var(--neg)", "var(--ink)"];
   for (let i = 0; i < 26; i++) {
     const s = document.createElement("span");
     s.className = "confetti";

@@ -225,6 +225,8 @@ def bench_symbol(ticker: str):
         return "^N225", "日経平均"
     if ticker.endswith(".KS") or ticker.endswith(".KQ"):
         return "^KS11", "KOSPI"
+    if ticker.endswith(".HK"):
+        return "^HSI", "ハンセン指数"
     return "^GSPC", "S&P500"
 
 
@@ -451,6 +453,15 @@ def check_data(verify_tickers=True):
                 continue
             if c.get("direction") not in ("+", "-"):
                 errs.append(f"{t}: directionは + / - のみ")
+            # 表記の桁ミスはネットワークを使わずに先に弾く。
+            # 香港は4桁ゼロ埋めでないとyfinanceが引けない（992.HK ✗ / 0992.HK ○）
+            m = re.match(r"^([0-9A-Z]+)\.(HK|T|KS|KQ)$", t)
+            if m:
+                code, sfx = m.groups()
+                if sfx == "HK" and not re.match(r"^\d{4,5}$", code):
+                    errs.append(f"{t}: 香港のコードは4桁ゼロ埋めで書く（例 0992.HK）")
+                if sfx in ("T", "KS", "KQ") and not re.match(r"^\d{3}[0-9A-Z]$|^\d{6}$", code):
+                    errs.append(f"{t}: {sfx}のコード桁数が不正")
             if verify_tickers and not c.get("price_at_call"):
                 try:
                     fetch_price(t)

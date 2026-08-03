@@ -14,6 +14,9 @@ import re
 import shutil
 import subprocess
 
+import sys
+
+import server
 from server import (DATA, BASE, bench_symbol, cached, compute_eval,
                     fetch_history, fetch_price, fetch_price_on, prefetch_all,
                     summary_of)
@@ -64,6 +67,62 @@ def load_previous_payloads():
         except Exception:
             pass
     return prev
+
+
+def classify_bad_ticker(ticker):
+    """株価を取得できなかった銘柄を「実在の疑い」と「一時的な欠落」に分ける。
+
+    単純に「引けなければ停止」にすると、香港市場のデータ反映が遅れているだけの
+    ケースでも公開が止まってしまう。そこで履歴が1本でも取れるかで区別する。
+
+    - 履歴がまったく無い  → 上場廃止・コード誤りの疑い（公開を止める）
+    - 履歴はあるが当日だけ無い → 市場休場やデータ反映待ち（警告のみ・次回自動再取得）
+    """
+    if server._BULK.get(ticker):
+        return "transient"
+    try:
+        import yfinance as yf
+        h = yf.Ticker(ticker).history(period="6mo")
+        return "transient" if len(h) else "unknown"
+    except Exception:
+        return "unknown"
+
+
+def write_build_report(bad_calls, blocking, generated_at):
+    """検査結果をファイルに残す。
+
+    Claudeのサンドボックスからは Yahoo Finance に到達できず、実在確認は
+    ユーザーのビルドでしか行えない。結果をリポジトリ内のファイルに残せば、
+    ユーザーが端末の出力を貼り付けなくてもClaudeが自分で読める。
+    公開リポジトリには同期しない（sync-public.sh で除外）。
+    """
+    path = os.path.join(BASE, "BUILD_REPORT.md")
+    lines = ["# ビルド検査レポート", "",
+             f"- 生成: {generated_at}",
+             f"- 判定: {'FAIL（公開を停止しました）' if blocking else 'PASS'}", ""]
+    if blocking:
+        lines += ["## 実在が確認できない銘柄（要修正）", "",
+                  "履歴が1本も取得できませんでした。上場廃止・コード誤り・社名変更を疑ってください。", ""]
+        for sid, ticker, name, msg in blocking:
+            lines.append(f"- `{ticker}` {name} … `{sid}`")
+            if msg:
+                lines.append(f"  - {msg}")
+        lines += ["",
+                  "対処: 「<社名> 上場廃止」「<社名> TOB 完全子会社」で確認し、",
+                  "`data/` の ticker と name を更新するか、連想ロジックが同じ上場銘柄に差し替える。",
+                  "（CONTENT_GUIDE.md 5.2）", ""]
+    transient = [b for b in bad_calls if b not in blocking]
+    if transient:
+        lines += ["## 一時的に価格が取れなかった銘柄（対応不要）", "",
+                  "履歴自体は取得できているため、市場休場やデータ反映待ちと判断しました。",
+                  "基準価格は未記録のまま残るので、次回のビルドで自動的に再取得されます。", ""]
+        for sid, ticker, name, msg in transient:
+            lines.append(f"- `{ticker}` {name} … `{sid}`")
+    if not bad_calls:
+        lines.append("すべての銘柄で株価を取得できました。")
+    with open(path, "w", encoding="utf-8") as fp:
+        fp.write("\n".join(lines) + "\n")
+    return path
 
 
 def build_calls(d, generated_at):
@@ -292,18 +351,45 @@ def main():
 
     print(f"\n完了: {ok}件成功 / {ng}件失敗　株価スナップショット: {generated_at}")
 
+    # --- 公開前の関所 ---
+    # 履歴が1本も取れない銘柄（上場廃止・コード誤りの疑い）があれば、
+    # 同期もコミットもさせずにここで止める。npm run build は
+    # `build_static.py && ./sync-public.sh` の連結なので、異常終了すれば同期は走らない。
+    blocking = []
     if bad_calls:
-        print("\n" + "=" * 56)
-        print(f"⚠ 株価を取得できなかった銘柄が {len(bad_calls)} 件あります（push前に確認）:")
-        for sid, ticker, name, msg in bad_calls:
+        print("\n→ 取得できなかった銘柄を判定中…")
+        for b in bad_calls:
+            kind = classify_bad_ticker(b[1])
+            print(f"   {'✗ 実在の疑い' if kind == 'unknown' else '△ 一時的な欠落'}: {b[1]} {b[2]}")
+            if kind == "unknown":
+                blocking.append(b)
+
+    report = write_build_report(bad_calls, blocking, generated_at)
+    print(f"\n検査レポート: {os.path.relpath(report, BASE)}")
+
+    if blocking:
+        print("\n" + "=" * 60)
+        print(f"✗ 実在を確認できない銘柄が {len(blocking)} 件あります。公開を停止しました。")
+        for sid, ticker, name, msg in blocking:
             print(f"   ✗ {ticker}  {name}  … {sid}")
             if msg:
                 print(f"      {msg}")
-        print("  対処のヒント:")
-        print("   ・上場廃止/持株会社移行などでコードが変わった → data/ のtickerを更新")
-        print("   ・yfinanceが安定配信しない小型株 → 別銘柄に差し替え、または許容")
-        print("   ・一時的なYahoo側の欠落 → 基準価格は未記録なので次回ビルドで自動再取得")
-        print("=" * 56)
+        print("")
+        print("  履歴が1本も取得できていません。上場廃止・コード誤り・社名変更を疑ってください。")
+        print("  「<社名> 上場廃止」「<社名> TOB 完全子会社」で確認し、data/ を修正して再ビルド。")
+        print("  ※ 同期・コミットは行っていないので、公開サイトは元のままです。")
+        print("=" * 60)
+        sys.exit(1)
+
+    transient = [b for b in bad_calls if b not in blocking]
+    if transient:
+        print("\n" + "-" * 60)
+        print(f"△ 一時的に価格を取れなかった銘柄が {len(transient)} 件あります（対応不要）:")
+        for sid, ticker, name, msg in transient:
+            print(f"   △ {ticker}  {name}  … {sid}")
+        print("  履歴自体は取れているため、市場休場・データ反映待ちと判断しました。")
+        print("  基準価格は未記録のまま残り、次回のビルドで自動的に再取得されます。")
+        print("-" * 60)
 
     print("\n公開反映: ./sync-public.sh && cd ../Rensou-Game-public && git push")
 

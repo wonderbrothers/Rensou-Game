@@ -30,7 +30,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fonts/local.css">
-<link rel="stylesheet" href="style.css?v=e9dd74af">
+<link rel="stylesheet" href="style.css?v=3d8547be">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#fdece5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -38,18 +38,29 @@
 <link rel="apple-touch-icon" href="images/icon-180.png">
 <link rel="icon" href="favicon.ico" sizes="48x48">
 <link rel="icon" type="image/png" href="images/icon-192.png" sizes="192x192">
+<script>
+/* ちらつき防止: 描画前にテーマを確定させる（切り替えの本体は app.js?v=13467565"rensou_theme");
+  var d=t?t==="dark":(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.setAttribute("data-theme",d?"dark":"light");
+  var m=document.querySelector('meta[name="theme-color"]');
+  if(m)m.setAttribute("content",d?"#151b2b":"#fdece5");
+}catch(e){}})();
+</script>
 </head>
 <body>
 <div class="wrap">
   <div class="deco" aria-hidden="true"></div>
 
+  <div class="navrow">
   <nav class="gnav" aria-label="グローバルメニュー">
-    <button class="gnav-item" data-nav="home" id="homeBtn"><span class="ms">home</span><span class="gt">HOME</span></button>
-    <button class="gnav-item" data-nav="patterns" id="patternsBtn"><span class="ms">menu_book</span><span class="gt">パターン図鑑</span></button>
-    <button class="gnav-item" data-nav="stats" id="statsBtn"><span class="ms">leaderboard</span><span class="gt">成績表</span></button>
-    <button class="gnav-item" data-nav="notes" id="notesBtn"><span class="ms">edit_note</span><span class="gt">間違いノート</span></button>
-    <button class="gnav-item" data-nav="calendar" id="calNavBtn"><span class="ms">calendar_month</span><span class="gt">カレンダー</span></button>
+    <button class="gnav-item" data-nav="home" id="homeBtn"><span class="ms">home</span><span class="gt">HOME</span><span class="gts">HOME</span></button>
+    <button class="gnav-item" data-nav="patterns" id="patternsBtn"><span class="ms">menu_book</span><span class="gt">パターン図鑑</span><span class="gts">パターン</span></button>
+    <button class="gnav-item" data-nav="stats" id="statsBtn"><span class="ms">leaderboard</span><span class="gt">成績表</span><span class="gts">成績表</span></button>
+    <button class="gnav-item" data-nav="notes" id="notesBtn"><span class="ms">edit_note</span><span class="gt">間違いノート</span><span class="gts">ノート</span></button>
+    <button class="gnav-item" data-nav="calendar" id="calNavBtn"><span class="ms">calendar_month</span><span class="gt">カレンダー</span><span class="gts">カレンダー</span></button>
   </nav>
+  <button class="gear" id="gearBtn" aria-label="設定"><span class="ms">settings</span></button>
+  </div>
 
   <header class="hd">
     <h1><img class="logo" id="homeLink" src="images/logo.svg" alt="連想ゲーム" title="トップへ戻る"></h1>
@@ -82,10 +93,10 @@
 
   <footer>
     <p class="disc">これは思考訓練であり、投資助言ではありません。</p>
-    <p class="ver">v2026.08.02-2348234</p>
+    <p class="ver">v2026.08.03-c289655</p>
     <p class="copy">&copy;<a class="cplink" href="https://wonder-bros.com" target="_blank" rel="noopener noreferrer">WONDER BROTHERS INC.</a></p>
   </footer>
 </div>
-<script src="app.js?v=083f165a"></script>
+<script src="app.js?v=13467565"></script>
 </body>
 </html>

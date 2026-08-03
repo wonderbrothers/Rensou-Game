@@ -38,6 +38,24 @@ def check_file(path):
     dirs = sorted(c.get("direction") for c in calls)
     if dirs not in (["+", "+", "-"], ["+", "-", "-"]):
         errs.append(f"callsの方向バランスが不正: {dirs}")
+    # callsのティッカー表記（yfinanceが引ける形か）
+    #   香港は4桁ゼロ埋め（992.HK ではなく 0992.HK）、日本・韓国は数字4桁＋接尾辞。
+    #   桁が足りないと「price unavailable」でビルド時に落ちるため、ここで先に止める。
+    for c in calls:
+        t = c.get("ticker", "")
+        if not t:
+            errs.append("callsにtickerがない")
+            continue
+        m = re.match(r"^([0-9A-Z]+)\.(HK|T|KS|KQ)$", t)
+        if m:
+            code, sfx = m.groups()
+            if sfx == "HK" and not re.match(r"^\d{4,5}$", code):
+                errs.append(f"ticker表記が不正: {t}（香港は4桁ゼロ埋め。例 0992.HK）")
+            if sfx in ("T", "KS", "KQ") and not re.match(r"^\d{3}[0-9A-Z]$|^\d{6}$", code):
+                errs.append(f"ticker表記が不正: {t}（{sfx}は4桁もしくは6桁）")
+        elif not re.match(r"^[A-Z][A-Z.\-]{0,6}$", t):
+            errs.append(f"ticker表記が不正: {t}")
+
     qs = d.get("questions", [])
     if len(qs) != 6:
         errs.append(f"設問が6問でない: {len(qs)}")
