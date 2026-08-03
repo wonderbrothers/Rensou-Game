@@ -142,7 +142,10 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .btn.ghost:hover{background:rgba(var(--sup-rgb),.20);transform:translateY(-2px);}
 
 /* ===== プレイ画面 ===== */
-#stage{max-width:720px;margin:0 auto 36px;}
+/* .wrap が縦フレックスのため、左右autoマージンだけだと stretch されず
+   「内容なりの幅」に縮む（カレンダーが日付選択で広がって見えた原因）。
+   width:100% を明示して幅を確定させ、max-width で上限、autoマージンで中央寄せ */
+#stage{width:100%;max-width:720px;margin:0 auto 36px;}
 #stage.wide{max-width:none;}   /* カレンダー画面はHOMEと同じ幅 */
 .top{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
 .score{margin-left:auto;font-size:15px;color:var(--ink-2);font-weight:800;
@@ -413,13 +416,17 @@ button.bd:hover,button.hdate:hover{transform:translateY(-1px);box-shadow:0 4px 1
 .calx .ms{font-size:20px;}
 .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
 .calw{text-align:center;font-size:10.5px;color:var(--ink-3);font-weight:800;padding:2px 0;}
-.calc{min-height:46px;border-radius:10px;background:var(--bg);display:flex;flex-direction:column;
-  align-items:center;padding:4px 0 3px;}
+/* 2行グリッド（1行目=日付／2行目=件数バッヂの席）にして、件数の有無に関わらず
+   日付の縦位置を揃える。バッヂが無い日も席だけ残るので行ごとに数字がずれない */
+.calc{min-height:46px;border-radius:10px;background:var(--bg);
+  display:grid;grid-template-rows:auto 16px;gap:2px;
+  align-content:center;justify-items:center;padding:4px 3px;}
 .calc.mute{background:transparent;}
 .calc .cd{font-size:11px;color:var(--ink);font-weight:800;line-height:1.2;}
 .calc.has{background:var(--pri-soft);}
-.cn{display:inline-block;background:var(--ink-bg);color:var(--ink-tx);font-size:10px;font-weight:800;
-  border-radius:999px;padding:1px 7px;margin-top:2px;pointer-events:none;}
+.cn{display:inline-flex;align-items:center;background:var(--ink-bg);color:var(--ink-tx);
+  font-size:10px;font-weight:800;line-height:1.4;
+  border-radius:999px;padding:1px 7px;pointer-events:none;align-self:center;}
 /* 件数のある日はセル全体がボタン（薄いオレンジの範囲すべてがクリック領域） */
 button.calc{border:0;font-family:inherit;cursor:pointer;width:100%;
   transition:background .15s,transform .1s;}
