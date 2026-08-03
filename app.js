@@ -102,6 +102,18 @@ function openSettings() {
       <button class="swi" id="swDark" type="button" role="switch"
         aria-checked="${isDarkMode()}" aria-label="ダークモード"></button>
     </div>
+    <div class="setrow">
+      <span class="sic ms">delete_forever</span>
+      <span class="stx"><b>保存データの削除</b><small>成績・間違いノート・中断中のプレイをこの端末から消します</small></span>
+      <button class="btn sm danger" id="clrData" type="button">削除</button>
+    </div>
+    <div class="setrow confirm hidden" id="clrConfirm">
+      <span class="stx"><b>本当に削除しますか？</b><small>取り消せません。残しておきたい場合は、先に成績表からバックアップを書き出してください。</small></span>
+      <span class="crow">
+        <button class="btn sm ghost" id="clrNo" type="button">やめる</button>
+        <button class="btn sm danger solid" id="clrYes" type="button">削除する</button>
+      </span>
+    </div>
     <p class="modalnote">設定はこの端末のブラウザに保存されます。切り替えていない間は、端末の外観設定（ライト／ダーク）に自動で追従します。</p>
   </div>`;
   document.body.appendChild(ov);
@@ -116,6 +128,25 @@ function openSettings() {
     const next = sw.getAttribute("aria-checked") !== "true";
     sw.setAttribute("aria-checked", String(next));
     setDarkMode(next);
+  };
+
+  // 保存データの削除は取り消せないため、モーダル内で二段階に確認する
+  const conf = ov.querySelector("#clrConfirm");
+  ov.querySelector("#clrData").onclick = () => conf.classList.remove("hidden");
+  ov.querySelector("#clrNo").onclick = () => conf.classList.add("hidden");
+  ov.querySelector("#clrYes").onclick = () => {
+    store.clearAll();
+    close();
+    showToast({
+      icon: "delete_forever",
+      title: "保存データを削除しました",
+      body: "成績・間違いノート・中断中のプレイをこの端末から消しました。"
+    });
+    // 保存データを映している画面を開いていたら、消えた状態に描き直す。
+    // プレイ中の画面を奪わないよう、その画面固有の要素の有無で判定する。
+    if ($("expBtn")) showStats();            // 成績表
+    else if ($("notesHead")) showNotes();     // 間違いノート
+    renderResumeBar();                       // 再開バナー（中断中のプレイ）
   };
 }
 
@@ -393,7 +424,7 @@ function showStorageNotice() {
   if (localStorage.getItem("rensou_notice_ok")) return;
   const bar = document.createElement("div");
   bar.className = "notice";
-  bar.innerHTML = `<span>${ic("lock")} 成績・間違いノートは<b>この端末のブラウザ内にのみ</b>保存されます。サーバーや外部への送信はありません。削除はいつでも「成績表」から。</span>
+  bar.innerHTML = `<span>${ic("lock")} 成績・間違いノートは<b>この端末のブラウザ内にのみ</b>保存されます。サーバーや外部への送信はありません。削除はいつでも右上の設定から。</span>
     <button id="noticeOk">OK</button>`;
   document.body.appendChild(bar);
   document.getElementById("noticeOk").onclick = () => {
@@ -1432,7 +1463,7 @@ function showStats() {
     <input type="file" id="impFile" accept=".json" style="display:none;">
   </div>
   <p class="cnote" style="margin-top:10px;">${ic("lock")} 成績はこの端末のブラウザ内にのみ保存されています（サーバー送信なし）。書き出したJSONで別端末への引っ越しができます。
-    <button class="linkbtn" id="clearBtn">保存データをすべて削除</button></p>`;
+    <button class="linkbtn" id="clearBtn">保存データをすべて削除</button>（右上の設定からも行えます）</p>`;
 
   $("stageBody").innerHTML = h;
   // 直近のプレイ: 日付→カレンダー
@@ -1720,7 +1751,7 @@ function showNotes() {
   $("scoreBox").innerHTML = "";
   const wrongs = getWrongs();
 
-  let h = `<div class="stepno">${ic("edit_note")} 間違いノート</div>`;
+  let h = `<div class="stepno" id="notesHead">${ic("edit_note")} 間違いノート</div>`;
   if (!wrongs.length) {
     h += `<p class="empty">間違いはまだありません。素晴らしい！ ${ic("celebration", 1)}</p>`;
   } else {

@@ -798,3 +798,16 @@ div.skl{display:block;}
 .swi[aria-checked="true"]{background:var(--pos);}
 .swi[aria-checked="true"]::after{transform:translateX(21px);}
 .swi:focus-visible{outline:2px solid var(--sup);outline-offset:2px;}
+
+/* 設定モーダル: 破壊的な操作（保存データの削除） */
+.btn.danger{background:var(--neg-soft);color:var(--neg-deep);box-shadow:none;}
+.btn.danger:hover{background:rgba(var(--neg-rgb),.20);}
+.btn.danger.solid{background:var(--neg);color:var(--on-color);}
+.btn.danger.solid:hover{background:var(--neg-deep);color:var(--on-color);}
+.setrow.confirm{align-items:flex-start;flex-wrap:wrap;gap:10px;}
+.setrow.confirm .stx b{color:var(--neg-deep);}
+.setrow .crow{flex:none;display:flex;gap:8px;margin-left:auto;}
+.setrow.hidden{display:none;}
+@media(max-width:420px){
+  .setrow.confirm .crow{width:100%;justify-content:flex-end;}
+}
