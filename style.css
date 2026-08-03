@@ -64,8 +64,13 @@ h1 .ms{font-size:1em;vertical-align:-0.12em;color:var(--pri);}
 body{margin:0;background:var(--bg) url("images/bg.svg");background-size:560px;color:var(--ink);line-height:1.75;
   font-family:"Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN",-apple-system,sans-serif;
   -webkit-font-smoothing:antialiased;}
-.wrap{max-width:1100px;margin:0 auto;padding:30px 18px 30px;position:relative;}
+/* 縦フレックス＋フッターの margin-top:auto で、コンテンツが少ない画面でも
+   フッターが中途半端な位置に浮かず画面下端に収まる（多い時は自然に押し下がる） */
+.wrap{max-width:1100px;margin:0 auto;padding:30px 18px 30px;position:relative;
+  display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;}
 .deco{display:none;}
+/* 本文とフッターの最低間隔（フッターは margin-top:auto で下端に張り付く） */
+#loader,#home{margin-bottom:36px;}
 
 /* ヘッダー = キャラの行進（背景・影なし） */
 header.hd{background:none;border:none;box-shadow:none;border-radius:0;
@@ -137,7 +142,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .btn.ghost:hover{background:rgba(var(--sup-rgb),.20);transform:translateY(-2px);}
 
 /* ===== プレイ画面 ===== */
-#stage{max-width:720px;margin:0 auto;}
+#stage{max-width:720px;margin:0 auto 36px;}
 #stage.wide{max-width:none;}   /* カレンダー画面はHOMEと同じ幅 */
 .top{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
 .score{margin-left:auto;font-size:15px;color:var(--ink-2);font-weight:800;
@@ -456,8 +461,10 @@ footer .disc{margin:0;}
 .cplink{color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .15s;}
 .cplink:hover{border-bottom-color:currentColor;}
 footer .copy{margin:8px 0 0;font-size:11px;letter-spacing:.09em;color:var(--ink-3);}
-footer{margin-top:36px;font-size:11.5px;color:var(--ink-3);border-top:2px dashed var(--line);
-  padding-top:16px;text-align:center;letter-spacing:.05em;}
+/* margin-top:auto = 余白があれば下端へ、無ければ 0。本文との最低間隔は
+   本文側（#loader/#home/#stage の margin-bottom）で確保する */
+footer{margin-top:auto;padding-top:16px;font-size:11.5px;color:var(--ink-3);
+  border-top:2px dashed var(--line);text-align:center;letter-spacing:.05em;}
 
 /* 初回の保存告知バナー */
 .notice{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:100;
