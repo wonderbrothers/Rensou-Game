@@ -398,7 +398,8 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
    縮め、成績・判定・矢印は常に完全表示する */
 .csrow .hbot{grid-row:2;grid-column:1 / span 2;
   display:flex;align-items:center;gap:8px;flex-wrap:nowrap;
-  position:relative;padding-right:30px;}   /* 右端に開閉矢印の席 */
+  position:relative;padding-right:30px;   /* 右端に開閉矢印の席 */
+  min-width:0;}   /* グリッドの列を最小内容幅で押し広げない（内容が長い行の器が行幅を超えて、矢印ごとはみ出すのを防ぐ） */
 .csrow .hbot .hwin{flex:0 1 auto;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;}
 .csrow .hbot .hscore{margin-left:auto;flex:0 0 auto;

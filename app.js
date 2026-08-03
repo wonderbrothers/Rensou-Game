@@ -1362,7 +1362,13 @@ async function loadCalls() {
     h += `<p class="cnote">※ T+5／T+20は、ニュースから5・20営業日後の固定の答え合わせタイミング。あくまで遊びで、投資助言ではありません。${d.frozen ? "<br>❄ このニュースはT+20の判定が確定済みです（株価は判定時点のもの）。" : ""}</p>`;
     box.innerHTML = h;
   } catch (e) {
-    box.querySelector(".cnote").textContent = "株価を取得できませんでした（サーバー未起動またはオフライン）";
+    // 株価はクイズ開始時に先読みしている。その瞬間だけ通信が切れていた場合、
+    // ここで再試行できないと結果画面ではずっとエラーのままになる
+    box.innerHTML = `<b class="ct">${ic("casino")} シニアアナリストの遊びコール</b>
+      <p class="cnote">株価を取得できませんでした（サーバー未起動またはオフライン）</p>
+      <div class="row"><button class="btn ghost sm" id="callsRetry">${ic("refresh")} 再試行</button></div>`;
+    const rb = $("callsRetry");
+    if (rb) rb.onclick = () => { callsPromise = prefetchCalls(cur); loadCalls(); };
   }
 }
 
