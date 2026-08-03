@@ -158,7 +158,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 /* 進捗バー */
 .bar{height:16px;background:var(--paper);border-radius:99px;box-shadow:inset 0 2px 5px rgba(var(--sh),.08);overflow:hidden;margin:10px 0 20px;}
 .bar>i{display:block;height:100%;border-radius:99px;width:0;transition:.4s;
-  background:linear-gradient(90deg,var(--sup),var(--sup-deep));}
+  background:linear-gradient(90deg,var(--pri),var(--pri-lite));}
 
 .stepno{display:inline-block;font-size:12.5px;color:var(--ink-tx);font-weight:800;letter-spacing:.06em;
   background:var(--ink-bg);border-radius:999px;padding:4px 16px;margin-bottom:10px;}
@@ -206,7 +206,8 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 /* アナリストの吹き出し = ネイビー */
 .analyst{background:var(--ink-bg);color:var(--ink-tx);border-radius:22px;padding:16px 18px;margin-top:22px;display:none;position:relative;}
 .analyst::before{content:"";position:absolute;top:-12px;left:38px;
-  border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:13px solid var(--ink);}
+  border-left:10px solid transparent;border-right:10px solid transparent;
+  border-bottom:13px solid var(--ink-bg);}   /* 吹き出し本体と同じ面の色（--ink は文字色） */
 .analyst.show{display:block;animation:rise .3s ease;}
 @keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 .analyst .who{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
@@ -381,16 +382,33 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
   font-size:9px;font-weight:800;padding:3px 0;letter-spacing:.02em;flex:none;}
 .dchip b{display:flex;align-items:center;justify-content:center;flex:1;
   font-size:19px;color:var(--ink);padding:0;}
-/* 幅の狭い端末: 上段=銘柄・ニュース（縦積み）／下段=バッヂ類と矢印を左右に配分 */
-@media(max-width:480px){
-  .csrow{flex-wrap:wrap;row-gap:5px;justify-content:space-between;}
-  .csrow .dchip{order:-1;}
-  .csrow .hname{flex:1 1 calc(100% - 58px);}
-  .csrow .hwin{margin-right:auto;}
-  .csrow .hscore{display:flex;align-items:center;gap:8px;margin-left:auto;}
-}
+/* 通算成績の銘柄行:
+   上段 = 日付チップ＋銘柄名（その下にニュース）
+   下段 = バッヂ列（市場・勝敗を左、成績・判定・矢印を右）を行の全幅に敷く。
+   flex任せだとバッヂ類が幅を譲らず銘柄名が数文字幅に潰れるため、
+   グリッドで「銘柄名=残り全幅」を確定させる */
+.csrow{display:grid;grid-template-columns:auto minmax(0,1fr);
+  column-gap:12px;row-gap:8px;align-items:center;}
+.csrow .dchip{grid-row:1;grid-column:1;}
+.csrow .hname{grid-row:1;grid-column:2;}
+.csrow .hname small.hnews{margin-top:2px;}
+/* バッヂ列は折り返しを禁止して常に1行にする。折り返しを許すと、成績の
+   桁数や端末の文字サイズ設定しだいで行ごとに1行/2行が混ざり、矢印の高さも
+   揃わなくなる。幅が足りないときは重要度の低い「市場・勝敗」を省略記号で
+   縮め、成績・判定・矢印は常に完全表示する */
+.csrow .hbot{grid-row:2;grid-column:1 / span 2;
+  display:flex;align-items:center;gap:8px;flex-wrap:nowrap;
+  position:relative;padding-right:30px;}   /* 右端に開閉矢印の席 */
+.csrow .hbot .hwin{flex:0 1 auto;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.csrow .hbot .hscore{margin-left:auto;flex:0 0 auto;
+  display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
+/* 開閉矢印はバッヂ列の右端・上下中央に固定（列は常に1行なので中央でよい） */
+.csrow .csarrow{position:absolute;right:0;top:50%;transform:translateY(-50%);}
+/* 開閉矢印は下段バッヂの並びの末尾。押しやすいようやや大きく */
+.csrow .csarrow{font-size:22px;vertical-align:0;}
 .csrow:hover{background:var(--sup-soft);}
-.csrow .csarrow{font-size:1.1em;vertical-align:-0.2em;color:var(--ink-3);}
+.csrow .csarrow{color:var(--ink-3);}
 .csdetail{background:var(--bg);border:1px solid var(--line);border-radius:14px;
   padding:10px 14px;margin:2px 0 10px;}
 .csdetail .basis{font-size:12px;color:var(--ink-2);margin:4px 0 6px;}
@@ -437,7 +455,7 @@ button.calc:active{transform:translateY(0);}
 .sbarrow{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
 .sblabel{flex:0 0 96px;font-size:12.5px;font-weight:800;}
 .sbar{flex:1;height:12px;background:rgba(var(--fill),.08);border-radius:99px;overflow:hidden;}
-.sbar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--sup),var(--sup-deep));}
+.sbar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--pri),var(--pri-lite));}
 .sbpct{flex:0 0 96px;font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:right;}
 .hrow{display:flex;align-items:center;gap:10px;padding:10px 0;font-size:13px;border-top:1px solid rgba(var(--fill),.12);}
 .hrow:first-of-type{border-top:0;}
@@ -897,3 +915,27 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
   .backlink,.gear,.pgbtn,.scard,.opt,.chip{transition:none !important;}
   .hero,h1 .em{animation:none !important;}
 }
+
+/* ===== 解説内の選択肢参照（どれが正解で、どれが自分の回答か） ===== */
+/* 行中の◯記号。縦位置は実画面で追い込んだ値（0.5px） */
+.refmk{display:inline-flex;align-items:center;justify-content:center;
+  min-width:19px;height:19px;padding:0 5px;margin:0 2px;border-radius:50%;
+  font-size:11.5px;font-weight:800;line-height:1;vertical-align:0.5px;
+  background:rgba(var(--fill),.14);color:inherit;}
+.refmk.ok{background:var(--pos);color:var(--on-color);}
+.refmk.ng{background:var(--neg);color:var(--on-color);}
+/* 解説冒頭の「あなたの回答◯／正解◯」の行 */
+.fbline{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px;
+  font-size:13px;}
+.fbline b{font-size:14px;}
+.fbok{color:var(--pos-deep);}
+.fbng{color:var(--neg-deep);}
+.fbsep{opacity:.5;margin:0 2px;}
+/* アナリスト吹き出し（濃い面）の中では明るいトーンで */
+.analyst .fbok{color:var(--pos-deep);}
+.analyst .fbng{color:var(--neg-deep);}
+:root[data-theme="light"] .analyst .fbok,
+:root:not([data-theme="dark"]) .analyst .fbok{color:#8bc9c3;}
+:root[data-theme="light"] .analyst .fbng,
+:root:not([data-theme="dark"]) .analyst .fbng{color:#f9a1d5;}
+:root:not([data-theme="dark"]) .analyst .refmk:not(.ok):not(.ng){background:rgba(255,255,255,.16);}

@@ -237,8 +237,14 @@ let swWaiting = null;
 /* ローカル開発（npm run dev）ではSWのキャッシュで編集が反映されなくなるため無効化し、
    既に登録済みのSWとキャッシュも解除する */
 function isLocalDev() {
-  return ["localhost", "127.0.0.1", "0.0.0.0"].includes(location.hostname)
-    || /^192\.168\./.test(location.hostname);
+  // プライベートIP全域を開発とみなす。判定が漏れるとスマホ実機での確認時に
+  // Service Workerが本番同様に起動し、編集がキャッシュに阻まれて反映されない
+  const h = location.hostname;
+  return ["localhost", "127.0.0.1", "0.0.0.0"].includes(h)
+    || /^192\.168\./.test(h)
+    || /^10\./.test(h)
+    || /^172\.(1[6-9]|2\d|3[01])\./.test(h)
+    || h.endsWith(".local");
 }
 
 function initServiceWorker() {
@@ -1073,13 +1079,20 @@ function shuffle(arr) {
    order[disp] = 元の選択肢index。元index → 表示ラベルの対応で置換する。
    order 省略時は元の並び順（A=0,B=1…）でそのまま表示。 */
 const IDENT = [0, 1, 2, 3, 4];
-function subMarks(reason, order) {
+/* reason内の {A}〜{E} を表示上の記号に置き換える。
+   correctOrig / chosenOrig（元インデックス）を渡すと、その記号を
+   色付きチップにして「どれが正解で、どれが自分の回答か」を一目で示す */
+function subMarks(reason, order, correctOrig, chosenOrig) {
   if (!reason) return reason || "";
   const map = {};
   (order || IDENT).forEach((orig, disp) => { map[orig] = MARKS[disp]; });
   return reason.replace(/\{([A-E])\}/g, (m, L) => {
-    const v = map[L.charCodeAt(0) - 65];
-    return v !== undefined ? v : L;
+    const oi = L.charCodeAt(0) - 65;
+    const v = map[oi];
+    if (v === undefined) return L;
+    if (oi === correctOrig) return `<span class="refmk ok">${v}</span>`;
+    if (oi === chosenOrig) return `<span class="refmk ng">${v}</span>`;
+    return `<span class="refmk">${v}</span>`;
   });
 }
 
@@ -1211,7 +1224,12 @@ function choose(disp) {
     st: q.step, q: q.q, ok,
     chosen: q.options[orig], corr: q.options[q.correct], reason: q.reason
   });
-  $("fbTxt").innerHTML = `<b>${ok ? `正解 ${ic("check_circle", 1)}` : `不正解 ${ic("cancel", 1)}`}</b> ${subMarks(q.reason, order)}`;
+  // どの記号が自分でどれが正解かを、冒頭の要約と本文中の色付き記号の両方で示す
+  const corrMark = MARKS[order.indexOf(q.correct)];
+  const yourLine = ok
+    ? `<span class="fbline"><b class="fbok">${ic("check_circle", 1)} 正解</b><span class="refmk ok">${corrMark}</span></span>`
+    : `<span class="fbline"><b class="fbng">${ic("cancel", 1)} 不正解</b>あなたの回答 <span class="refmk ng">${MARKS[disp]}</span><span class="fbsep">／</span>正解 <span class="refmk ok">${corrMark}</span></span>`;
+  $("fbTxt").innerHTML = `${yourLine}${subMarks(q.reason, order, q.correct, ok ? -1 : orig)}`;
   $("fb").classList.add("show");
   $("nx").classList.add("show");
   // 回答済みなので「次の問題から」再開できるよう進捗を更新
@@ -1267,7 +1285,7 @@ function showAnswers(s) {
       h += `<div class="aopt${k === q.correct ? " ok" : ""}"><span class="mk">${MARKS[k]}</span><span>${o}</span>${k === q.correct ? '<span class="abadge">正解</span>' : ""}</div>`;
     });
     h += glossaryHTML(q);
-    h += `<div class="areason"><b>解説</b>${subMarks(q.reason)}</div></div>`;
+    h += `<div class="areason"><b>解説</b>${subMarks(q.reason, null, q.correct)}</div></div>`;
   });
   if (s.learning) h += `<div class="band chk"><b>${ic("lightbulb", 1)} 今回の学び</b>${s.learning}</div>`;
   if (s.calls && s.calls.length) h += `<div class="calls" id="callsBox"></div>`;
@@ -1790,8 +1808,8 @@ function renderCSView() {
     h += `<div class="hrow csrow${isOpen ? " open" : ""}" data-k="${k}" title="タップで詳細を表示">
       ${dateChipHTML(r.date)}
       <span class="hname">${r.name}<small class="hnews">${r.news}</small></span>
-      <span class="hwin">${r.market || ""}・${r.win}</span>
-      <span class="hscore"><span class="${relCls}">${r.dir}コール 市場相対 ${s}${r.rel}%</span> ${judgeBadge(r.rel, r.dir)} <span class="ms csarrow">${isOpen ? "expand_less" : "expand_more"}</span></span></div>`;
+      <span class="hbot"><span class="hwin">${r.market || ""}・${r.win}</span>
+      <span class="hscore"><span class="${relCls}">${r.dir}コール 市場相対 ${s}${r.rel}%</span> ${judgeBadge(r.rel, r.dir)} <span class="ms csarrow">${isOpen ? "expand_less" : "expand_more"}</span></span></span></div>`;
     if (isOpen) h += csDetailHTML(r);
   });
   h += `</div>`;
@@ -1823,13 +1841,27 @@ function renderCSView() {
   $("csBody").querySelectorAll(".csrow").forEach(el => {
     el.onclick = async () => {
       const r = listRows[+el.dataset.k];
-      if (!r || !r.sid) return;   // 旧キャッシュ（sidなし）は「集計する」で更新後に対応
+      if (!r) return;
+      if (!r.sid) {   // 旧キャッシュにはsidが無く詳細を引けない。無言で無視しない
+        showToast({ key: "cs-stale", icon: "sync_problem",
+          title: "集計データが古い形式です",
+          body: "「集計する」を押して作り直すと、銘柄の詳細を開けるようになります。" });
+        return;
+      }
       const key = `${r.sid}|${r.ticker}`;
       if (csOpen === key) { csOpen = null; renderCSView(); return; }
       if (!csDetail[r.sid]) {
         el.style.opacity = ".6";
         try { csDetail[r.sid] = await apiGet(`api/calls/${r.sid}`); }
-        catch (e) { el.style.opacity = ""; return; }
+        catch (e) {
+          el.style.opacity = "";
+          // 原因の切り分けができるよう、失敗の中身（404やネットワーク断）も添える
+          const why = (e && e.message) ? `詳細: ${e.message}` : "";
+          showToast({ key: "cs-fetch", icon: "cloud_off",
+            title: "詳細データを取得できませんでした",
+            body: `通信環境をご確認のうえ、もう一度お試しください。${why}` });
+          return;
+        }
       }
       csOpen = key;
       renderCSView();

@@ -59,6 +59,19 @@ def static_files(p):
     return send_from_directory(BASE, p)
 
 
+@app.after_request
+def no_cache(resp):
+    """開発サーバーは常に最新のファイルを配る（キャッシュさせない）。
+
+    index.html の ?v= ハッシュはビルド時にしか変わらないため、開発中に
+    app.js / style.css を編集しても、ブラウザが同じURLのキャッシュを
+    使い続けて「直したのに反映されない」が起きる。本番（GitHub Pages）には
+    このヘッダーは付かないので影響しない。
+    """
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 def load_all_sessions():
     out = []
     for f in sorted(glob.glob(os.path.join(DATA, "*.json"))):
