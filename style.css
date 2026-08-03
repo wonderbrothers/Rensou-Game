@@ -46,7 +46,6 @@
   --ink-tx:#ffffff;                  /* 濃い面に載せる文字 */
   --ov:rgba(var(--fill),.45);           /* モーダルの背景 */
   --pri-lite:#e86b55;                /* プライマリのグラデ終端 */
-  --ease:cubic-bezier(.4,0,.2,1);    /* 動きのイージング（色ではないのでテーマ非依存） */
   color-scheme:light;
 }
 *{box-sizing:border-box;}
@@ -143,10 +142,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .btn.ghost:hover{background:rgba(var(--sup-rgb),.20);transform:translateY(-2px);}
 
 /* ===== プレイ画面 ===== */
-/* .wrap が縦フレックスのため、左右autoマージンだけだと stretch されず
-   「内容なりの幅」に縮む（カレンダーが日付選択で広がって見えた原因）。
-   width:100% を明示して幅を確定させ、max-width で上限、autoマージンで中央寄せ */
-#stage{width:100%;max-width:720px;margin:0 auto 36px;}
+#stage{max-width:720px;margin:0 auto 36px;}
 #stage.wide{max-width:none;}   /* カレンダー画面はHOMEと同じ幅 */
 .top{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
 .score{margin-left:auto;font-size:15px;color:var(--ink-2);font-weight:800;
@@ -158,7 +154,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 /* 進捗バー */
 .bar{height:16px;background:var(--paper);border-radius:99px;box-shadow:inset 0 2px 5px rgba(var(--sh),.08);overflow:hidden;margin:10px 0 20px;}
 .bar>i{display:block;height:100%;border-radius:99px;width:0;transition:.4s;
-  background:linear-gradient(90deg,var(--pri),var(--pri-lite));}
+  background:linear-gradient(90deg,var(--sup),var(--sup-deep));}
 
 .stepno{display:inline-block;font-size:12.5px;color:var(--ink-tx);font-weight:800;letter-spacing:.06em;
   background:var(--ink-bg);border-radius:999px;padding:4px 16px;margin-bottom:10px;}
@@ -206,8 +202,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 /* アナリストの吹き出し = ネイビー */
 .analyst{background:var(--ink-bg);color:var(--ink-tx);border-radius:22px;padding:16px 18px;margin-top:22px;display:none;position:relative;}
 .analyst::before{content:"";position:absolute;top:-12px;left:38px;
-  border-left:10px solid transparent;border-right:10px solid transparent;
-  border-bottom:13px solid var(--ink-bg);}   /* 吹き出し本体と同じ面の色（--ink は文字色） */
+  border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:13px solid var(--ink);}
 .analyst.show{display:block;animation:rise .3s ease;}
 @keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 .analyst .who{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
@@ -382,34 +377,16 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
   font-size:9px;font-weight:800;padding:3px 0;letter-spacing:.02em;flex:none;}
 .dchip b{display:flex;align-items:center;justify-content:center;flex:1;
   font-size:19px;color:var(--ink);padding:0;}
-/* 通算成績の銘柄行:
-   上段 = 日付チップ＋銘柄名（その下にニュース）
-   下段 = バッヂ列（市場・勝敗を左、成績・判定・矢印を右）を行の全幅に敷く。
-   flex任せだとバッヂ類が幅を譲らず銘柄名が数文字幅に潰れるため、
-   グリッドで「銘柄名=残り全幅」を確定させる */
-.csrow{display:grid;grid-template-columns:auto minmax(0,1fr);
-  column-gap:12px;row-gap:8px;align-items:center;}
-.csrow .dchip{grid-row:1;grid-column:1;}
-.csrow .hname{grid-row:1;grid-column:2;}
-.csrow .hname small.hnews{margin-top:2px;}
-/* バッヂ列は折り返しを禁止して常に1行にする。折り返しを許すと、成績の
-   桁数や端末の文字サイズ設定しだいで行ごとに1行/2行が混ざり、矢印の高さも
-   揃わなくなる。幅が足りないときは重要度の低い「市場・勝敗」を省略記号で
-   縮め、成績・判定・矢印は常に完全表示する */
-.csrow .hbot{grid-row:2;grid-column:1 / span 2;
-  display:flex;align-items:center;gap:8px;flex-wrap:nowrap;
-  position:relative;padding-right:30px;   /* 右端に開閉矢印の席 */
-  min-width:0;}   /* グリッドの列を最小内容幅で押し広げない（内容が長い行の器が行幅を超えて、矢印ごとはみ出すのを防ぐ） */
-.csrow .hbot .hwin{flex:0 1 auto;min-width:0;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap;}
-.csrow .hbot .hscore{margin-left:auto;flex:0 0 auto;
-  display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
-/* 開閉矢印はバッヂ列の右端・上下中央に固定（列は常に1行なので中央でよい） */
-.csrow .csarrow{position:absolute;right:0;top:50%;transform:translateY(-50%);}
-/* 開閉矢印は下段バッヂの並びの末尾。押しやすいようやや大きく */
-.csrow .csarrow{font-size:22px;vertical-align:0;}
+/* 幅の狭い端末: 上段=銘柄・ニュース（縦積み）／下段=バッヂ類と矢印を左右に配分 */
+@media(max-width:480px){
+  .csrow{flex-wrap:wrap;row-gap:5px;justify-content:space-between;}
+  .csrow .dchip{order:-1;}
+  .csrow .hname{flex:1 1 calc(100% - 58px);}
+  .csrow .hwin{margin-right:auto;}
+  .csrow .hscore{display:flex;align-items:center;gap:8px;margin-left:auto;}
+}
 .csrow:hover{background:var(--sup-soft);}
-.csrow .csarrow{color:var(--ink-3);}
+.csrow .csarrow{font-size:1.1em;vertical-align:-0.2em;color:var(--ink-3);}
 .csdetail{background:var(--bg);border:1px solid var(--line);border-radius:14px;
   padding:10px 14px;margin:2px 0 10px;}
 .csdetail .basis{font-size:12px;color:var(--ink-2);margin:4px 0 6px;}
@@ -436,17 +413,13 @@ button.bd:hover,button.hdate:hover{transform:translateY(-1px);box-shadow:0 4px 1
 .calx .ms{font-size:20px;}
 .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
 .calw{text-align:center;font-size:10.5px;color:var(--ink-3);font-weight:800;padding:2px 0;}
-/* 2行グリッド（1行目=日付／2行目=件数バッヂの席）にして、件数の有無に関わらず
-   日付の縦位置を揃える。バッヂが無い日も席だけ残るので行ごとに数字がずれない */
-.calc{min-height:46px;border-radius:10px;background:var(--bg);
-  display:grid;grid-template-rows:auto 16px;gap:2px;
-  align-content:center;justify-items:center;padding:4px 3px;}
+.calc{min-height:46px;border-radius:10px;background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;padding:4px 0 3px;}
 .calc.mute{background:transparent;}
 .calc .cd{font-size:11px;color:var(--ink);font-weight:800;line-height:1.2;}
 .calc.has{background:var(--pri-soft);}
-.cn{display:inline-flex;align-items:center;background:var(--ink-bg);color:var(--ink-tx);
-  font-size:10px;font-weight:800;line-height:1.4;
-  border-radius:999px;padding:1px 7px;pointer-events:none;align-self:center;}
+.cn{display:inline-block;background:var(--ink-bg);color:var(--ink-tx);font-size:10px;font-weight:800;
+  border-radius:999px;padding:1px 7px;margin-top:2px;pointer-events:none;}
 /* 件数のある日はセル全体がボタン（薄いオレンジの範囲すべてがクリック領域） */
 button.calc{border:0;font-family:inherit;cursor:pointer;width:100%;
   transition:background .15s,transform .1s;}
@@ -456,7 +429,7 @@ button.calc:active{transform:translateY(0);}
 .sbarrow{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
 .sblabel{flex:0 0 96px;font-size:12.5px;font-weight:800;}
 .sbar{flex:1;height:12px;background:rgba(var(--fill),.08);border-radius:99px;overflow:hidden;}
-.sbar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--pri),var(--pri-lite));}
+.sbar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--sup),var(--sup-deep));}
 .sbpct{flex:0 0 96px;font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:right;}
 .hrow{display:flex;align-items:center;gap:10px;padding:10px 0;font-size:13px;border-top:1px solid rgba(var(--fill),.12);}
 .hrow:first-of-type{border-top:0;}
@@ -692,15 +665,15 @@ div.skl{display:block;}
      ホームインジケータ領域の上にそのまま浮かせる（safe-area分を足さない） */
   .gnav{position:fixed;z-index:70;
     left:50%;right:auto;bottom:21px;transform:translateX(-50%);
-    width:calc(100% - 42px);max-width:none;margin:0;padding:2px;
-    border-radius:999px;   /* 大小どちらの状態もカプセル型 */
+    width:calc(100% - 42px);max-width:none;margin:0;padding:6px;
+    border-radius:26px;
     border:1px solid var(--glass-line);
     background:var(--glass-3);
     -webkit-backdrop-filter:blur(20px) saturate(180%);
     backdrop-filter:blur(20px) saturate(180%);
     box-shadow:0 10px 30px rgba(var(--sh),.18);
     justify-content:space-around;overflow:visible;}
-  .gnav-item{flex:1 1 0;min-width:0;border-radius:999px;padding:7px 2px;font-size:10px;gap:2px;}
+  .gnav-item{flex:1 1 0;min-width:0;border-radius:20px;padding:7px 2px;font-size:10px;gap:2px;}
   .gnav-item .ms{font-size:20px;}
   /* 幅の狭いボトムナビでは、文字数を抑えた短いラベルに差し替える */
   .gnav-item .gt{display:none;}
@@ -708,25 +681,21 @@ div.skl{display:block;}
     white-space:nowrap;max-width:100%;}
   .gnav-item.active{background:var(--pri-soft);color:var(--pri-deep);box-shadow:none;}
 
-  /* 下スクロール中は縮小: ラベルを隠してアイコンだけのコンパクト表示に。
-     flex や justify-content は値を補間できずカクつくので、状態間で変えない。
-     動かすのは幅・高さ・角丸・文字サイズという補間できる値だけにする。
-     項目は両状態とも flex:1 1 0 のままなので、コンテナ幅が縮むのに追従して
-     各項目の幅もなめらかに縮む（幅228pxのとき内訳がちょうど40px×5になる） */
-  .gnav{transition:width .3s var(--ease),border-radius .3s var(--ease),
-    padding .3s var(--ease);will-change:width;}
-  .gnav-item{height:50px;justify-content:center;
-    transition:height .3s var(--ease),padding .3s var(--ease),
-    border-radius .3s var(--ease);}
-  .gnav-item .ms{transition:font-size .3s var(--ease);}
-  .gnav .gt,.gnav .gts{transition:opacity .16s ease,max-height .3s var(--ease);
-    max-height:14px;opacity:1;overflow:hidden;}
+  /* 下スクロール中は縮小: ラベルを隠してアイコンだけのコンパクト表示に */
+  .gnav{transition:padding .22s ease,border-radius .22s ease,width .22s ease;}
+  .gnav-item{transition:padding .22s ease;}
+  .gnav .gt,.gnav .gts{transition:opacity .18s ease,max-height .22s ease,margin .22s ease;
+    max-height:14px;opacity:1;}
+  /* 中身（アイコン5個）の幅に合わせて縮め、中央に配置する。
+     幅を割合で決めるとアイコンがはみ出すため width:max-content にする */
   /* 幅は中身ぴったり: アイコン40px×5 + 間隔4px×4 + 内側余白6px×2 = 228px */
-  .gnav.mini{width:228px;max-width:calc(100% - 42px);border-radius:999px;}
+  .gnav.mini{width:228px;max-width:calc(100% - 42px);
+    padding:6px;border-radius:999px;gap:4px;justify-content:center;}
   /* アイコンだけになるので、各項目を正円のタップ領域にする */
-  .gnav.mini .gnav-item{height:40px;padding:0;border-radius:999px;}
-  .gnav.mini .gt,.gnav.mini .gts{max-height:0;opacity:0;}
-  .gnav.mini .ms{font-size:20px;}
+  .gnav.mini .gnav-item{flex:0 0 auto;width:40px;height:40px;padding:0;border-radius:50%;
+    justify-content:center;}
+  .gnav.mini .gt,.gnav.mini .gts{max-height:0;opacity:0;margin:0;overflow:hidden;}
+  .gnav.mini .ms{font-size:22px;}
   /* 浮かせたナビの下に本文が隠れないよう余白を確保 */
   .wrap{padding-bottom:96px;}
   /* 画面上部に固定した「戻る」「設定」と本文（スコアやロゴ）が重ならないよう、
@@ -882,61 +851,3 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
 @media(max-width:640px){
   body.has-notice .toastbox{bottom:176px;}
 }
-
-/* ===== ページ送り（通算成績の銘柄一覧） ===== */
-.csrange{margin:0 2px 8px;font-size:11.5px;color:var(--ink-3);letter-spacing:.03em;}
-/* ページ送りの着地点。一覧の先頭が画面の上端に貼りつかないよう余白を持たせる。
-   スマホは上部に「戻る」「設定」を固定しているのでその高さぶんを足す */
-#csList{scroll-margin-top:20px;}
-@media(max-width:640px){#csList{scroll-margin-top:64px;}}
-.pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
-  gap:6px;margin:18px 0 4px;}
-.pgbtn{display:inline-flex;align-items:center;justify-content:center;
-  min-width:34px;height:34px;padding:0 9px;border-radius:999px;
-  border:1px solid var(--glass-line);background:var(--glass);
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
-  font-family:inherit;font-size:13px;font-weight:800;color:var(--ink-2);
-  cursor:pointer;transition:background .15s,color .15s,transform .15s;}
-.pgbtn .ms{font-size:19px;vertical-align:0;line-height:1;}
-.pgbtn:hover:not(:disabled){background:var(--glass-2);color:var(--pri-deep);transform:translateY(-1px);}
-.pgbtn:disabled{opacity:.35;cursor:default;}
-.pgbtn.current{background:var(--pri);border-color:transparent;color:var(--on-color);
-  box-shadow:0 6px 16px rgba(var(--pri-rgb),.32);}
-.pgbtn.current:hover{background:var(--pri);color:var(--on-color);}
-.pgap{color:var(--ink-3);font-size:13px;font-weight:800;padding:0 2px;user-select:none;}
-@media(max-width:640px){
-  .pager{gap:5px;}
-  .pgbtn{min-width:32px;height:32px;padding:0 7px;font-size:12.5px;}
-  .pgbtn .ms{font-size:18px;}
-}
-
-/* OSで「視差効果を減らす」を選んでいる人には動きを出さない */
-@media(prefers-reduced-motion:reduce){
-  .gnav,.gnav-item,.gnav-item .ms,.gnav .gt,.gnav .gts,
-  .backlink,.gear,.pgbtn,.scard,.opt,.chip{transition:none !important;}
-  .hero,h1 .em{animation:none !important;}
-}
-
-/* ===== 解説内の選択肢参照（どれが正解で、どれが自分の回答か） ===== */
-/* 行中の◯記号。縦位置は実画面で追い込んだ値（0.5px） */
-.refmk{display:inline-flex;align-items:center;justify-content:center;
-  min-width:19px;height:19px;padding:0 5px;margin:0 2px;border-radius:50%;
-  font-size:11.5px;font-weight:800;line-height:1;vertical-align:0.5px;
-  background:rgba(var(--fill),.14);color:inherit;}
-.refmk.ok{background:var(--pos);color:var(--on-color);}
-.refmk.ng{background:var(--neg);color:var(--on-color);}
-/* 解説冒頭の「あなたの回答◯／正解◯」の行 */
-.fbline{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px;
-  font-size:13px;}
-.fbline b{font-size:14px;}
-.fbok{color:var(--pos-deep);}
-.fbng{color:var(--neg-deep);}
-.fbsep{opacity:.5;margin:0 2px;}
-/* アナリスト吹き出し（濃い面）の中では明るいトーンで */
-.analyst .fbok{color:var(--pos-deep);}
-.analyst .fbng{color:var(--neg-deep);}
-:root[data-theme="light"] .analyst .fbok,
-:root:not([data-theme="dark"]) .analyst .fbok{color:#8bc9c3;}
-:root[data-theme="light"] .analyst .fbng,
-:root:not([data-theme="dark"]) .analyst .fbng{color:#f9a1d5;}
-:root:not([data-theme="dark"]) .analyst .refmk:not(.ok):not(.ng){background:rgba(255,255,255,.16);}
