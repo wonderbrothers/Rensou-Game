@@ -160,18 +160,46 @@ function initNavShrink() {
   if (!nav) return;
   let last = window.scrollY;
   let idle = null;
-  const set = compact => nav.classList.toggle("mini", compact);
-  window.addEventListener("scroll", () => {
+  let ticking = false;
+  let compact = false;      // いま適用されている状態
+  let want = false;         // これから適用したい状態
+  let pending = null;
+  const DELAY = 200;        // スクロールを検知してから実際に動くまでの間（ワンテンポ）
+
+  // 同じ状態なら触らない。無駄なクラス操作でアニメーションが途切れるのを防ぐ
+  const apply = v => {
+    if (v === compact) return;
+    compact = v;
+    nav.classList.toggle("mini", v);
+  };
+  // すぐには動かさず、少し置いてから適用する。その間に向きが変われば取り消す。
+  // スクロールに即応すると、指が触れた瞬間に反応してせわしなく見える
+  const request = (v, immediate) => {
+    if (v === want && !immediate) return;         // 同じ予約は積み直さない
+    want = v;
+    clearTimeout(pending);
+    pending = null;
+    if (immediate) { apply(v); return; }
+    pending = setTimeout(() => { pending = null; apply(v); }, DELAY);
+  };
+  const update = () => {
+    ticking = false;
     const y = window.scrollY;
     const dy = y - last;
-    if (Math.abs(dy) > 6) {                       // 微細な揺れは無視
-      if (dy > 0 && y > 80) set(true);            // 下へ → 縮小
-      else if (dy < 0) set(false);                // 上へ → 復帰
-      last = y;
-    }
-    if (y <= 80) set(false);                      // 最上部では常に通常表示
+    // しきい値を方向で変える（縮むのは慎重に、戻るのは軽く）。
+    // 同じ値だと、指の微妙な揺れで拡大縮小がばたつく
+    if (dy > 12 && y > 80) { request(true); last = y; }
+    else if (dy < -8) { request(false); last = y; }
+    else if (Math.abs(dy) > 12) last = y;
+    if (y <= 80) request(false, true);            // 最上部では待たずに通常表示へ
     clearTimeout(idle);
-    idle = setTimeout(() => set(false), 1200);    // 手が止まったら戻す
+    idle = setTimeout(() => request(false, true), 1200);   // 手が止まったら戻す
+  };
+  // スクロールごとに処理せず、描画の直前に1回だけまとめて判定する
+  window.addEventListener("scroll", () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
   }, { passive: true });
 }
 

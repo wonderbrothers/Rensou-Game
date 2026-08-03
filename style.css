@@ -46,6 +46,7 @@
   --ink-tx:#ffffff;                  /* 濃い面に載せる文字 */
   --ov:rgba(var(--fill),.45);           /* モーダルの背景 */
   --pri-lite:#e86b55;                /* プライマリのグラデ終端 */
+  --ease:cubic-bezier(.4,0,.2,1);    /* 動きのイージング（色ではないのでテーマ非依存） */
   color-scheme:light;
 }
 *{box-sizing:border-box;}
@@ -688,20 +689,24 @@ div.skl{display:block;}
     white-space:nowrap;max-width:100%;}
   .gnav-item.active{background:var(--pri-soft);color:var(--pri-deep);box-shadow:none;}
 
-  /* 下スクロール中は縮小: ラベルを隠してアイコンだけのコンパクト表示に */
-  .gnav{transition:padding .22s ease,border-radius .22s ease,width .22s ease;}
-  .gnav-item{transition:padding .22s ease;}
-  .gnav .gt,.gnav .gts{transition:opacity .18s ease,max-height .22s ease,margin .22s ease;
-    max-height:14px;opacity:1;}
-  /* 中身（アイコン5個）の幅に合わせて縮め、中央に配置する。
-     幅を割合で決めるとアイコンがはみ出すため width:max-content にする */
+  /* 下スクロール中は縮小: ラベルを隠してアイコンだけのコンパクト表示に。
+     flex や justify-content は値を補間できずカクつくので、状態間で変えない。
+     動かすのは幅・高さ・角丸・文字サイズという補間できる値だけにする。
+     項目は両状態とも flex:1 1 0 のままなので、コンテナ幅が縮むのに追従して
+     各項目の幅もなめらかに縮む（幅228pxのとき内訳がちょうど40px×5になる） */
+  .gnav{transition:width .3s var(--ease),border-radius .3s var(--ease),
+    padding .3s var(--ease);will-change:width;}
+  .gnav-item{height:50px;justify-content:center;
+    transition:height .3s var(--ease),padding .3s var(--ease),
+    border-radius .3s var(--ease);}
+  .gnav-item .ms{transition:font-size .3s var(--ease);}
+  .gnav .gt,.gnav .gts{transition:opacity .16s ease,max-height .3s var(--ease);
+    max-height:14px;opacity:1;overflow:hidden;}
   /* 幅は中身ぴったり: アイコン40px×5 + 間隔4px×4 + 内側余白6px×2 = 228px */
-  .gnav.mini{width:228px;max-width:calc(100% - 42px);
-    padding:6px;border-radius:999px;gap:4px;justify-content:center;}
+  .gnav.mini{width:228px;max-width:calc(100% - 42px);border-radius:999px;}
   /* アイコンだけになるので、各項目を正円のタップ領域にする */
-  .gnav.mini .gnav-item{flex:0 0 auto;width:40px;height:40px;padding:0;border-radius:50%;
-    justify-content:center;}
-  .gnav.mini .gt,.gnav.mini .gts{max-height:0;opacity:0;margin:0;overflow:hidden;}
+  .gnav.mini .gnav-item{height:40px;padding:0;border-radius:999px;}
+  .gnav.mini .gt,.gnav.mini .gts{max-height:0;opacity:0;}
   .gnav.mini .ms{font-size:22px;}
   /* 浮かせたナビの下に本文が隠れないよう余白を確保 */
   .wrap{padding-bottom:96px;}
@@ -884,4 +889,11 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
   .pager{gap:5px;}
   .pgbtn{min-width:32px;height:32px;padding:0 7px;font-size:12.5px;}
   .pgbtn .ms{font-size:18px;}
+}
+
+/* OSで「視差効果を減らす」を選んでいる人には動きを出さない */
+@media(prefers-reduced-motion:reduce){
+  .gnav,.gnav-item,.gnav-item .ms,.gnav .gt,.gnav .gts,
+  .backlink,.gear,.pgbtn,.scard,.opt,.chip{transition:none !important;}
+  .hero,h1 .em{animation:none !important;}
 }
