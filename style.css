@@ -673,7 +673,7 @@ div.skl{display:block;}
      ホームインジケータ領域の上にそのまま浮かせる（safe-area分を足さない） */
   .gnav{position:fixed;z-index:70;
     left:50%;right:auto;bottom:21px;transform:translateX(-50%);
-    width:calc(100% - 42px);max-width:none;margin:0;padding:6px;
+    width:calc(100% - 42px);max-width:none;margin:0;padding:2px;
     border-radius:999px;   /* 大小どちらの状態もカプセル型 */
     border:1px solid var(--glass-line);
     background:var(--glass-3);
@@ -707,7 +707,7 @@ div.skl{display:block;}
   /* アイコンだけになるので、各項目を正円のタップ領域にする */
   .gnav.mini .gnav-item{height:40px;padding:0;border-radius:999px;}
   .gnav.mini .gt,.gnav.mini .gts{max-height:0;opacity:0;}
-  .gnav.mini .ms{font-size:22px;}
+  .gnav.mini .ms{font-size:20px;}
   /* 浮かせたナビの下に本文が隠れないよう余白を確保 */
   .wrap{padding-bottom:96px;}
   /* 画面上部に固定した「戻る」「設定」と本文（スコアやロゴ）が重ならないよう、
