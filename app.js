@@ -1619,6 +1619,8 @@ function marketOf(t) {
 let csRows = [], csAsof = null, csMarket = "all", csStatus = "all";
 let csSort = "all";        // "all" | "+" | "-" … コールの向きで並び替え
 let csOpen = null;         // 展開中の行キー "sid|ticker"
+let csPage = 1;            // 銘柄一覧のページ番号（1始まり）
+const CS_PAGE = 20;        // 1ページの表示件数
 const csDetail = {};       // sid → api/calls payload（詳細展開用キャッシュ）
 let statsDate = "";        // 直近のプレイの日付フィルタ
 
@@ -1654,7 +1656,7 @@ function renderCallStats(rows, asof, dupes) {
   // 旧キャッシュ（dateを持たない行）でも安全に動くよう、描画時にも集約をかける
   csRows = dedupeCalls(rows);
   csDupes = dupes != null ? dupes : rows.length - csRows.length;
-  csAsof = asof; csMarket = "all"; csStatus = "all"; csSort = "all"; csOpen = null;
+  csAsof = asof; csMarket = "all"; csStatus = "all"; csSort = "all"; csOpen = null; csPage = 1;
   renderCSView();
 }
 
@@ -1737,10 +1739,22 @@ function renderCSView() {
   </div>`;
   if (csSort !== "all") listRows = listRows.filter(r => r.dir === csSort && r.rel !== 0);
 
-  if (!listRows.length) {
+  // --- ページ分割 ---
+  const total = listRows.length;
+  const pages = Math.max(1, Math.ceil(total / CS_PAGE));
+  if (csPage > pages) csPage = pages;          // 絞り込みで件数が減ったとき用
+  const from = (csPage - 1) * CS_PAGE;
+  const pageRows = listRows.slice(from, from + CS_PAGE);
+
+  // ページ送りの着地点。ここから下が銘柄一覧の本体
+  h += `<div id="csList">`;
+  if (!total) {
     h += `<p class="empty">該当する銘柄がありません。</p>`;
+  } else if (pages > 1) {
+    h += `<p class="cnote csrange">${total}件中 ${from + 1}〜${from + pageRows.length}件を表示</p>`;
   }
-  listRows.forEach((r, k) => {
+  pageRows.forEach((r, i) => {
+    const k = from + i;                        // 展開時の参照は全体での位置で持つ
     const s = r.rel > 0 ? "+" : "";
     const relCls = r.rel > 0 ? "relpos" : r.rel < 0 ? "relneg" : "";
     const key = `${r.sid || ""}|${r.ticker}`;
@@ -1752,15 +1766,30 @@ function renderCSView() {
       <span class="hscore"><span class="${relCls}">${r.dir}コール 市場相対 ${s}${r.rel}%</span> ${judgeBadge(r.rel, r.dir)} <span class="ms csarrow">${isOpen ? "expand_less" : "expand_more"}</span></span></div>`;
     if (isOpen) h += csDetailHTML(r);
   });
+  h += `</div>`;
+  h += pagerHTML(csPage, pages);
+
   $("csBody").innerHTML = h;
+  $("csBody").querySelectorAll("[data-pg]").forEach(b => {
+    b.onclick = () => {
+      if (b.disabled) return;
+      csPage = +b.dataset.pg;
+      csOpen = null;                           // ページを移ったら展開は畳む
+      renderCSView();
+      // offsetTop は親要素基準でずれるため、要素そのものへスクロールさせる。
+      // 上部に固定したボタンぶんの余白は #csList の scroll-margin-top で確保
+      const list = $("csList");
+      if (list) list.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+  });
   $("csBody").querySelectorAll("[data-m]").forEach(b => {
-    b.onclick = () => { csMarket = b.dataset.m; csStatus = "all"; csOpen = null; renderCSView(); };
+    b.onclick = () => { csMarket = b.dataset.m; csStatus = "all"; csOpen = null; csPage = 1; renderCSView(); };
   });
   $("csBody").querySelectorAll("[data-cs]").forEach(b => {
-    b.onclick = () => { csStatus = csStatus === b.dataset.cs ? "all" : b.dataset.cs; csOpen = null; renderCSView(); };
+    b.onclick = () => { csStatus = csStatus === b.dataset.cs ? "all" : b.dataset.cs; csOpen = null; csPage = 1; renderCSView(); };
   });
   $("csBody").querySelectorAll("[data-sort]").forEach(b => {
-    b.onclick = () => { csSort = csSort === b.dataset.sort ? "all" : b.dataset.sort; renderCSView(); };
+    b.onclick = () => { csSort = csSort === b.dataset.sort ? "all" : b.dataset.sort; csPage = 1; renderCSView(); };
   });
   // 銘柄行クリック → チャートと詳細を展開
   $("csBody").querySelectorAll(".csrow").forEach(el => {
@@ -1779,8 +1808,34 @@ function renderCSView() {
     };
   });
   const clr = $("csClear");
-  if (clr) clr.onclick = () => { csStatus = "all"; csOpen = null; renderCSView(); };
+  if (clr) clr.onclick = () => { csStatus = "all"; csOpen = null; csPage = 1; renderCSView(); };
   if (csAsof) $("csNote").textContent = `最終集計: ${csAsof.toLocaleString("ja-JP")}（結果はこの端末に保存されます）`;
+}
+
+/* ページ送り。ページ数が多くなっても幅が破綻しないよう、
+   現在地の前後2ページだけを出し、離れた場所は「…」で畳む */
+function pagerHTML(page, pages) {
+  if (pages <= 1) return "";
+  const nums = new Set([1, pages, page, page - 1, page + 1, page - 2, page + 2]);
+  const list = [...nums].filter(n => n >= 1 && n <= pages).sort((a, b) => a - b);
+  let out = `<div class="pager">
+    <button class="pgbtn" data-pg="${page - 1}"${page === 1 ? " disabled" : ""}
+      aria-label="前のページ">${ic("chevron_left")}</button>`;
+  let prev = 0;
+  list.forEach(n => {
+    // 飛んだのが1ページだけなら「…」より数字を出したほうが押せて親切
+    if (n - prev === 2) {
+      out += `<button class="pgbtn num" data-pg="${n - 1}">${n - 1}</button>`;
+    } else if (n - prev > 1) {
+      out += `<span class="pgap">…</span>`;
+    }
+    out += `<button class="pgbtn num${n === page ? " current" : ""}" data-pg="${n}"
+      ${n === page ? 'aria-current="page"' : ""}>${n}</button>`;
+    prev = n;
+  });
+  out += `<button class="pgbtn" data-pg="${page + 1}"${page === pages ? " disabled" : ""}
+      aria-label="次のページ">${ic("chevron_right")}</button></div>`;
+  return out;
 }
 
 /* ---------- 間違いノート ---------- */

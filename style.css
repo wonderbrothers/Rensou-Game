@@ -851,3 +851,30 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
 @media(max-width:640px){
   body.has-notice .toastbox{bottom:176px;}
 }
+
+/* ===== ページ送り（通算成績の銘柄一覧） ===== */
+.csrange{margin:0 2px 8px;font-size:11.5px;color:var(--ink-3);letter-spacing:.03em;}
+/* ページ送りの着地点。一覧の先頭が画面の上端に貼りつかないよう余白を持たせる。
+   スマホは上部に「戻る」「設定」を固定しているのでその高さぶんを足す */
+#csList{scroll-margin-top:20px;}
+@media(max-width:640px){#csList{scroll-margin-top:64px;}}
+.pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
+  gap:6px;margin:18px 0 4px;}
+.pgbtn{display:inline-flex;align-items:center;justify-content:center;
+  min-width:34px;height:34px;padding:0 9px;border-radius:999px;
+  border:1px solid var(--glass-line);background:var(--glass);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  font-family:inherit;font-size:13px;font-weight:800;color:var(--ink-2);
+  cursor:pointer;transition:background .15s,color .15s,transform .15s;}
+.pgbtn .ms{font-size:19px;vertical-align:0;line-height:1;}
+.pgbtn:hover:not(:disabled){background:var(--glass-2);color:var(--pri-deep);transform:translateY(-1px);}
+.pgbtn:disabled{opacity:.35;cursor:default;}
+.pgbtn.current{background:var(--pri);border-color:transparent;color:var(--on-color);
+  box-shadow:0 6px 16px rgba(var(--pri-rgb),.32);}
+.pgbtn.current:hover{background:var(--pri);color:var(--on-color);}
+.pgap{color:var(--ink-3);font-size:13px;font-weight:800;padding:0 2px;user-select:none;}
+@media(max-width:640px){
+  .pager{gap:5px;}
+  .pgbtn{min-width:32px;height:32px;padding:0 7px;font-size:12.5px;}
+  .pgbtn .ms{font-size:18px;}
+}
