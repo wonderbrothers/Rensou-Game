@@ -225,6 +225,27 @@ def sanitize_payload(payload):
     return payload
 
 
+def write_sitemap(sessions):
+    """sitemap.xml を生成する。SPAのためURLはトップのみだが、
+    lastmod を最新記事の日付で更新することで、クローラーに
+    「更新されているサイト」であることを伝える。"""
+    latest = max((d.get("date", "") for d in sessions), default="")
+    lastmod = latest or datetime.date.today().isoformat()
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        '  <url>\n'
+        '    <loc>https://rensougame.wonder-bros.com/</loc>\n'
+        f'    <lastmod>{lastmod}</lastmod>\n'
+        '    <changefreq>daily</changefreq>\n'
+        '  </url>\n'
+        '</urlset>\n'
+    )
+    with open(os.path.join(BASE, "sitemap.xml"), "w", encoding="utf-8") as fp:
+        fp.write(xml)
+    print(f"✓ sitemap.xml（lastmod: {lastmod}）")
+
+
 def stamp_version():
     """フッターにビルド版数（ビルド日付＋git短縮ハッシュ）を自動刻印する。
 
@@ -395,6 +416,7 @@ def main():
     # Pages の Jekyll 処理を無効化（_ 始まりのファイル等をそのまま配信させる）
     open(os.path.join(BASE, ".nojekyll"), "w").close()
 
+    write_sitemap(sessions)
     stamp_version()
     stamp_assets()
     stamp_sw()   # ← app.js/style.css のハッシュ更新後に実行する
