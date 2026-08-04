@@ -8,6 +8,7 @@
 import datetime
 import glob
 import json
+import math
 import os
 import random
 import time
@@ -18,6 +19,20 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(BASE, "data")
 
 app = Flask(__name__, static_folder=None)
+
+
+class _StrictJSON(app.json_provider_class):
+    """NaN/Infinity を含む応答を作らせない（作ろうとしたらdevで即500になる）。
+
+    静的ビルド側の write() と同じ方針。壊れたJSONを黙って配るより、
+    開発中に大きな音で失敗するほうが早く直せる。
+    """
+    def dumps(self, obj, **kwargs):
+        kwargs.setdefault("allow_nan", False)
+        return super().dumps(obj, **kwargs)
+
+
+app.json = _StrictJSON(app)
 
 # ---------- 日次価格キャッシュ（同じ銘柄×同じ日は再取得しない） ----------
 CACHE_FILE = os.path.join(BASE, ".cache_prices.json")
@@ -57,6 +72,19 @@ def root():
 @app.route("/<path:p>")
 def static_files(p):
     return send_from_directory(BASE, p)
+
+
+@app.after_request
+def no_cache(resp):
+    """開発サーバーは常に最新のファイルを配る（キャッシュさせない）。
+
+    index.html の ?v= ハッシュはビルド時にしか変わらないため、開発中に
+    app.js / style.css を編集しても、ブラウザが同じURLのキャッシュを
+    使い続けて「直したのに反映されない」が起きる。本番（GitHub Pages）には
+    このヘッダーは付かないので影響しない。
+    """
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 def load_all_sessions():
@@ -140,6 +168,19 @@ def _with_retry(fn, tries=3, base=1.5):
 _BULK = {}   # ticker -> [{"d","iso","p"}, ...]（日付昇順）
 
 
+def _finite(x):
+    """数値として有効か（NaN/Inf/None を弾く）。
+
+    Yahooは市場データの反映前に NaN の行を返すことがある。NaN は正式なJSONでは
+    不正な値で、Pythonのjsonは平気で出力するがブラウザの response.json() は
+    パースを拒否する。APIに載せる数値は必ずこの関数を通して除外する。
+    """
+    try:
+        return x is not None and math.isfinite(float(x))
+    except (TypeError, ValueError):
+        return False
+
+
 def prefetch_all(tickers, start_str):
     """全銘柄の日次終値を yf.download 一括で取得して _BULK に格納する。
 
@@ -179,20 +220,21 @@ def prefetch_all(tickers, start_str):
 
 def fetch_price(ticker: str) -> float:
     """現在（直近）の株価"""
-    rows = _BULK.get(ticker)
+    rows = [r for r in (_BULK.get(ticker) or []) if _finite(r["p"])]
     if rows:
         return rows[-1]["p"]
     import yfinance as yf
     tk = yf.Ticker(ticker)
     try:
         p = tk.fast_info["last_price"]
-        if p:
+        if p and _finite(p):
             return float(p)
     except Exception:
         pass
 
     def _hist():
         h = tk.history(period="5d")
+        h = h[h["Close"].notna()]
         if not len(h):
             raise RuntimeError(f"price unavailable: {ticker}")
         return float(h["Close"].iloc[-1])
@@ -203,7 +245,7 @@ def fetch_price_on(ticker: str, date_str: str) -> float:
     """指定日（ニュース日付）の終値。休場日はその直前の営業日終値。"""
     rows = _BULK.get(ticker)
     if rows:
-        upto = [r for r in rows if r["iso"] <= date_str]
+        upto = [r for r in rows if r["iso"] <= date_str and _finite(r["p"])]
         if upto:
             return upto[-1]["p"]
     import yfinance as yf
@@ -213,6 +255,7 @@ def fetch_price_on(ticker: str, date_str: str) -> float:
 
     def _hist():
         h = yf.Ticker(ticker).history(start=start.isoformat(), end=end.isoformat())
+        h = h[h["Close"].notna()]
         if not len(h):
             raise RuntimeError(f"price unavailable on {date_str}: {ticker}")
         return float(h["Close"].iloc[-1])
@@ -279,7 +322,7 @@ def fetch_history(ticker: str, start_str: str):
         h = yf.Ticker(ticker).history(start=start.isoformat(), end=end.isoformat())
         return [{"d": i.strftime("%m/%d"), "iso": i.strftime("%Y-%m-%d"),
                  "p": round(float(row["Close"]), 2)}
-                for i, row in h.iterrows()]
+                for i, row in h.iterrows() if _finite(row["Close"])]
     return _with_retry(_hist)
 
 

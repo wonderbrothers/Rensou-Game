@@ -186,6 +186,45 @@ def build_calls(d, generated_at):
     return {"calls": results, "generated_at": generated_at}
 
 
+def sanitize_payload(payload):
+    """スナップショットからJSONとして不正な NaN/Inf を取り除く。
+
+    NaN はブラウザの response.json() がパースを拒否する。凍結済みの
+    再利用パイロードは過去のNaNを含んだまま配られ続けるため、
+    書き出す直前に必ずここを通す。履歴のNaN行は削除し、evalに
+    非有限値が混ざっていた場合はきれいな履歴から再計算する。
+    """
+    import math
+
+    def finite(x):
+        try:
+            return x is not None and math.isfinite(float(x))
+        except (TypeError, ValueError):
+            return False
+
+    def has_bad(o):
+        if isinstance(o, dict):
+            return any(has_bad(v) for v in o.values())
+        if isinstance(o, list):
+            return any(has_bad(v) for v in o)
+        return isinstance(o, float) and not math.isfinite(o)
+
+    for c in payload.get("calls", []):
+        for k in ("history", "bench_history"):
+            if isinstance(c.get(k), list):
+                c[k] = [r for r in c[k] if finite(r.get("p"))]
+        if has_bad(c.get("eval", {})):
+            try:
+                c["eval"] = compute_eval(c["history"], c.get("bench_history") or [],
+                                         c.get("called_at"))
+            except Exception:
+                c.pop("eval", None)
+        for k in ("current", "change_pct", "price_at_call"):
+            if k in c and not finite(c[k]):
+                c.pop(k, None)
+    return payload
+
+
 def stamp_version():
     """フッターにビルド版数（ビルド日付＋git短縮ハッシュ）を自動刻印する。
 
@@ -261,9 +300,20 @@ def stamp_assets():
 
 
 def write(path, obj):
+    """静的APIの唯一の書き出し口。allow_nan=False で NaN/Infinity を構造的に禁止する。
+
+    NaNはブラウザの response.json() がパースを拒否するため、1件でも混ざると
+    その記事のAPIは全損する（2026-08-04の事故）。sanitize_payload が仕事を
+    していれば発火しないが、万一すり抜けてもここで音を立てて止まり、
+    壊れたJSONが公開されることはない。
+    """
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    try:
+        text = json.dumps(obj, ensure_ascii=False, allow_nan=False)
+    except ValueError as e:
+        raise ValueError(f"{path}: JSONに不正な数値（NaN/Infinity）が混入 — {e}")
     with open(path, "w", encoding="utf-8") as fp:
-        json.dump(obj, fp, ensure_ascii=False)
+        fp.write(text)
         fp.write("\n")
 
 
@@ -322,13 +372,13 @@ def main():
             continue
         try:
             if sid in frozen_ids:
-                payload = prev[sid]
+                payload = sanitize_payload(prev[sid])
                 payload["frozen"] = True
                 write(os.path.join(OUT, "calls", sid), payload)
                 ok += 1
                 print(f"❄ api/calls/{sid} （T+20確定・凍結を再利用）")
                 continue
-            payload = build_calls(d, generated_at)
+            payload = sanitize_payload(build_calls(d, generated_at))
             if is_frozen(payload):
                 payload["frozen"] = True   # 次回ビルドから再取得しない
             write(os.path.join(OUT, "calls", sid), payload)
@@ -350,6 +400,10 @@ def main():
     stamp_sw()   # ← app.js/style.css のハッシュ更新後に実行する
 
     print(f"\n完了: {ok}件成功 / {ng}件失敗　株価スナップショット: {generated_at}")
+
+    if ng:
+        print(f"\n✗ {ng}件の生成に失敗しました。公開を停止します（上の ✗ 行を確認）。")
+        sys.exit(1)
 
     # --- 公開前の関所 ---
     # 履歴が1本も取れない銘柄（上場廃止・コード誤りの疑い）があれば、
