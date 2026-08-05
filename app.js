@@ -50,6 +50,8 @@ const store = {
    配色は style.css の :root[data-theme="dark"] が持つため、ここでは属性の付け替えだけを行う。
    ちらつき防止の初期適用は index.html の先頭インラインスクリプトが担当する。 */
 const THEME_KEY = "rensou_theme";
+const FS_KEY = "rensou_fontsize";           // "s" | "m" | "l"
+const FS_LABELS = { s: "小", m: "中", l: "大" };
 const THEME_COLOR = { light: "#fdece5", dark: "#151b2b" };
 
 function systemPrefersDark() {
@@ -71,8 +73,21 @@ function setDarkMode(dark) {
   try { localStorage.setItem(THEME_KEY, dark ? "dark" : "light"); } catch (e) {}
   applyTheme(dark);
 }
+/* 文字サイズ。値は style.css の :root[data-fs] が持つ倍率で全体に効く */
+function storedFontSize() {
+  try { return localStorage.getItem(FS_KEY) || "s"; } catch (e) { return "s"; }
+}
+function applyFontSize(v) {
+  document.documentElement.setAttribute("data-fs", v);
+}
+function setFontSize(v) {
+  try { localStorage.setItem(FS_KEY, v); } catch (e) {}
+  applyFontSize(v);
+}
+
 function initTheme() {
   applyTheme(isDarkMode());
+  applyFontSize(storedFontSize());
   // 明示的な選択がない間は端末の設定変更に追従する
   if (window.matchMedia) {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -105,6 +120,15 @@ function openSettings() {
         aria-checked="${isDarkMode()}" aria-label="ダークモード"></button>
     </div>
     <div class="setrow">
+      <span class="sic ms">format_size</span>
+      <span class="stx"><b>文字サイズ</b><small>読みやすい大きさに変えられます</small></span>
+      <span class="segbtn" role="group" aria-label="文字サイズ">
+        ${["s", "m", "l"].map(v => `<button type="button" data-fs="${v}"
+          class="${storedFontSize() === v ? "on" : ""}"
+          aria-pressed="${storedFontSize() === v}">${FS_LABELS[v]}</button>`).join("")}
+      </span>
+    </div>
+    <div class="setrow">
       <span class="sic ms">delete_forever</span>
       <span class="stx"><b>保存データの削除</b><small>成績・間違いノート・中断中のプレイをこの端末から消します</small></span>
       <button class="btn sm danger" id="clrData" type="button">削除</button>
@@ -131,6 +155,17 @@ function openSettings() {
     sw.setAttribute("aria-checked", String(next));
     setDarkMode(next);
   };
+
+  ov.querySelectorAll("[data-fs]").forEach(b => {
+    b.onclick = () => {
+      setFontSize(b.dataset.fs);
+      ov.querySelectorAll("[data-fs]").forEach(x => {
+        const on = x === b;
+        x.classList.toggle("on", on);
+        x.setAttribute("aria-pressed", String(on));
+      });
+    };
+  });
 
   // 保存データの削除は取り消せないため、モーダル内で二段階に確認する
   const conf = ov.querySelector("#clrConfirm");
@@ -1551,7 +1586,7 @@ function showStats() {
       ? ` <button class="chip active sm" id="pdClear" style="font-size:11px;">${ic("calendar_month")} ${statsDate} ${ic("close")}</button>` : ""}</div>`;
     const hist = statsDate
       ? rs.filter(r => (r.at || "").slice(0, 10) === statsDate).reverse()
-      : rs.slice(-8).reverse();
+      : rs.slice(-5).reverse();   // 通常は直近5件（日付で絞った時はその日の全件）
     if (!hist.length) h += `<p class="cnote">この日付のプレイはありません。</p>`;
     hist.forEach(r => {
       const pd = (r.at || "").slice(0, 10);
@@ -1635,20 +1670,27 @@ async function loadCallStats(force) {
   }
   $("csNote").textContent = "集計中…（全ニュースの株価を取得しています）";
   $("csBody").innerHTML = csSkeletonHTML();
-  const rows = [];
-  for (const s of sessions) {
-    if (!hasCalls(s)) continue;
-    try {
-      const d = await apiGet(`api/calls/${s.id}`);
-      d.calls.forEach(c => {
-        if (!c.eval) return;
-        const e = c.eval;
-        const w = (e.t20 && e.t20.status === "done") ? { ...e.t20, win: "T+20" }
-          : (e.t5 && e.t5.status === "done") ? { ...e.t5, win: "T+5" }
-          : { ...e.now, win: "経過中" };
-        rows.push({ sid: s.id, date: s.date || "", news: s.news.headline, name: c.name, dir: c.direction, win: w.win, rel: w.rel, bench: c.bench || "", ticker: c.ticker, market: marketOf(c.ticker) });
-      });
-    } catch (err) { /* skip */ }
+  let rows = [];
+  // 集計は api/callstats の1リクエストで済ませる。記事ごとに api/calls を
+  // 直列取得していた頃は、記事数がそのまま往復回数＝待ち時間になっていた
+  try {
+    rows = (await apiGet("api/callstats")).map(r => ({ ...r, market: marketOf(r.ticker) }));
+  } catch (_) {
+    // 旧構成（api/callstats が無い環境）では従来どおり記事ごとに取得する
+    for (const s of sessions) {
+      if (!hasCalls(s)) continue;
+      try {
+        const d = await apiGet(`api/calls/${s.id}`);
+        d.calls.forEach(c => {
+          if (!c.eval) return;
+          const e = c.eval;
+          const w = (e.t20 && e.t20.status === "done") ? { ...e.t20, win: "T+20" }
+            : (e.t5 && e.t5.status === "done") ? { ...e.t5, win: "T+5" }
+            : { ...e.now, win: "経過中" };
+          rows.push({ sid: s.id, date: s.date || "", news: s.news.headline, name: c.name, dir: c.direction, win: w.win, rel: w.rel, bench: c.bench || "", ticker: c.ticker, market: marketOf(c.ticker) });
+        });
+      } catch (err) { /* skip */ }
+    }
   }
   const uniq = dedupeCalls(rows);
   store.setCallStats({ ts: Date.now(), rows: uniq, dupes: rows.length - uniq.length });

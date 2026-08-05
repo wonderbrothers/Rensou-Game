@@ -246,6 +246,27 @@ def write_sitemap(sessions):
     print(f"✓ sitemap.xml（lastmod: {lastmod}）")
 
 
+def stat_rows_of(d, payload):
+    """通算成績の集計行を組み立てる（server.py の /api/callstats と同じ形）。
+
+    market の判定はクライアントの marketOf に任せる（ロジックを二重に持たない）。
+    """
+    out = []
+    for c in payload.get("calls", []):
+        e = c.get("eval")
+        if not e:
+            continue
+        w = ({**e["t20"], "win": "T+20"} if (e.get("t20") or {}).get("status") == "done"
+             else {**e["t5"], "win": "T+5"} if (e.get("t5") or {}).get("status") == "done"
+             else {**(e.get("now") or {}), "win": "経過中"})
+        out.append({"sid": d["id"], "date": d.get("date", ""),
+                    "news": d["news"]["headline"], "name": c.get("name", ""),
+                    "dir": c.get("direction"), "win": w.get("win"),
+                    "rel": w.get("rel"), "bench": c.get("bench", ""),
+                    "ticker": c.get("ticker")})
+    return out
+
+
 def stamp_version():
     """フッターにビルド版数（ビルド日付＋git短縮ハッシュ）を自動刻印する。
 
@@ -386,6 +407,7 @@ def main():
         prefetch_all(sorted(tickers), earliest)
 
     ok = ng = 0
+    stats_rows = []  # api/callstats 用（通算成績の集計を1リクエストで済ませる）
     bad_calls = []   # 株価を取得できなかった銘柄（push前に潰すための警告用）
     for d in sessions:
         sid = d.get("id")
@@ -396,6 +418,7 @@ def main():
                 payload = sanitize_payload(prev[sid])
                 payload["frozen"] = True
                 write(os.path.join(OUT, "calls", sid), payload)
+                stats_rows.extend(stat_rows_of(d, payload))
                 ok += 1
                 print(f"❄ api/calls/{sid} （T+20確定・凍結を再利用）")
                 continue
@@ -403,6 +426,7 @@ def main():
             if is_frozen(payload):
                 payload["frozen"] = True   # 次回ビルドから再取得しない
             write(os.path.join(OUT, "calls", sid), payload)
+            stats_rows.extend(stat_rows_of(d, payload))
             ok += 1
             print(f"✓ api/calls/{sid}")
             for c in payload.get("calls", []):
@@ -412,6 +436,9 @@ def main():
         except Exception as e:
             ng += 1
             print(f"✗ api/calls/{sid}  {e}")
+
+    write(os.path.join(OUT, "callstats"), stats_rows)
+    print(f"✓ api/callstats（{len(stats_rows)}コール・通算成績はこれ1本で読む）")
 
     # Pages の Jekyll 処理を無効化（_ 始まりのファイル等をそのまま配信させる）
     open(os.path.join(BASE, ".nojekyll"), "w").close()

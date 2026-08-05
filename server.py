@@ -326,17 +326,21 @@ def fetch_history(ticker: str, start_str: str):
     return _with_retry(_hist)
 
 
-@app.route("/api/calls/<sid>")
-def calls(sid):
+def calls_payload(sid):
+    """遊びコールの株価・評価を組み立てて返す（見つからなければ None）。
+
+    /api/calls/<sid> と /api/callstats の両方から使う。集計APIが
+    このまま同じ計算を通ることで、devでも常に data/ の最新が反映される。
+    """
     path = os.path.join(DATA, f"{sid}.json")
     if not os.path.exists(path):
-        return jsonify({"error": "session not found"}), 404
+        return None
     with open(path, encoding="utf-8") as fp:
         d = json.load(fp)
 
     call_list = d.get("calls", [])
     if not call_list:
-        return jsonify({"calls": []})
+        return {"calls": []}
 
     changed = False
     results = []
@@ -391,7 +395,44 @@ def calls(sid):
             json.dump(d, fp, ensure_ascii=False, indent=2)
             fp.write("\n")
 
-    return jsonify({"calls": results})
+    return {"calls": results}
+
+
+@app.route("/api/calls/<sid>")
+def calls(sid):
+    payload = calls_payload(sid)
+    if payload is None:
+        return jsonify({"error": "session not found"}), 404
+    return jsonify(payload)
+
+
+@app.route("/api/callstats")
+def callstats():
+    """通算成績の集計用。全記事のコールを1レスポンスにまとめる。
+
+    従来クライアントは api/calls/<id> を記事数ぶん直列に取得しており、
+    記事が増えるほど往復回数がそのまま待ち時間になっていた（75記事=75往復）。
+    集計に必要な項目だけを1本にまとめて往復を1回にする。
+    market の判定はクライアントの marketOf に任せる（ロジックの二重化を避ける）。
+    """
+    rows = []
+    for d in load_all_sessions():
+        if not d.get("calls"):
+            continue
+        payload = calls_payload(d["id"]) or {}
+        for c in payload.get("calls", []):
+            e = c.get("eval")
+            if not e:
+                continue
+            w = ({**e["t20"], "win": "T+20"} if (e.get("t20") or {}).get("status") == "done"
+                 else {**e["t5"], "win": "T+5"} if (e.get("t5") or {}).get("status") == "done"
+                 else {**(e.get("now") or {}), "win": "経過中"})
+            rows.append({"sid": d["id"], "date": d.get("date", ""),
+                         "news": d["news"]["headline"], "name": c.get("name", ""),
+                         "dir": c.get("direction"), "win": w.get("win"),
+                         "rel": w.get("rel"), "bench": c.get("bench", ""),
+                         "ticker": c.get("ticker")})
+    return jsonify(rows)
 
 
 def record_all():
