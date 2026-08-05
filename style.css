@@ -226,7 +226,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .analyst .av{width:38px;height:38px;flex:none;border-radius:50%;background:#fff;display:block;
   object-fit:cover;object-position:50% 22%;}
 /* 濃い面の上の文字に *-soft は使わない（ダークでは soft が暗い面色に反転して沈む） */
-.analyst .who b{font-size:calc(13px * var(--fs));color:var(--ink);letter-spacing:.05em;}
+.analyst .who b{font-size:calc(13px * var(--fs));color:var(--ink-tx);letter-spacing:.05em;}
 .analyst p{margin:0;font-size:calc(14.5px * var(--fs));}
 .analyst p b{color:var(--hl);}
 .next{margin-top:20px;display:none;width:100%;background:var(--pri);color:var(--on-color);
