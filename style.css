@@ -14,7 +14,8 @@
      ============================================================ */
   --ink:#22304f;
   --ink-2:#556075;          /* ベースの明トーン: 補足テキスト */
-  --ink-3:#646e84;          /* ベースの淡トーン: 補助テキスト（ガラス面で4.6:1・白面で5.1:1） */
+  --ink-3:#566178;          /* ベースの淡トーン: 補助テキスト。背景の円が最も濃い場所の
+                               ガラス面でも4.5:1を保つ値（円を濃くしたぶん一段濃くした） */
   --line:rgba(var(--fill),.14);
   --shadow:0 10px 24px rgba(var(--sh),.10);
   --paper:#ffffff;
@@ -562,16 +563,18 @@ footer{margin-top:auto;padding-top:16px;font-size:calc(11.5px * var(--fs));color
    （PWAのステータスバー裏・セーフエリアまで背景が届く） */
 /* キャンバス（オーバースクロールやセーフエリアで露出する面）は
    グラデーション終端と同じ色にして、地の色が出ないようにする */
+/* キャンバス色は html だけが持つ。body にも同じ色を敷くと、body の背景が
+   z-index:-1 の円レイヤー（body::before）を覆い隠して色が一切見えなくなる */
 html{background:var(--canvas);}
-body{background:var(--canvas);min-height:100vh;min-height:100dvh;}
+body{background:transparent;min-height:100vh;min-height:100dvh;}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   /* 100dvh で iOS のツールバー出入りにも追従させる */
   height:100vh;height:100dvh;
   background:
-  radial-gradient(560px 560px at 85% 0%, rgba(224,68,43,.18), transparent 70%),
-  radial-gradient(520px 520px at 2% 28%, rgba(20,117,182,.16), transparent 70%),
-  radial-gradient(500px 500px at 68% 55%, rgba(156,113,241,.16), transparent 70%),
-  radial-gradient(440px 440px at 22% 92%, rgba(243,60,167,.10), transparent 70%),
+  radial-gradient(560px 560px at 85% 0%, rgba(224,68,43,.28), transparent 70%),
+  radial-gradient(520px 520px at 2% 28%, rgba(20,117,182,.26), transparent 70%),
+  radial-gradient(500px 500px at 68% 55%, rgba(156,113,241,.24), transparent 70%),
+  radial-gradient(440px 440px at 22% 92%, rgba(243,60,167,.16), transparent 70%),
   linear-gradient(135deg,#fdece5 0%,#e2edfc 46%,#ece4fa 100%);}
 /* ノッチ・ステータスバーとコンテンツの重なりを回避 */
 .wrap{padding-top:calc(30px + env(safe-area-inset-top));
@@ -757,7 +760,7 @@ div.skl{display:block;}
 :root[data-theme="dark"]{
   --ink:#e9eefa;            /* 地の上で 14.8:1 */
   --ink-2:#a9afbc;          /*  〃      7.8:1 */
-  --ink-3:#8c919f;          /* ガラス面の上で 4.6:1（小さな補助テキストもAA） */
+  --ink-3:#9ca2b1;          /* 背景の円が最も濃い場所のガラス面でも4.5:1 */
   --line:rgba(255,255,255,.13);
   --shadow:0 10px 24px rgba(0,0,0,.45);
   --paper:#1c2438;
@@ -774,10 +777,13 @@ div.skl{display:block;}
   --sup-rgb:67,145,197;  --acc-rgb:176,141,244;
 
   --canvas:#151b2b;
-  --glass:rgba(255,255,255,.06);
-  --glass-2:rgba(255,255,255,.11);
-  --glass-3:rgba(255,255,255,.17);
-  --glass-line:rgba(255,255,255,.11);
+  /* 暗い面では白を重ねると背景の円と一緒に明るくなり、明るい文字が沈む。
+     黒を重ねてカードを背景より暗く落とすことで、円の色は透けたまま
+     文字のコントラストを確保する */
+  --glass:rgba(0,0,0,.18);
+  --glass-2:rgba(0,0,0,.18);      /* hover は明るくせず、縁を強めて浮きを出す */
+  --glass-3:rgba(0,0,0,.18);      /* 選択中も同様（面ではなく縁と文字色で示す） */
+  --glass-line:rgba(255,255,255,.13);
   --sh:0,0,0;
   --fill:255,255,255;
   --on-color:#151b2b;       /* 明るい有彩色の上には暗い文字を載せる */
@@ -791,10 +797,10 @@ div.skl{display:block;}
 /* 背景: 同じ色相のにじみを、暗い紺のグラデーションの上に薄く敷く */
 :root[data-theme="dark"] body::before{
   background:
-  radial-gradient(560px 560px at 85% 0%, rgba(230,105,85,.16), transparent 70%),
-  radial-gradient(520px 520px at 2% 28%, rgba(67,145,197,.16), transparent 70%),
-  radial-gradient(500px 500px at 68% 55%, rgba(176,141,244,.14), transparent 70%),
-  radial-gradient(440px 440px at 22% 92%, rgba(245,99,185,.10), transparent 70%),
+  radial-gradient(560px 560px at 85% 0%, rgba(230,105,85,.34), transparent 70%),
+  radial-gradient(520px 520px at 2% 28%, rgba(67,145,197,.34), transparent 70%),
+  radial-gradient(500px 500px at 68% 55%, rgba(176,141,244,.31), transparent 70%),
+  radial-gradient(440px 440px at 22% 92%, rgba(245,99,185,.21), transparent 70%),
   linear-gradient(135deg,#1b1f30 0%,#141c2e 46%,#151b2b 100%);}
 
 /* 暗い面ではガラスの縁が浮きすぎるため、影を弱めて縁を主役にする */
@@ -949,3 +955,11 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
 .segbtn button:hover{color:var(--ink);}
 .segbtn button.on{background:var(--pri);color:var(--on-color);}
 .segbtn button:focus-visible{outline:2px solid var(--sup);outline-offset:1px;}
+
+/* ダークでは面の明るさを変えると背景の円と混ざって文字が沈むため、
+   hover と選択の変化は縁の明るさで表す */
+:root[data-theme="dark"] .scard:hover,
+:root[data-theme="dark"] .opt:hover:not(:disabled),
+:root[data-theme="dark"] .csrow:hover{border-color:rgba(255,255,255,.28);}
+:root[data-theme="dark"] .gnav-item:hover{background:rgba(255,255,255,.07);}
+:root[data-theme="dark"] .gnav-item.active{background:rgba(255,255,255,.12);}
