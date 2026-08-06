@@ -180,12 +180,22 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .evt{display:flex;align-items:center;flex-wrap:wrap;gap:8px;
   font-size:calc(14px * var(--fs));color:var(--ink-2);margin-bottom:14px;line-height:1.7;font-weight:700;}
 .evt .evth{flex:1;min-width:0;}
+/* スマホでは出典バッヂとタイトルを縦に積む。横並びのままだとバッヂのぶん
+   タイトルの幅が狭くなり、長い見出しが細い柱のように折り返してしまう */
+@media(max-width:640px){
+  .evt{flex-direction:column;align-items:flex-start;gap:6px;}
+  .evt .evth{flex:none;width:100%;}
+}
 /* 設問文: 選択肢（ボタン）と見た目を分けるため面・縁・影を持たない。
    左右paddingは選択肢の文字位置と揃えるための微調整のみ */
 .qq{font-size:calc(18px * var(--fs));font-weight:800;margin:6px 0 16px;line-height:1.7;color:var(--ink);
   padding:0 6px;}
 /* 設問の頭に「Q.」を付ける（プレイ画面・解答一覧・間違いノート共通） */
-.qq::before,.aq.qlabel::before{content:"Q.";color:var(--pri);font-weight:800;margin-right:7px;}
+/* 「Q.」は左の柱として固定し、設問文がその下に回り込まないようにする。
+   グリッドの1列目に置くことで、2行目以降も文字の頭が揃う
+   （プレイ画面・解答一覧・間違いノートで共通） */
+.qq,.aq.qlabel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 7px;align-items:start;}
+.qq::before,.aq.qlabel::before{content:"Q.";color:var(--pri);font-weight:800;}
 
 /* 選択肢 */
 .opts{display:flex;flex-direction:column;gap:12px;}
