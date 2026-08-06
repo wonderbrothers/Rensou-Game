@@ -773,8 +773,8 @@ div.skl{display:block;}
   --ink-3:#9ca2b1;          /* 背景の円が最も濃い場所のガラス面でも4.5:1 */
   --line:rgba(255,255,255,.13);
   --shadow:0 10px 24px rgba(0,0,0,.45);
-  --paper:#1c2438;
-  --bg:#151b2b;
+  --paper:#151c2b;
+  --bg:#0d121d;
 
   --pri:#e66955;  --pri-deep:#f0a599;  --pri-soft:#35222b;
   --pos:#3da59c;  --pos-deep:#8bc9c3;  --pos-soft:#142e39;
@@ -786,7 +786,7 @@ div.skl{display:block;}
   --pri-rgb:230,105,85;  --pos-rgb:61,165,156;  --neg-rgb:245,99,185;
   --sup-rgb:67,145,197;  --acc-rgb:176,141,244;
 
-  --canvas:#151b2b;
+  --canvas:#0d121d;
   /* 暗い面では白を重ねると背景の円と一緒に明るくなり、明るい文字が沈む。
      黒を重ねてカードを背景より暗く落とすことで、円の色は透けたまま
      文字のコントラストを確保する */
@@ -796,8 +796,8 @@ div.skl{display:block;}
   --glass-line:rgba(255,255,255,.13);
   --sh:0,0,0;
   --fill:255,255,255;
-  --on-color:#151b2b;       /* 明るい有彩色の上には暗い文字を載せる */
-  --ink-bg:#2c3654;
+  --on-color:#0d121d;       /* 明るい有彩色の上には暗い文字を載せる */
+  --ink-bg:#242c45;
   --ink-tx:#e9eefa;
   --ov:rgba(0,0,0,.62);
   --pri-lite:#ef8b78;
@@ -811,7 +811,7 @@ div.skl{display:block;}
   radial-gradient(520px 520px at 2% 28%, rgba(67,145,197,.34), transparent 70%),
   radial-gradient(500px 500px at 68% 55%, rgba(176,141,244,.31), transparent 70%),
   radial-gradient(440px 440px at 22% 92%, rgba(245,99,185,.21), transparent 70%),
-  linear-gradient(135deg,#1b1f30 0%,#141c2e 46%,#151b2b 100%);}
+  linear-gradient(135deg,#121623 0%,#0c121e 46%,#0d121d 100%);}
 
 /* 暗い面ではガラスの縁が浮きすぎるため、影を弱めて縁を主役にする */
 :root[data-theme="dark"] .scard:hover{box-shadow:0 18px 44px rgba(0,0,0,.55);}

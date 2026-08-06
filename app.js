@@ -52,7 +52,7 @@ const store = {
 const THEME_KEY = "rensou_theme";
 const FS_KEY = "rensou_fontsize";           // "s" | "m" | "l"
 const FS_LABELS = { s: "小", m: "中", l: "大" };
-const THEME_COLOR = { light: "#fdece5", dark: "#151b2b" };
+const THEME_COLOR = { light: "#fdece5", dark: "#0d121d" };
 
 function systemPrefersDark() {
   return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
