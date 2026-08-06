@@ -10,6 +10,7 @@
     "check": "bash -c 'source .venv/bin/activate && python server.py --check'",
     "font": "./fetch_font.sh",
     "test": "bash -c 'source .venv/bin/activate 2>/dev/null; python3 test_server.py'",
-    "build": "bash -c 'source .venv/bin/activate && chmod +x ./*.sh && python build_static.py && ./sync-public.sh'"
+    "build": "bash -c 'source .venv/bin/activate && chmod +x ./*.sh && python build_static.py && ./sync-public.sh'",
+    "news": "bash -c 'source .venv/bin/activate 2>/dev/null; python3 tools/fetch_news.py \"$@\"' --"
   }
 }
