@@ -973,3 +973,16 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
 :root[data-theme="dark"] .csrow:hover{border-color:rgba(255,255,255,.28);}
 :root[data-theme="dark"] .gnav-item:hover{background:rgba(255,255,255,.07);}
 :root[data-theme="dark"] .gnav-item.active{background:rgba(255,255,255,.12);}
+
+/* スマホは画面が狭く、固定サイズの円（560px等）が画面幅を超えて全面を覆う。
+   PCでは画面の一部だけが色づくため、同じ指定でもスマホの方がずっと明るく
+   見える。円を小さく・薄くして、PCと近い印象に揃える */
+@media(max-width:640px){
+  :root[data-theme="dark"] body::before{
+    background:
+    radial-gradient(380px 380px at 88% 2%, rgba(230,105,85,.20), transparent 70%),
+    radial-gradient(360px 360px at 0% 26%, rgba(67,145,197,.20), transparent 70%),
+    radial-gradient(340px 340px at 74% 56%, rgba(176,141,244,.18), transparent 70%),
+    radial-gradient(300px 300px at 16% 94%, rgba(245,99,185,.12), transparent 70%),
+    linear-gradient(135deg,#121623 0%,#0c121e 46%,#0d121d 100%);}
+}
