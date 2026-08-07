@@ -170,7 +170,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
   background:linear-gradient(90deg,var(--pri),var(--pri-lite));}
 
 .stepno{display:inline-block;font-size:calc(12.5px * var(--fs));color:var(--ink-tx);font-weight:800;letter-spacing:.06em;
-  background:var(--ink-bg);border-radius:999px;padding:4px 16px;margin-bottom:10px;}
+  background:var(--ink-bg);border-radius:999px;padding:4px 16px;margin-bottom:16px;}
 /* 設問ステップのバッヂ（クリックで説明モーダル） */
 .stepq{border:0;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:4px;
   transition:transform .1s,box-shadow .15s;}
@@ -191,11 +191,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .qq{font-size:calc(18px * var(--fs));font-weight:800;margin:6px 0 16px;line-height:1.7;color:var(--ink);
   padding:0 6px;}
 /* 設問の頭に「Q.」を付ける（プレイ画面・解答一覧・間違いノート共通） */
-/* 「Q.」は左の柱として固定し、設問文がその下に回り込まないようにする。
-   グリッドの1列目に置くことで、2行目以降も文字の頭が揃う
-   （プレイ画面・解答一覧・間違いノートで共通） */
-.qq,.aq.qlabel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 7px;align-items:start;}
-.qq::before,.aq.qlabel::before{content:"Q.";color:var(--pri);font-weight:800;}
+.qq::before,.aq.qlabel::before{content:"Q.";color:var(--pri);font-weight:800;margin-right:7px;}
 
 /* 選択肢 */
 .opts{display:flex;flex-direction:column;gap:12px;}
@@ -773,8 +769,8 @@ div.skl{display:block;}
   --ink-3:#9ca2b1;          /* 背景の円が最も濃い場所のガラス面でも4.5:1 */
   --line:rgba(255,255,255,.13);
   --shadow:0 10px 24px rgba(0,0,0,.45);
-  --paper:#151c2b;
-  --bg:#0d121d;
+  --paper:#1c2438;
+  --bg:#151b2b;
 
   --pri:#e66955;  --pri-deep:#f0a599;  --pri-soft:#35222b;
   --pos:#3da59c;  --pos-deep:#8bc9c3;  --pos-soft:#142e39;
@@ -786,7 +782,7 @@ div.skl{display:block;}
   --pri-rgb:230,105,85;  --pos-rgb:61,165,156;  --neg-rgb:245,99,185;
   --sup-rgb:67,145,197;  --acc-rgb:176,141,244;
 
-  --canvas:#0d121d;
+  --canvas:#151b2b;
   /* 暗い面では白を重ねると背景の円と一緒に明るくなり、明るい文字が沈む。
      黒を重ねてカードを背景より暗く落とすことで、円の色は透けたまま
      文字のコントラストを確保する */
@@ -796,8 +792,8 @@ div.skl{display:block;}
   --glass-line:rgba(255,255,255,.13);
   --sh:0,0,0;
   --fill:255,255,255;
-  --on-color:#0d121d;       /* 明るい有彩色の上には暗い文字を載せる */
-  --ink-bg:#242c45;
+  --on-color:#151b2b;       /* 明るい有彩色の上には暗い文字を載せる */
+  --ink-bg:#2c3654;
   --ink-tx:#e9eefa;
   --ov:rgba(0,0,0,.62);
   --pri-lite:#ef8b78;
@@ -811,7 +807,7 @@ div.skl{display:block;}
   radial-gradient(520px 520px at 2% 28%, rgba(67,145,197,.34), transparent 70%),
   radial-gradient(500px 500px at 68% 55%, rgba(176,141,244,.31), transparent 70%),
   radial-gradient(440px 440px at 22% 92%, rgba(245,99,185,.21), transparent 70%),
-  linear-gradient(135deg,#121623 0%,#0c121e 46%,#0d121d 100%);}
+  linear-gradient(135deg,#1b1f30 0%,#141c2e 46%,#151b2b 100%);}
 
 /* 暗い面ではガラスの縁が浮きすぎるため、影を弱めて縁を主役にする */
 :root[data-theme="dark"] .scard:hover{box-shadow:0 18px 44px rgba(0,0,0,.55);}
@@ -973,16 +969,3 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
 :root[data-theme="dark"] .csrow:hover{border-color:rgba(255,255,255,.28);}
 :root[data-theme="dark"] .gnav-item:hover{background:rgba(255,255,255,.07);}
 :root[data-theme="dark"] .gnav-item.active{background:rgba(255,255,255,.12);}
-
-/* スマホは画面が狭く、固定サイズの円（560px等）が画面幅を超えて全面を覆う。
-   PCでは画面の一部だけが色づくため、同じ指定でもスマホの方がずっと明るく
-   見える。円を小さく・薄くして、PCと近い印象に揃える */
-@media(max-width:640px){
-  :root[data-theme="dark"] body::before{
-    background:
-    radial-gradient(380px 380px at 88% 2%, rgba(230,105,85,.20), transparent 70%),
-    radial-gradient(360px 360px at 0% 26%, rgba(67,145,197,.20), transparent 70%),
-    radial-gradient(340px 340px at 74% 56%, rgba(176,141,244,.18), transparent 70%),
-    radial-gradient(300px 300px at 16% 94%, rgba(245,99,185,.12), transparent 70%),
-    linear-gradient(135deg,#121623 0%,#0c121e 46%,#0d121d 100%);}
-}

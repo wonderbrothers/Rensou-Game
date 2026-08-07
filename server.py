@@ -590,7 +590,21 @@ if __name__ == "__main__":
             print(f"  スマホから  : http://{ip}:8000  （同一Wi-Fiに接続していること）")
         # 0.0.0.0 で待ち受けて同一ネットワークの端末からもアクセス可能にする
         try:
-            from waitress import serve
-            serve(app, host="0.0.0.0", port=8000, threads=8)
-        except ImportError:
-            app.run(host="0.0.0.0", port=8000, debug=False)
+            try:
+                from waitress import serve
+                serve(app, host="0.0.0.0", port=8000, threads=8)
+            except ImportError:
+                app.run(host="0.0.0.0", port=8000, debug=False)
+        except OSError as e:
+            # ポートの取り合いは前回のサーバーが残っているのが原因のことが多い。
+            # Pythonのトレースバックだけでは何をすればいいか分からないため案内を出す
+            if getattr(e, "errno", None) in (48, 98):   # macOS / Linux の EADDRINUSE
+                print("\n" + "=" * 56)
+                print("✗ ポート8000は既に使われています。")
+                print("  前回の開発サーバーが残っている可能性が高いです。")
+                print("  次を実行してから、もう一度 npm run dev してください:")
+                print("\n    lsof -ti :8000 | xargs kill\n")
+                print("  （それでも空かない場合は kill -9 を試してください）")
+                print("=" * 56)
+                sys.exit(1)
+            raise
