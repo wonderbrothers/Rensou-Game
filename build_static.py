@@ -408,6 +408,7 @@ def main():
 
     ok = ng = 0
     stats_rows = []  # api/callstats 用（通算成績の集計を1リクエストで済ませる）
+    built = {}       # sid -> payload（callstatsはCIフォールバック確定後に集計する）
     bad_calls = []   # 株価を取得できなかった銘柄（push前に潰すための警告用）
     for d in sessions:
         sid = d.get("id")
@@ -418,7 +419,7 @@ def main():
                 payload = sanitize_payload(prev[sid])
                 payload["frozen"] = True
                 write(os.path.join(OUT, "calls", sid), payload)
-                stats_rows.extend(stat_rows_of(d, payload))
+                built[sid] = payload
                 ok += 1
                 print(f"❄ api/calls/{sid} （T+20確定・凍結を再利用）")
                 continue
@@ -426,7 +427,7 @@ def main():
             if is_frozen(payload):
                 payload["frozen"] = True   # 次回ビルドから再取得しない
             write(os.path.join(OUT, "calls", sid), payload)
-            stats_rows.extend(stat_rows_of(d, payload))
+            built[sid] = payload
             ok += 1
             print(f"✓ api/calls/{sid}")
             for c in payload.get("calls", []):
@@ -437,8 +438,7 @@ def main():
             ng += 1
             print(f"✗ api/calls/{sid}  {e}")
 
-    write(os.path.join(OUT, "callstats"), stats_rows)
-    print(f"✓ api/callstats（{len(stats_rows)}コール・通算成績はこれ1本で読む）")
+    # callstats はCIフォールバックの確定後（classify の後）に書き出す
 
     # Pages の Jekyll 処理を無効化（_ 始まりのファイル等をそのまま配信させる）
     open(os.path.join(BASE, ".nojekyll"), "w").close()
@@ -466,6 +466,36 @@ def main():
             print(f"   {'✗ 実在の疑い' if kind == 'unknown' else '△ 一時的な欠落'}: {b[1]} {b[2]}")
             if kind == "unknown":
                 blocking.append(b)
+
+    # --- CI（定期リフレッシュ）でのフォールバック ---
+    # GitHub Actions のランナーは Yahoo にレート制限されやすく、実在する銘柄でも
+    # 「履歴ゼロ」と誤判定されて関所（exit 1）に引っかかることがある。
+    # PRICE_REFRESH=1 のときに限り、前回の正常なスナップショットが残っている記事は
+    # それを再利用して公開を継続する（銘柄の実在検査という関所は、コンテンツを
+    # 追加する手元ビルドでは従来どおり厳格に働く）。
+    if os.environ.get("PRICE_REFRESH") == "1" and blocking:
+        still = []
+        for b in blocking:
+            sid = b[0]
+            p = prev.get(sid)
+            if p and sid in built:
+                payload = sanitize_payload(p)
+                if is_frozen(payload):
+                    payload["frozen"] = True
+                write(os.path.join(OUT, "calls", sid), payload)
+                built[sid] = payload
+                print(f"   ↩ 取得失敗のため前回スナップショットを再利用: {sid}（{b[1]}）")
+            else:
+                still.append(b)
+        blocking = still
+
+    stats_rows = []
+    for d in sessions:
+        sid = d.get("id")
+        if sid in built:
+            stats_rows.extend(stat_rows_of(d, built[sid]))
+    write(os.path.join(OUT, "callstats"), stats_rows)
+    print(f"✓ api/callstats（{len(stats_rows)}コール・通算成績はこれ1本で読む）")
 
     report = write_build_report(bad_calls, blocking, generated_at)
     print(f"\n検査レポート: {os.path.relpath(report, BASE)}")

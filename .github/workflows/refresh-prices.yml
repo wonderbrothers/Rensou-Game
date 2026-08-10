@@ -39,6 +39,10 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Rebuild price snapshots (api/)
+        env:
+          # CIフォールバック: ランナーがYahooにレート制限された場合、
+          # 前回の正常なスナップショットを再利用して公開を継続する
+          PRICE_REFRESH: "1"
         run: python build_static.py
 
       - name: Guard against a bad snapshot
