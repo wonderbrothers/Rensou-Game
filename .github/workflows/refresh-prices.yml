@@ -82,6 +82,15 @@ jobs:
             exit 0
           fi
           git commit -m "chore: 株価スナップショットを更新 ($(date -u '+%Y-%m-%d %H:%M UTC'))"
+
+          # ビルドは api/data 以外も書き換える（.nojekyll・sitemap.xml・
+          # index.html の版数刻印・sw.js のキャッシュ版数など）。それらは
+          # コミット対象外なので未ステージのまま残り、rebase が拒否される
+          # （error: cannot pull with rebase: You have unstaged changes）。
+          # コミットしたい範囲は確定済みなので、残りは捨ててから取り込む。
+          git checkout -- . 2>/dev/null || true
+          git clean -fd 2>/dev/null || true
+
           # 手元pushや他コミットと衝突しうるので、取り込み直してから数回試す
           for i in 1 2 3; do
             git pull --rebase origin "${GITHUB_REF_NAME}" && git push && {
