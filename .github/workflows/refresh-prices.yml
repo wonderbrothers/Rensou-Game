@@ -29,6 +29,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # 既定の浅いクローン（depth=1）では push 前の
+          # git pull --rebase が共通祖先を辿れず fatal（exit 128）になる
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -78,7 +82,14 @@ jobs:
             exit 0
           fi
           git commit -m "chore: 株価スナップショットを更新 ($(date -u '+%Y-%m-%d %H:%M UTC'))"
-          # 手元pushや他コミットと衝突しないよう、push前にリモートを取り込む
-          git pull --rebase origin "${GITHUB_REF_NAME}"
-          git push
-          echo "✓ 更新をpushしました（GitHub Pagesが再デプロイされます）"
+          # 手元pushや他コミットと衝突しうるので、取り込み直してから数回試す
+          for i in 1 2 3; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push && {
+              echo "✓ 更新をpushしました（GitHub Pagesが再デプロイされます）"
+              exit 0
+            }
+            echo "・push に失敗（$i回目）。10秒後に再試行します"
+            sleep 10
+          done
+          echo "✗ 3回試しても push できませんでした"
+          exit 1

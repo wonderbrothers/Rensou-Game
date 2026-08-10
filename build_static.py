@@ -407,6 +407,7 @@ def main():
         prefetch_all(sorted(tickers), earliest)
 
     ok = ng = 0
+    failed_ids = []   # 生成に失敗した記事（CIでは前回分で穴埋めする）
     stats_rows = []  # api/callstats 用（通算成績の集計を1リクエストで済ませる）
     built = {}       # sid -> payload（callstatsはCIフォールバック確定後に集計する）
     bad_calls = []   # 株価を取得できなかった銘柄（push前に潰すための警告用）
@@ -436,6 +437,7 @@ def main():
                                       c.get("name", ""), c.get("message", "")))
         except Exception as e:
             ng += 1
+            failed_ids.append(sid)
             print(f"✗ api/calls/{sid}  {e}")
 
     # callstats はCIフォールバックの確定後（classify の後）に書き出す
@@ -449,10 +451,6 @@ def main():
     stamp_sw()   # ← app.js/style.css のハッシュ更新後に実行する
 
     print(f"\n完了: {ok}件成功 / {ng}件失敗　株価スナップショット: {generated_at}")
-
-    if ng:
-        print(f"\n✗ {ng}件の生成に失敗しました。公開を停止します（上の ✗ 行を確認）。")
-        sys.exit(1)
 
     # --- 公開前の関所 ---
     # 履歴が1本も取れない銘柄（上場廃止・コード誤りの疑い）があれば、
@@ -473,6 +471,22 @@ def main():
     # PRICE_REFRESH=1 のときに限り、前回の正常なスナップショットが残っている記事は
     # それを再利用して公開を継続する（銘柄の実在検査という関所は、コンテンツを
     # 追加する手元ビルドでは従来どおり厳格に働く）。
+    if os.environ.get("PRICE_REFRESH") == "1" and failed_ids:
+        # 例外で生成できなかった記事。api/ は作り直すため、放置すると
+        # そのニュースのAPIがファイルごと消えてフロントが404になる
+        for sid in list(failed_ids):
+            p = prev.get(sid)
+            if not p:
+                continue
+            payload = sanitize_payload(p)
+            if is_frozen(payload):
+                payload["frozen"] = True
+            write(os.path.join(OUT, "calls", sid), payload)
+            built[sid] = payload
+            failed_ids.remove(sid)
+            ng -= 1
+            print(f"   ↩ 生成に失敗したため前回スナップショットを再利用: {sid}")
+
     if os.environ.get("PRICE_REFRESH") == "1" and blocking:
         still = []
         for b in blocking:
@@ -496,6 +510,11 @@ def main():
             stats_rows.extend(stat_rows_of(d, built[sid]))
     write(os.path.join(OUT, "callstats"), stats_rows)
     print(f"✓ api/callstats（{len(stats_rows)}コール・通算成績はこれ1本で読む）")
+
+    if ng:
+        print(f"\n✗ {ng}件の生成に失敗し、前回スナップショットでも補えませんでした。")
+        print("   公開を停止します（上の ✗ 行を確認）。")
+        sys.exit(1)
 
     report = write_build_report(bad_calls, blocking, generated_at)
     print(f"\n検査レポート: {os.path.relpath(report, BASE)}")
