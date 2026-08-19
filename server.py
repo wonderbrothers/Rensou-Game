@@ -520,7 +520,24 @@ def check_data(verify_tickers=True):
                 if ord(m.group(1)) - 65 >= len(opts):
                     errs.append(f"Q{i+1}: トークン{{{m.group(1)}}}が選択肢数を超えている")
 
-            # --- 用語解説 ---
+        # --- 記号バイアス（正解だけに現れる特徴で当てられるのを防ぐ） ---
+        # 「A──B」のようなダッシュ・三点リーダを正解にだけ使うと、読まずに
+        # 当てられる。実データで208問すべてが該当していた（2026-08-10）
+        DASH = re.compile(r"──|—|―|‐‐|--|…")
+        marks = [bool(DASH.search(o)) for o in opts]
+        if marks[c] and sum(marks) == 1:
+            errs.append(f"Q{i+1}: 正解だけがダッシュ等の記号を含む（読まずに当てられる）")
+
+            # --- 語尾バイアス（言い切っている選択肢を消すだけで絞れるのを防ぐ） ---
+        # 罠を「〜のはずである」「必ず〜」で書き、正解だけ含みのある表現に
+        # すると、内容を読まずに消去法で当てられる
+        HEDGE = re.compile(r"はず(だ|である|です)?。?$|のはず|であるはず|わけがない|"
+                           r"に決まって|必ず|すべて|一切|無関係|関係がない|影響を与えない")
+        hedges = [bool(HEDGE.search(o)) for o in opts]
+        if not hedges[c] and sum(hedges) >= 3:
+            errs.append(f"Q{i+1}: 罠3つが断定表現で正解だけ含みを持つ（消去法で当てられる）")
+
+        # --- 用語解説 ---
             if not q.get("glossary"):
                 errs.append(f"Q{i+1}: glossary（用語解説）がない")
 

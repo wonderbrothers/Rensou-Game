@@ -85,6 +85,21 @@ def check_file(path):
         bare = re.findall(r"(?<![A-Za-z{&])([A-D])(?![A-Za-z}&])", reason)
         if bare:
             errs.append(f"{tag}: reasonに生の選択肢参照: {bare}")
+        # 記号バイアス: 正解だけにダッシュ等があると読まずに当てられる
+        DASH = re.compile(r"──|—|―|‐‐|--|…")
+        marks = [bool(DASH.search(o)) for o in opts]
+        if marks[c] and sum(marks) == 1:
+            errs.append(f"{tag}: 正解だけがダッシュ等の記号を含む（読まずに当てられる）")
+
+        # --- 語尾バイアス（言い切っている選択肢を消すだけで絞れるのを防ぐ） ---
+        # 罠を「〜のはずである」「必ず〜」で書き、正解だけ含みのある表現に
+        # すると、内容を読まずに消去法で当てられる
+        HEDGE = re.compile(r"はず(だ|である|です)?。?$|のはず|であるはず|わけがない|"
+                           r"に決まって|必ず|すべて|一切|無関係|関係がない|影響を与えない")
+        hedges = [bool(HEDGE.search(o)) for o in opts]
+        if not hedges[c] and sum(hedges) >= 3:
+            errs.append(f"{tag}: 罠3つが断定表現で正解だけ含みを持つ（消去法で当てられる）")
+
         # 3. glossary
         g = q.get("glossary", [])
         if len(g) < 2:

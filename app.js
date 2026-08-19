@@ -37,11 +37,21 @@ const store = {
     try { localStorage.setItem("rensou_progress", JSON.stringify(v)); } catch (e) {}
   },
   clearProgress() { localStorage.removeItem("rensou_progress"); },
+  /* 復習で正解した問題（間違いノートから外す）。"記事ID|設問文" の配列 */
+  get cleared() {
+    try { return JSON.parse(localStorage.getItem("rensou_cleared") || "[]"); } catch (e) { return []; }
+  },
+  addCleared(keys) {
+    const set = new Set(this.cleared);
+    keys.forEach(k => set.add(k));
+    try { localStorage.setItem("rensou_cleared", JSON.stringify([...set])); } catch (e) {}
+  },
   clearAll() {
     localStorage.removeItem("rensou_results");
     localStorage.removeItem("rensou_callstats");
     localStorage.removeItem("rensou_callstats_v2");
     localStorage.removeItem("rensou_progress");
+    localStorage.removeItem("rensou_cleared");
   }
 };
 
@@ -1220,7 +1230,7 @@ function renderQ() {
   $("stageBody").innerHTML = `
     <div class="bar"><i style="width:${idx / cur.questions.length * 100}%"></i></div>
     ${stepBadgeHTML(q.step)}
-    <div class="evt">${srcBadgeHTML(cur.news)}<span class="evth">${cur.news.headline}</span></div>
+    <div class="evt">${srcBadgeHTML(q.__src ? q.__src.news : cur.news)}<span class="evth">${(q.__src ? q.__src.news : cur.news).headline}</span></div>
     <div class="qq">${q.q}</div><div class="opts" id="opts"></div>
     ${glossaryHTML(q)}
     <div class="analyst" id="fb"><div class="who"><img class="av" src="images/analyst.png" alt="" width="38" height="38"><b>シニアアナリストより</b></div><p id="fbTxt"></p></div>
@@ -1265,6 +1275,8 @@ function choose(disp) {
     st: q.step, q: q.q, ok,
     chosen: q.options[orig], corr: q.options[q.correct], reason: q.reason
   });
+  // 復習で正解できた問題は間違いノートから外す（克服済みとして別に記録）
+  if (ok && cur.__review && q.__src) store.addCleared([`${q.__src.id}|${q.q}`]);
   const corrMark = MARKS[order.indexOf(q.correct)];
   const yourLine = ok
     ? `<span class="fbline"><b class="fbok">${ic("check_circle", 1)} 正解</b><span class="refmk ok">${corrMark}</span></span>`
@@ -1958,9 +1970,14 @@ function pagerHTML(page, pages) {
 
 /* ---------- 間違いノート ---------- */
 function getWrongs() {
+  // 復習で正解した問題は「克服済み」として除外する。
+  // 元の成績（results）は履歴として残したいので、別の一覧で持つ
+  const cleared = new Set(store.cleared);
   const wrongs = [];
   store.results.forEach(r => (r.answers || []).forEach(a => {
-    if (!a.ok) wrongs.push({ ...a, id: r.id, headline: r.headline, at: (r.at || "").slice(0, 10) });
+    if (a.ok) return;
+    if (cleared.has(`${r.id}|${a.q}`)) return;
+    wrongs.push({ ...a, id: r.id, headline: r.headline, at: (r.at || "").slice(0, 10) });
   }));
   return wrongs.reverse();
 }
@@ -2029,12 +2046,13 @@ async function startWrongReview() {
     const s = sessions.find(x => x.id === w.id);
     if (!s || !s.questions) return;
     const q = s.questions.find(qq => qq.q === w.q);
-    if (q) qs.push(q);
+    // どのニュースの問題かを画面に出し、正解時に克服済みへ移すため出典を持たせる
+    if (q) qs.push({ ...q, __src: { id: s.id, news: s.news } });
   });
   if (!qs.length) { alert("復習できる問題が見つかりませんでした。"); return; }
   cur = {
     id: "__review", __review: true, categories: [],
-    news: { source: "復習モード", headline: `間違えた問題だけを解き直す（${Math.min(qs.length, 12)}問）` },
+    news: { source: "間違いノート", headline: `間違えた問題だけを解き直す（${Math.min(qs.length, 12)}問）` },
     questions: shuffle(qs).slice(0, 12)
   };
   callsPromise = null;
