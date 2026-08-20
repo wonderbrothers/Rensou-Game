@@ -13,7 +13,7 @@ import os
 import random
 import time
 
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(BASE, "data")
@@ -406,6 +406,36 @@ def calls(sid):
     return jsonify(payload)
 
 
+def snapshot_payload(sid):
+    """前回ビルドが書き出した api/calls/<sid> を、使えるなら返す（無ければ None）。
+
+    devの集計を軽くするための仕組み。往復回数は api/callstats で1回に減ったが、
+    サーバー側は毎回125記事ぶんの株価をyfinanceから取り直しており、記事が増える
+    ほど1回の待ち時間が伸びていた（本番は静的ファイルなのでこの負担が無い）。
+
+    「T+20が確定した記事は再取得しない」という凍結の仕組みは既にあるが、
+    公開から日が浅いうちは確定済みが0件で効かない。そこで確定を待たず、
+    ビルド済みのスナップショットがあればそれを使う。表示される現在値は
+    「最後にビルドした時点」＝公開サイトと同じ鮮度になる。
+
+    ただし **data/<sid>.json を編集したら必ず取り直す**。devが古い内容を配ると
+    作問の修正をその場で確認できなくなる（api/index で実際に起きた事故）。
+    最新の株価が要るときは /api/callstats?fresh=1 で全件取り直せる。
+    """
+    snap = os.path.join(BASE, "api", "calls", sid)
+    src = os.path.join(DATA, f"{sid}.json")
+    if not os.path.exists(snap) or not os.path.exists(src):
+        return None
+    if os.path.getmtime(src) > os.path.getmtime(snap):
+        return None                      # data/ の方が新しい＝編集された
+    try:
+        with open(snap, encoding="utf-8") as fp:
+            payload = json.load(fp)
+    except Exception:
+        return None                      # 壊れていれば取り直す
+    return payload if payload.get("calls") else None
+
+
 @app.route("/api/callstats")
 def callstats():
     """通算成績の集計用。全記事のコールを1レスポンスにまとめる。
@@ -414,12 +444,20 @@ def callstats():
     記事が増えるほど往復回数がそのまま待ち時間になっていた（75記事=75往復）。
     集計に必要な項目だけを1本にまとめて往復を1回にする。
     market の判定はクライアントの marketOf に任せる（ロジックの二重化を避ける）。
+
+    株価はビルド済みスナップショットを優先して使う（snapshot_payload 参照）。
     """
-    rows = []
+    fresh = request.args.get("fresh") == "1"
+    rows, reused, refetched = [], 0, 0
     for d in load_all_sessions():
         if not d.get("calls"):
             continue
-        payload = calls_payload(d["id"]) or {}
+        payload = None if fresh else snapshot_payload(d["id"])
+        if payload is not None:
+            reused += 1
+        else:
+            payload = calls_payload(d["id"]) or {}
+            refetched += 1
         for c in payload.get("calls", []):
             e = c.get("eval")
             if not e:
@@ -432,6 +470,8 @@ def callstats():
                          "dir": c.get("direction"), "win": w.get("win"),
                          "rel": w.get("rel"), "bench": c.get("bench", ""),
                          "ticker": c.get("ticker")})
+    print(f"[callstats] {len(rows)}件 "
+          f"（スナップショット再利用 {reused}記事／株価を取得 {refetched}記事）")
     return jsonify(rows)
 
 
@@ -461,114 +501,50 @@ def record_all():
         print(os.path.basename(f), "→ 更新" if changed else "→ 変更なし")
 
 
+def _content_checker():
+    """作問の機械検査は tools/check_content.py に一本化して読み込む。
+
+    以前は同じ検査を server.py 側にも書いていたが、実装が二重化した結果
+    server.py 側だけ字下げが崩れ、**記号バイアスと語尾バイアスが最後の設問しか
+    見ておらず、glossaryの検査は語尾バイアス違反時にしか走らない**状態が
+    見過ごされていた（2026-08-20発見）。検査の本体は1つに保ち、
+    server.py はネットワークが要るティッカー実在確認だけを受け持つ。
+    """
+    import importlib.util
+    path = os.path.join(BASE, "tools", "check_content.py")
+    spec = importlib.util.spec_from_file_location("check_content", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def check_data(verify_tickers=True):
-    """data/ の全JSONをスキーマ検証し、ティッカーの実在も確認する"""
-    import re
+    """data/ の全JSONを検査し、ティッカーの実在も確認する"""
+    cc = _content_checker()
+    files = sorted(glob.glob(os.path.join(DATA, "*.json")))
+    corpus = cc.check_corpus(files)          # 記事をまたぐ検査（使い回しの罠）
     ok = True
-    for f in sorted(glob.glob(os.path.join(DATA, "*.json"))):
+    for f in files:
         name = os.path.basename(f)
-        errs = []
-        try:
-            with open(f, encoding="utf-8") as fp:
-                d = json.load(fp)
-        except Exception as e:
-            print(f"✗ {name}: JSONが壊れています ({e})")
-            ok = False
-            continue
-        # スキーマ
-        for k in ("id", "date", "news", "questions"):
-            if k not in d:
-                errs.append(f"必須キー欠落: {k}")
-        if not re.match(r"^\d{4}-\d{2}-\d{2}$", d.get("date", "")):
-            errs.append("dateがYYYY-MM-DD形式でない")
-        news = d.get("news", {})
-        for k in ("source", "headline", "essence"):
-            if not news.get(k):
-                errs.append(f"news.{k} が空")
-        qs = d.get("questions", [])
-        if len(qs) != 6:
-            errs.append(f"questionsが6問でない ({len(qs)}問)")
-        correct_positions = []
-        for i, q in enumerate(qs):
-            opts = q.get("options", [])
-            if len(opts) < 2:
-                errs.append(f"Q{i+1}: 選択肢不足")
-                continue
-            c = q.get("correct", -1)
-            if not (0 <= c < len(opts)):
-                errs.append(f"Q{i+1}: correctが範囲外")
-                continue
-            correct_positions.append(c)
-            if not q.get("reason"):
-                errs.append(f"Q{i+1}: reasonが空")
-                continue
+        errs = cc.check_file(f) + corpus.get(name[:-5], [])
 
-            # --- 文字数バイアス（正解が長いと当てられてしまうメタ攻略の防止） ---
-            ls = [len(o) for o in opts]
-            spread = max(ls) - min(ls)
-            margin = ls[c] - max(l for j, l in enumerate(ls) if j != c)
-            if spread > 6:
-                errs.append(f"Q{i+1}: 選択肢の文字数差が{spread}字（6字以内に。lens={ls}）")
-            if ls[c] == max(ls) and ls.count(max(ls)) == 1 and margin > 2:
-                errs.append(f"Q{i+1}: 正解が単独最長で+{margin}字突出（2字以内に。詳細はreasonへ）")
-
-            # --- reason内の選択肢参照はトークン必須（シャッフル対応） ---
-            for m in re.finditer(r'(?<![A-Za-z&{])([A-E])(?![A-Za-z}])', q["reason"]):
-                errs.append(f"Q{i+1}: reasonに生の選択肢参照 '{m.group(1)}'（{{A}}形式で書く）")
-                break
-            for m in re.finditer(r'\{([A-E])\}', q["reason"]):
-                if ord(m.group(1)) - 65 >= len(opts):
-                    errs.append(f"Q{i+1}: トークン{{{m.group(1)}}}が選択肢数を超えている")
-
-        # --- 記号バイアス（正解だけに現れる特徴で当てられるのを防ぐ） ---
-        # 「A──B」のようなダッシュ・三点リーダを正解にだけ使うと、読まずに
-        # 当てられる。実データで208問すべてが該当していた（2026-08-10）
-        DASH = re.compile(r"──|—|―|‐‐|--|…")
-        marks = [bool(DASH.search(o)) for o in opts]
-        if marks[c] and sum(marks) == 1:
-            errs.append(f"Q{i+1}: 正解だけがダッシュ等の記号を含む（読まずに当てられる）")
-
-            # --- 語尾バイアス（言い切っている選択肢を消すだけで絞れるのを防ぐ） ---
-        # 罠を「〜のはずである」「必ず〜」で書き、正解だけ含みのある表現に
-        # すると、内容を読まずに消去法で当てられる
-        HEDGE = re.compile(r"はず(だ|である|です)?。?$|のはず|であるはず|わけがない|"
-                           r"に決まって|必ず|すべて|一切|無関係|関係がない|影響を与えない")
-        hedges = [bool(HEDGE.search(o)) for o in opts]
-        if not hedges[c] and sum(hedges) >= 3:
-            errs.append(f"Q{i+1}: 罠3つが断定表現で正解だけ含みを持つ（消去法で当てられる）")
-
-        # --- 用語解説 ---
-            if not q.get("glossary"):
-                errs.append(f"Q{i+1}: glossary（用語解説）がない")
-
-        # --- 正解位置の分散（同一位置の3連続以上は禁止） ---
-        for i in range(len(correct_positions) - 2):
-            if correct_positions[i] == correct_positions[i+1] == correct_positions[i+2]:
-                errs.append(f"correctがQ{i+1}〜Q{i+3}で同じ位置に3連続")
-                break
-        # ティッカー
-        for c in d.get("calls", []):
-            t = c.get("ticker", "")
-            if not t:
-                errs.append("callsにticker欠落")
-                continue
-            if c.get("direction") not in ("+", "-"):
-                errs.append(f"{t}: directionは + / - のみ")
-            # 表記の桁ミスはネットワークを使わずに先に弾く。
-            # 香港は4桁ゼロ埋めでないとyfinanceが引けない（992.HK ✗ / 0992.HK ○）
-            m = re.match(r"^([0-9A-Z]+)\.(HK|T|KS|KQ)$", t)
-            if m:
-                code, sfx = m.groups()
-                if sfx == "HK" and not re.match(r"^\d{4,5}$", code):
-                    errs.append(f"{t}: 香港のコードは4桁ゼロ埋めで書く（例 0992.HK）")
-                if sfx in ("T", "KS", "KQ") and not re.match(r"^\d{3}[0-9A-Z]$|^\d{6}$", code):
-                    errs.append(f"{t}: {sfx}のコード桁数が不正")
-            if verify_tickers and not c.get("price_at_call"):
+        # ティッカーの実在（ネットワークが要るのでここだけ server.py が持つ）
+        if verify_tickers:
+            try:
+                with open(f, encoding="utf-8") as fp:
+                    d = json.load(fp)
+            except Exception:
+                d = {}
+            for c in d.get("calls", []):
+                t = c.get("ticker", "")
+                if not t or c.get("price_at_call"):
+                    continue
                 try:
                     fetch_price(t)
                     print(f"  ✓ {t} 実在確認OK")
                 except Exception as e:
                     errs.append(f"{t}: 株価を取得できない（ティッカー誤り？） {e}")
+
         if errs:
             ok = False
             print(f"✗ {name}")

@@ -33,7 +33,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fonts/local.css">
-<link rel="stylesheet" href="style.css?v=b225475a">
+<link rel="stylesheet" href="style.css?v=635743c8">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#fdece5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -42,7 +42,12 @@
 <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64 128x128">
 <link rel="icon" type="image/png" href="images/icon-192.png" sizes="192x192">
 <script>
-/* ちらつき防止: 描画前にテーマを確定させる（切り替えの本体は app.js?v=f17c33aa"rensou_theme");
+/* ちらつき防止: 描画前にテーマと文字サイズを確定させる。
+   切り替えの本体は外部スクリプト側にある（ここでは属性を付けるだけ）。
+   ※このブロックにアセット名（app.js / style.css）を書かないこと。
+     build_static.py の stamp_assets() が誤って書き換える経路になる */
+(function(){try{
+  var t=localStorage.getItem("rensou_theme");
   var d=t?t==="dark":(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.setAttribute("data-theme",d?"dark":"light");
   document.documentElement.setAttribute("data-fs",localStorage.getItem("rensou_fontsize")||"s");
@@ -121,7 +126,7 @@
 
   <footer>
     <p class="disc">これは思考訓練であり、投資助言ではありません。</p>
-    <p class="ver">v2026.08.19-bff02cd</p>
+    <p class="ver">v2026.08.20-0e88419</p>
     <p class="copy">&copy;<a class="cplink" href="https://wonder-bros.com" target="_blank" rel="noopener noreferrer">WONDER BROTHERS INC.</a></p>
   </footer>
 </div>

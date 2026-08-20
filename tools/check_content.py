@@ -15,6 +15,7 @@ Claudeのサンドボックス等で `npm run check` が実行できない場合
   4. correct の同一位置3連続なし・6問中同一位置4回以上なし
   5. スキーマ: id=ファイル名 / date / news4キー / 6問 / 各4択 / correct範囲 /
      calls3銘柄・方向は＋2−1か＋1−2 / learning
+  6. 使い回しの罠: 同じ選択肢が複数の記事に登場しないこと（記事をまたぐ検査）
 """
 import json, re, sys, glob, os
 
@@ -115,16 +116,111 @@ def check_file(path):
         errs.append("learningがない")
     return errs
 
+def norm_option(s):
+    """選択肢の比較用の正規化。助詞・記号のゆれを吸収して同じ罠を同じとみなす。
+
+    「世界のスマートフォンの出荷の台数の統計を確認していく」と
+    「世界のスマートフォンの出荷台数の統計を確認していく」は同じ罠。
+    """
+    return re.sub(r"[のをだけ、。・\s]", "", s)
+
+
+def check_corpus(targets):
+    """記事をまたぐ検査: 選択肢の使い回しを見つける。
+
+    背景（2026-08-20発見）: ⑥検証ポイントの罠が「世界のGDP成長率…」
+    「日本の失業率…」といった汎用マクロ指標のテンプレになっており、
+    125記事750問のうち100問が同じ罠を共有していた。そのうち82問は
+    罠3本すべてが使い回しで、**記事を読まなくても「見覚えのない選択肢＝正解」**
+    で当たる状態だった（使い回しの罠が正解になったことは一度も無い）。
+
+    比較は data/ 全体に対して行う。1ファイルだけ検査するときも、
+    corpus 全体と突き合わせないと使い回しは見つけられない。
+    """
+    seen = {}                       # 正規化した選択肢 -> [(記事id, 設問番号)]
+    for p in sorted(glob.glob("data/*.json")):
+        try:
+            d = json.load(open(p))
+        except Exception:
+            continue
+        for i, q in enumerate(d.get("questions", [])):
+            for o in q.get("options", []):
+                seen.setdefault(norm_option(o), []).append((d.get("id"), i + 1, o))
+
+    target_ids = {os.path.basename(p)[:-5] for p in targets}
+    out = {}
+    for uses in seen.values():
+        arts = {u[0] for u in uses}
+        if len(arts) < 2:
+            continue
+        for sid, qn, text in uses:
+            if sid not in target_ids:
+                continue
+            others = sorted(arts - {sid})
+            out.setdefault(sid, []).append(
+                f"q{qn}: 使い回しの罠（他{len(others)}記事と同一の選択肢）"
+                f"「{text}」→ 例: {others[0]}")
+    return out
+
+
+def longest_hit_rate():
+    """「一番長い選択肢を選ぶ」だけで何割当たるかを測る（偶然は25%）。
+
+    1問ごとの検査（正解が単独最長なら突出2字以内）は通っていても、
+    **正解がいつも最長寄り**なら、中身を読まずに長さの比較だけで当てられる。
+    実測で全750問の50.0%、⑥検証ポイントに至っては67.2%だった（2026-08-20）。
+    2字差でも、比べれば分かってしまう。
+
+    最長が複数ある設問は「長さでは決められない」ので、当たりに数えない。
+    ここは記事単位の合否ではないので警告として出す（是正は記事の書き換えが要る）。
+    """
+    hit = tot = 0
+    per_step = {}
+    for p in sorted(glob.glob("data/*.json")):
+        try:
+            d = json.load(open(p))
+        except Exception:
+            continue
+        for q in d.get("questions", []):
+            opts = q.get("options", [])
+            c = q.get("correct", -1)
+            if len(opts) != 4 or not (0 <= c < 4):
+                continue
+            L = [len(o) for o in opts]
+            step = q.get("step", "?")
+            s = per_step.setdefault(step, [0, 0])
+            tot += 1
+            s[1] += 1
+            if L.count(max(L)) > 1:
+                continue
+            if L.index(max(L)) == c:
+                hit += 1
+                s[0] += 1
+    return hit, tot, per_step
+
+
 def main():
     targets = sys.argv[1:] or sorted(glob.glob("data/*.json"))
+    corpus_errs = check_corpus(targets)
     total_err = 0
     for p in targets:
-        errs = check_file(p)
+        errs = check_file(p) + corpus_errs.get(os.path.basename(p)[:-5], [])
         if errs:
             print(f"FAIL {p}")
             for e in errs:
                 print(f"  - {e}")
             total_err += len(errs)
+    hit, tot, per_step = longest_hit_rate()
+    if tot:
+        rate = hit / tot * 100
+        mark = "⚠" if rate >= 35 else "✓"
+        print(f"\n{mark} 長さバイアス: 一番長い選択肢を選ぶだけで {hit}/{tot} = {rate:.1f}% "
+              f"当たる（偶然は25%）")
+        worst = sorted(((v[0] / v[1] * 100, k, v) for k, v in per_step.items()
+                        if v[1] >= 20 and v[0] / v[1] >= 0.45), reverse=True)
+        for r, k, v in worst:
+            print(f"    {k}: {v[0]}/{v[1]} = {r:.1f}%")
+
     if total_err:
         print(f"\nFAIL: {total_err}件の違反")
         sys.exit(1)

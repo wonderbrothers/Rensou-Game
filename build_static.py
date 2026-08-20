@@ -321,6 +321,14 @@ def stamp_assets():
 
     ブラウザは URL が変わらないと古いファイルを使い続ける。中身が変わったときだけ
     ハッシュが変わるので、利用者が手動でリロードしなくても新しい版が読み込まれる。
+
+    書き換えは src="…" / href="…" の中だけに限定する。
+    2026-08-20の事故: 以前は "app.js" という文字列を index.html のどこでも
+    置換していた。ちらつき防止のインラインスクリプトのコメントに「app.js」と
+    書いてあったため、そこにも ?v= が差し込まれ、さらに次のビルドで
+    `[^"']*` が改行をまたいで貪欲に食い、コメントから3行ぶんを飲み込んで
+    スクリプトを破壊した（テーマと文字サイズの先行適用が効かなくなっていた）。
+    属性値の中に閉じ込め、引用符も改行も越えられないようにして再発を防ぐ。
     """
     index = os.path.join(BASE, "index.html")
     if not os.path.exists(index):
@@ -333,7 +341,19 @@ def stamp_assets():
         if not os.path.exists(path):
             continue
         h = hashlib.md5(open(path, "rb").read()).hexdigest()[:8]
-        html = re.sub(rf'({re.escape(asset)})(\?v=[^"\']*)?', rf'\1?v={h}', html)
+        html = re.sub(
+            rf'((?:src|href)=")({re.escape(asset)})(?:\?v=[^"\n]*)?(")',
+            rf'\1\2?v={h}\3',
+            html,
+        )
+
+    # 属性の外に asset?v= が漏れていたら、置換の巻き込みが起きている
+    stray = re.search(r'(?<!["/])\b(?:app\.js|style\.css)\?v=', html)
+    if stray:
+        raise SystemExit(
+            "✗ index.html: 属性の外に ?v= が付いています（置換の巻き込み）: "
+            + html[max(0, stray.start() - 40):stray.end() + 20]
+        )
 
     if html != before:
         with open(index, "w", encoding="utf-8") as fp:

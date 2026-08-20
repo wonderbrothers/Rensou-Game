@@ -50,13 +50,20 @@
   --ease:cubic-bezier(.4,0,.2,1);    /* 動きのイージング（色ではないのでテーマ非依存） */
 
   /* 文字サイズ倍率。style.css の px 指定はすべて calc(◯px * var(--fs)) 経由。
-     1 = 小（従来と同一）。data-fs 属性で切り替える（色ではないのでテーマ非依存） */
-  --fs:1;
+     data-fs 属性で切り替える（色ではないのでテーマ非依存）。
+     px の素の数値は倍率1.0を前提に書かれているが、既定は「小」＝1.09。
+     この行は data-fs が無い場合（属性の付け忘れ・noscript）の保険で、
+     必ず「小」と同じ値にしておくこと */
+  --fs:1.09;
   color-scheme:light;
 }
-/* 文字サイズ 3段階。小=1（従来）／中／大 */
-:root[data-fs="m"]{--fs:1.09;}
-:root[data-fs="l"]{--fs:1.20;}
+/* 文字サイズ 3段階。2026-08-20に全体を一段上げた（旧: 1 / 1.09 / 1.20）。
+   刻みは約10%ずつ。文字と一緒に大きくすべき固定寸法（丸バッヂ・日付チップ・
+   カレンダーのセルなど）も calc(◯px * var(--fs)) にしてあるので、
+   どの段でも見た目の比率は変わらない */
+:root[data-fs="s"]{--fs:1.09;}
+:root[data-fs="m"]{--fs:1.20;}
+:root[data-fs="l"]{--fs:1.32;}
 
 *{box-sizing:border-box;}
 
@@ -208,7 +215,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .obadge .ms{font-size:1.05em;}
 .obadge.ok{background:var(--pos-deep);color:var(--on-color);}
 .obadge.ng{background:var(--neg-deep);color:var(--on-color);}
-.opt .mk{flex:none;width:30px;height:30px;border-radius:50%;color:var(--on-color);
+.opt .mk{flex:none;width:calc(30px * var(--fs));height:calc(30px * var(--fs));border-radius:50%;color:var(--on-color);
   display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(13.5px * var(--fs));}
 .opt:nth-child(1) .mk{background:var(--pri);}
 .opt:nth-child(2) .mk{background:var(--sup);}
@@ -267,7 +274,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .aopt>span:nth-child(2){flex:1;min-width:0;}
 /* 既定（＝正解でも自分の回答でもない選択肢）はグレーで一段落とす */
 .aopt{color:var(--ink-2);}
-.aopt .mk{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ink-3);color:var(--on-color);
+.aopt .mk{flex:none;width:calc(24px * var(--fs));height:calc(24px * var(--fs));border-radius:50%;background:var(--ink-3);color:var(--on-color);
   display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(12px * var(--fs));}
 .aopt.ok{background:var(--pos-soft);border-color:var(--pos);color:var(--pos-deep);}
 .aopt.ok .mk{background:var(--pos);}
@@ -387,7 +394,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .csrow{cursor:pointer;transition:background .12s;}
 /* ニュース日付のカレンダー風チップ */
 /* 日付チップ: 縦横同寸の正方形 */
-.dchip{flex:none;width:46px;height:46px;border-radius:9px;overflow:hidden;text-align:center;
+.dchip{flex:none;width:calc(46px * var(--fs));height:calc(46px * var(--fs));border-radius:9px;overflow:hidden;text-align:center;
   background:var(--paper);box-shadow:0 3px 10px rgba(var(--sh),.14);line-height:1;
   display:flex;flex-direction:column;}
 /* カード見出し行: 日付チップ＋バッヂ類 */
@@ -411,7 +418,7 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 @media(max-width:755px){
   .csrow{flex-wrap:wrap;row-gap:5px;justify-content:space-between;}
   .csrow .dchip{order:-1;}
-  .csrow .hname{flex:1 1 calc(100% - 58px);}
+  .csrow .hname{flex:1 1 calc(100% - 46px * var(--fs) - 12px);}   /* 日付チップの幅＋余白 */
   .csrow .hwin{margin-right:auto;}
   .csrow .hscore{display:flex;align-items:center;gap:8px;margin-left:auto;}
 }
@@ -436,7 +443,7 @@ button.bd:hover,button.hdate:hover{transform:translateY(-1px);box-shadow:0 4px 1
   padding:18px;width:min(380px,94vw);}
 .calhd{display:flex;align-items:center;gap:12px;justify-content:center;position:relative;
   margin-bottom:12px;font-size:calc(15px * var(--fs));color:var(--ink);}
-.calnav{border:0;background:rgba(var(--fill),.08);border-radius:10px;width:30px;height:30px;
+.calnav{border:0;background:rgba(var(--fill),.08);border-radius:10px;width:calc(30px * var(--fs));height:calc(30px * var(--fs));
   font-size:calc(17px * var(--fs));cursor:pointer;color:var(--ink);font-weight:800;line-height:1;}
 .calnav:hover{background:rgba(var(--fill),.16);}
 .calx{position:absolute;right:0;top:2px;border:0;background:none;cursor:pointer;color:var(--ink-3);}
@@ -445,15 +452,17 @@ button.bd:hover,button.hdate:hover{transform:translateY(-1px);box-shadow:0 4px 1
 .calw{text-align:center;font-size:calc(10.5px * var(--fs));color:var(--ink-3);font-weight:800;padding:2px 0;}
 /* 2行グリッド（1行目=日付／2行目=件数バッヂの席）にして、件数の有無に関わらず
    日付の縦位置を揃える。バッヂが無い日も席だけ残るので行ごとに数字がずれない */
-.calc{min-height:46px;border-radius:10px;background:var(--bg);
-  display:grid;grid-template-rows:auto 16px;gap:2px;
+.calc{min-height:calc(46px * var(--fs));border-radius:10px;background:var(--bg);
+  display:grid;grid-template-rows:auto calc(16px * var(--fs));gap:2px;
   align-content:center;justify-items:center;padding:4px 3px;}
 .calc.mute{background:transparent;}
 .calc .cd{font-size:calc(11px * var(--fs));color:var(--ink);font-weight:800;line-height:1.2;}
 .calc.has{background:var(--pri-soft);}
 .cn{display:inline-flex;align-items:center;background:var(--ink-bg);color:var(--ink-tx);
   font-size:calc(10px * var(--fs));font-weight:800;line-height:1.4;
-  border-radius:999px;padding:1px 7px;pointer-events:none;align-self:center;}
+  border-radius:999px;padding:1px 5px;pointer-events:none;align-self:center;max-width:100%;}
+/* 左右の余白が7pxだと「12件」が文字サイズ「大」でモーダルのセル幅（約46px）を
+   はみ出すため5pxにしてある。詰めるとここが最初に溢れる */
 /* 件数のある日はセル全体がボタン（薄いオレンジの範囲すべてがクリック領域） */
 button.calc{border:0;font-family:inherit;cursor:pointer;width:100%;
   transition:background .15s,transform .1s;}
@@ -464,7 +473,7 @@ button.calc:active{transform:translateY(0);}
 .sblabel{flex:0 0 96px;font-size:calc(12.5px * var(--fs));font-weight:800;}
 .sbar{flex:1;height:12px;background:rgba(var(--fill),.08);border-radius:99px;overflow:hidden;}
 .sbar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--pri),var(--pri-lite));}
-.sbpct{flex:0 0 96px;font-size:calc(11.5px * var(--fs));color:var(--ink-2);font-weight:700;text-align:right;}
+.sbpct{flex:0 0 calc(96px * var(--fs));font-size:calc(11.5px * var(--fs));color:var(--ink-2);font-weight:700;text-align:right;}
 .hrow{display:flex;align-items:center;gap:10px;padding:10px 0;font-size:calc(13px * var(--fs));border-top:1px solid rgba(var(--fill),.12);}
 .hrow:first-of-type{border-top:0;}
 .hdate{flex:none;font-size:calc(11px * var(--fs));color:var(--ink-3);font-weight:700;}
@@ -644,7 +653,7 @@ a.src:hover{background:rgba(var(--sup-rgb),.26);}
 /* カレンダー画面: 選択中の日付 */
 .calc.picked{outline:2px solid var(--ink);outline-offset:-2px;background:rgba(var(--fill),.20);}
 #stage .calgrid{gap:5px;}
-#stage .calc{min-height:52px;}
+#stage .calc{min-height:calc(52px * var(--fs));}
 #stage .calhd b{font-size:calc(15px * var(--fs));}
 .calnav{background:var(--glass-3);}
 
@@ -904,7 +913,7 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
 .pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
   gap:6px;margin:18px 0 4px;}
 .pgbtn{display:inline-flex;align-items:center;justify-content:center;
-  min-width:34px;height:34px;padding:0 9px;border-radius:999px;
+  min-width:calc(34px * var(--fs));height:calc(34px * var(--fs));padding:0 9px;border-radius:999px;
   border:1px solid var(--glass-line);background:var(--glass);
   -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
   font-family:inherit;font-size:calc(13px * var(--fs));font-weight:800;color:var(--ink-2);
@@ -918,7 +927,7 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
 .pgap{color:var(--ink-3);font-size:calc(13px * var(--fs));font-weight:800;padding:0 2px;user-select:none;}
 @media(max-width:640px){
   .pager{gap:5px;}
-  .pgbtn{min-width:32px;height:32px;padding:0 7px;font-size:calc(12.5px * var(--fs));}
+  .pgbtn{min-width:calc(32px * var(--fs));height:calc(32px * var(--fs));padding:0 7px;font-size:calc(12.5px * var(--fs));}
   .pgbtn .ms{font-size:calc(18px * var(--fs));}
 }
 
@@ -933,7 +942,7 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
    すべて新設クラスで、既存セレクタには触れない。
    .analyst（濃い面）配下の上書きも .analyst スコープ内に限定 */
 .refmk{display:inline-flex;align-items:center;justify-content:center;
-  min-width:19px;height:19px;padding:0 5px;margin:0 2px;border-radius:50%;
+  min-width:calc(19px * var(--fs));height:calc(19px * var(--fs));padding:0 5px;margin:0 2px;border-radius:50%;
   font-size:calc(11.5px * var(--fs));font-weight:800;line-height:1;vertical-align:0.5px;
   background:rgba(var(--fill),.14);color:inherit;}
 .refmk.ok{background:var(--pos-deep);color:var(--on-color);}
