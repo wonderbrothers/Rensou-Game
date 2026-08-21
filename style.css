@@ -96,6 +96,13 @@ h1{margin:0 0 10px;padding:0;line-height:0;font-size:0;display:flex;justify-cont
 .logo{width:min(340px,74vw);height:auto;display:block;transition:transform .18s ease;
   cursor:pointer;user-select:none;-webkit-user-drag:none;}
 .logo:hover{transform:scale(1.03);}
+/* ロゴはテーマごとに色違いのSVGへ差し替える。
+   SVGは <img> なので中の fill にCSSが届かず、色は画像側が持つしかない。
+   JSでsrcを付け替えるとテーマ確定より後になって一瞬前の色が見えるため、
+   data-theme に対するCSSで切り替える（描画前に属性が付いているのでちらつかない）。
+   content が効かない環境では src のライト用がそのまま出るだけで、崩れはしない。
+   影響範囲: このロゴだけ（.logo は index.html の h1 の1箇所でのみ使用） */
+:root[data-theme="dark"] .logo{content:url("images/logo-dark.svg");}
 h1 .em{display:inline-block;animation:wiggle 2.6s ease-in-out infinite;letter-spacing:0;}
 @keyframes wiggle{0%,100%{transform:rotate(-6deg);}50%{transform:rotate(8deg);}}
 .tag{color:var(--ink-2);font-size:calc(12.5px * var(--fs));margin:0 0 10px;letter-spacing:.12em;}
