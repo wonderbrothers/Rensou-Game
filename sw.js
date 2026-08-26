@@ -3,7 +3,7 @@
    - api/ は「ネットワーク優先・失敗時キャッシュ」で常に最新を見せつつ、オフラインでも既読を閲覧可能にする
    - 新しい版が出たら自動で切り替えず、アプリ側のトーストからユーザーが更新を選ぶ
    CACHE_VERSION は build_static.py がビルドごとに自動で書き換える */
-const CACHE_VERSION = "9fdd634900d7";
+const CACHE_VERSION = "215b6968329c";
 const SHELL_CACHE = `rensou-shell-${CACHE_VERSION}`;
 const DATA_CACHE = `rensou-data-${CACHE_VERSION}`;
 
