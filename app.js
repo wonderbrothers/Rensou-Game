@@ -53,6 +53,7 @@ function questionParams(q) {
   base.step_no = stepIndex(q && q.step);
   base.step_name = (q && q.step) || undefined;
   base.question_index = idx + 1;
+  base.entry = curEntry || undefined;
   return base;
 }
 
@@ -89,8 +90,12 @@ function trackView(kind, s) {
   }, withArticle ? articleParams(s) : {}));
 }
 
-/* プレイの入口（どこから始めたか）・開始時刻・検索の打ち止め待ち */
+/* プレイの入口（どこから始めたか）・開始時刻・検索の打ち止め待ち。
+   curEntry はプレイ中ずっと保持する。GA4のファネルは内訳ディメンションを
+   「各ステップのイベントが持つ値」で分けるため、開始イベントだけに入口を付けると
+   2ステップ目以降が (not set) になって入口別の完走率が出せない。 */
 let playEntry = "list";
+let curEntry = "list";
 let playStartedAt = 0;
 let kwTimer = null;
 
@@ -521,8 +526,9 @@ function resumePlay(s, p) {
   sessionAnswers = p.answers || [];
   callsPromise = prefetchCalls(s);
   playStartedAt = Date.now();
+  curEntry = "resume";
   track("quiz_start", Object.assign({}, articleParams(s), {
-    entry: "resume", item_count: s.questions.length, question_index: idx + 1
+    entry: curEntry, item_count: s.questions.length, question_index: idx + 1
   }));
   show("stage");
   setNav(null);
@@ -1270,8 +1276,9 @@ function startPlay(s) {
   cur = s; idx = 0; live = 0; sessionAnswers = [];
   callsPromise = prefetchCalls(s);
   playStartedAt = Date.now();
+  curEntry = playEntry;
   track("quiz_start", Object.assign({}, articleParams(s), {
-    entry: playEntry, item_count: s.questions.length
+    entry: curEntry, item_count: s.questions.length
   }));
   playEntry = "list";
   show("stage");
@@ -1421,6 +1428,7 @@ function playResult() {
   const n = cur.questions.length;
   store.clearProgress();          // 完走したので中断状態は破棄
   track("quiz_complete", Object.assign({}, articleParams(cur), {
+    entry: curEntry || undefined,
     score: live, total: n, score_rate: Math.round(live / n * 100),
     duration_sec: playStartedAt ? Math.round((Date.now() - playStartedAt) / 1000) : undefined
   }));
@@ -2195,9 +2203,10 @@ async function startWrongReview() {
   idx = 0; live = 0; sessionAnswers = [];
   pushBack();                 // 戻り先＝間違いノート（早期returnの後なので空振りしない）
   playStartedAt = Date.now();
+  curEntry = "review";
   track("review_start", { item_count: cur.questions.length });
   track("quiz_start", Object.assign({}, articleParams(cur), {
-    entry: "review", item_count: cur.questions.length
+    entry: curEntry, item_count: cur.questions.length
   }));
   show("stage");
   setNav(null);
