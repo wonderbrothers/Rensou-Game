@@ -6,6 +6,94 @@ let order = [];            // 選択肢シャッフルの表示順（表示位�
 let sessionAnswers = [];   // 今回プレイの回答記録
 let callsPromise = null;   // 遊びコールの株価: スタート直後に先読み
 
+/* ---------- 計測（GTM → GA4） ----------
+   dataLayer に積むだけの薄い層。GTMコンテナが未設定でも配列に溜まるだけで、
+   画面表示や既存の処理には一切影響しない（送信の可否はGTM側の設定で決まる）。
+   GTMのデータレイヤーは値が次のpushへ持ち越されるため、既知のキーを毎回
+   undefined で打ち消してから積む（前のイベントの article_id 等の混入を防ぐ）。 */
+const TRACK_KEYS = [
+  "screen_name", "page_path", "page_title",
+  "article_id", "article_date", "article_title", "category",
+  "entry", "review_mode", "step_no", "step_name", "question_index",
+  "is_correct", "score", "total", "score_rate", "duration_sec",
+  "calls_count", "source_name", "link_url", "search_term",
+  "filter_type", "filter_value", "item_count",
+  "setting_name", "setting_value", "error_message"
+];
+
+function track(name, params) {
+  try {
+    const p = { event: name };
+    TRACK_KEYS.forEach(k => { p[k] = undefined; });
+    Object.assign(p, params || {});
+    (window.dataLayer = window.dataLayer || []).push(p);
+  } catch (e) { /* 計測の失敗でアプリを止めない */ }
+}
+
+/* 記事の文脈（どのニュースでの出来事か）を共通パラメータとして付ける */
+function articleParams(s) {
+  if (!s) return {};
+  const cats = s.categories || [];
+  return {
+    article_id: s.id,
+    article_date: s.date || undefined,
+    article_title: (s.news && s.news.headline) || undefined,
+    category: cats.length ? cats.join("|") : undefined,
+    review_mode: s.__review ? "yes" : "no"
+  };
+}
+
+/* 復習モードでは出題元の記事が問題ごとに異なるため、その記事を文脈にする */
+function questionParams(q) {
+  const base = articleParams(cur);
+  if (q && q.__src) {
+    base.article_id = q.__src.id;
+    base.article_title = q.__src.news.headline;
+  }
+  base.step_no = stepIndex(q && q.step);
+  base.step_name = (q && q.step) || undefined;
+  base.question_index = idx + 1;
+  return base;
+}
+
+/* ステップ番号を①〜⑥から1〜6へ（レポートで並べ替えできるようにする） */
+function stepIndex(st) {
+  const i = "①②③④⑤⑥".indexOf(stepNum(st));
+  return i < 0 ? undefined : i + 1;
+}
+
+/* SPAは画面を切り替えてもURLが変わらないため、仮想ページビューを自分で送る */
+const VIEW_PATH = {
+  home: "/", guide: "/guide", patterns: "/patterns", stats: "/stats",
+  notes: "/notes", calendar: "/calendar", play: "/play", answers: "/answers",
+  result: "/result"
+};
+const VIEW_TITLE = {
+  home: "HOME", guide: "遊び方", patterns: "パターン図鑑", stats: "成績表",
+  notes: "間違いノート", calendar: "カレンダー", play: "クイズ",
+  answers: "解答一覧", result: "結果"
+};
+let lastViewKey = "";
+function trackView(kind, s) {
+  const withArticle = (kind === "play" || kind === "answers" || kind === "result");
+  const base = VIEW_PATH[kind] || ("/" + kind);
+  const path = (withArticle && s) ? (base + "/" + s.id) : base;
+  // 同じ画面の描き直し（絞り込み・HOMEボタンの二重呼び出し）でPVを重複計上しない。
+  // 直前と同じ画面のときだけ抑止するので、home→play→home は2回数える。
+  if (path === lastViewKey) return;
+  lastViewKey = path;
+  track("vpv", Object.assign({
+    screen_name: kind,
+    page_path: path,
+    page_title: (VIEW_TITLE[kind] || kind) + "｜RENSOU GAME"
+  }, withArticle ? articleParams(s) : {}));
+}
+
+/* プレイの入口（どこから始めたか）・開始時刻・検索の打ち止め待ち */
+let playEntry = "list";
+let playStartedAt = 0;
+let kwTimer = null;
+
 const $ = id => document.getElementById(id);
 function show(id) {
   ["loader", "home", "stage"].forEach(v => $(v).classList.toggle("hidden", v !== id));
@@ -80,6 +168,7 @@ function applyTheme(dark) {
   if (meta) meta.setAttribute("content", dark ? THEME_COLOR.dark : THEME_COLOR.light);
 }
 function setDarkMode(dark) {
+  track("setting_change", { setting_name: "theme", setting_value: dark ? "dark" : "light" });
   try { localStorage.setItem(THEME_KEY, dark ? "dark" : "light"); } catch (e) {}
   applyTheme(dark);
 }
@@ -91,6 +180,7 @@ function applyFontSize(v) {
   document.documentElement.setAttribute("data-fs", v);
 }
 function setFontSize(v) {
+  track("setting_change", { setting_name: "font_size", setting_value: v });
   try { localStorage.setItem(FS_KEY, v); } catch (e) {}
   applyFontSize(v);
 }
@@ -182,6 +272,7 @@ function openSettings() {
   ov.querySelector("#clrData").onclick = () => conf.classList.remove("hidden");
   ov.querySelector("#clrNo").onclick = () => conf.classList.add("hidden");
   ov.querySelector("#clrYes").onclick = () => {
+    track("setting_change", { setting_name: "clear_data", setting_value: "done" });
     store.clearAll();
     close();
     showToast({
@@ -338,6 +429,7 @@ function notifyAppUpdate(worker) {
     body: "新しい版に切り替えるには更新してください。",
     actionLabel: "更新する",
     onAction: () => {
+      track("app_update_accept");
       if (swWaiting) swWaiting.postMessage({ type: "SKIP_WAITING" });
       else location.reload();
     }
@@ -428,6 +520,10 @@ function resumePlay(s, p) {
   live = p.live || 0;
   sessionAnswers = p.answers || [];
   callsPromise = prefetchCalls(s);
+  playStartedAt = Date.now();
+  track("quiz_start", Object.assign({}, articleParams(s), {
+    entry: "resume", item_count: s.questions.length, question_index: idx + 1
+  }));
   show("stage");
   setNav(null);
   markView("play", () => resumePlay(s, p));
@@ -462,6 +558,7 @@ function importResults(file) {
       });
       merged.sort((a, b) => (a.at || "").localeCompare(b.at || ""));
       store.setResults(merged);
+      track("results_import", { item_count: added });
       alert(`${added} 件の記録を取り込みました（重複はスキップ）。`);
       showStats();
     } catch (e) {
@@ -554,6 +651,7 @@ async function boot() {
     initNavShrink();
   } catch (e) {
     console.error("[連想ゲーム] データ取得に失敗:", e);
+    track("app_error", { error_message: String((e && e.message) || e).slice(0, 100) });
     const note = document.querySelector("#loader .errnote");
     if (note) note.textContent = `（${e.message}）`;
     show("loader");
@@ -687,6 +785,7 @@ function openHomeCalendar() {
   openCalendar(counts, iso => {
     activeDate = activeDate === iso ? "" : iso;
     shown = PAGE;
+    track("filter_apply", { filter_type: "date", filter_value: activeDate || "all" });
     renderHome(true);
   }, "件数をタップするとその日付のニュースだけを表示します");
 }
@@ -779,7 +878,7 @@ function showCalendar() {
       catch (e) { b.disabled = false; b.innerHTML = orig; alert("記事の読み込みに失敗しました。通信環境をご確認ください。"); return; }
       b.disabled = false;
       b.innerHTML = orig;
-      if (b.dataset.a === "ans") showAnswers(s); else startPlay(s);
+      if (b.dataset.a === "ans") showAnswers(s); else { playEntry = "list"; startPlay(s); }
     };
   }
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -807,6 +906,7 @@ function openCategoryModal() {
     b.onclick = () => {
       activeCat = b.dataset.c || null;
       shown = PAGE;
+      track("filter_apply", { filter_type: "category", filter_value: activeCat || "all" });
       close();
       renderHome(true);
     };
@@ -828,9 +928,25 @@ function renderToolbar() {
       </div>
     </div>`;
   const kwInput = $("kw");
-  kwInput.oninput = () => { keyword = kwInput.value; shown = PAGE; renderList(); };
-  $("unplayed").onclick = () => { unplayedOnly = !unplayedOnly; shown = PAGE; renderHome(true); };
-  $("sortBtn").onclick = () => { sortDesc = !sortDesc; shown = PAGE; renderHome(true); };
+  kwInput.oninput = () => {
+    keyword = kwInput.value; shown = PAGE; renderList();
+    // 1文字ごとに送らず、入力が止まってから1回だけ送る
+    clearTimeout(kwTimer);
+    kwTimer = setTimeout(() => {
+      const t = keyword.trim();
+      if (t.length >= 2) track("search", { search_term: t, item_count: filteredSessions().length });
+    }, 900);
+  };
+  $("unplayed").onclick = () => {
+    unplayedOnly = !unplayedOnly; shown = PAGE;
+    track("filter_apply", { filter_type: "unplayed", filter_value: unplayedOnly ? "on" : "off" });
+    renderHome(true);
+  };
+  $("sortBtn").onclick = () => {
+    sortDesc = !sortDesc; shown = PAGE;
+    track("filter_apply", { filter_type: "sort", filter_value: sortDesc ? "newest" : "oldest" });
+    renderHome(true);
+  };
   $("catBtn").onclick = () => openCategoryModal();
 
   // 適用中の絞り込みだけをチップで表示（解除用）
@@ -915,6 +1031,7 @@ function observeSentinel() {
       $("listFoot").innerHTML = "";   // 番人を消して二重発火を防ぐ
       setTimeout(() => {
         shown += PAGE;
+        track("list_load_more", { item_count: shown });
         renderList();                  // 実カードで置き換え
         loadingMore = false;
       }, 600);
@@ -948,7 +1065,7 @@ function renderHome(keepScroll) {
     }
     b.disabled = false;
     b.innerHTML = orig;
-    if (b.dataset.a === "ans") showAnswers(s); else startPlay(s);
+    if (b.dataset.a === "ans") showAnswers(s); else { playEntry = "list"; startPlay(s); }
   };
   show("home");
   setNav("home");
@@ -965,6 +1082,7 @@ const backStack = [];
 
 function markView(kind, run) {
   viewNow = { kind, run };
+  trackView(kind, cur);
   const b = $("backBtn");
   // 戻る導線が要るのは、ナビから直接来られない画面だけ
   if (b) b.classList.toggle("hidden", !(kind === "play" || kind === "answers"));
@@ -1151,6 +1269,11 @@ function startPlay(s) {
   pushBack();
   cur = s; idx = 0; live = 0; sessionAnswers = [];
   callsPromise = prefetchCalls(s);
+  playStartedAt = Date.now();
+  track("quiz_start", Object.assign({}, articleParams(s), {
+    entry: playEntry, item_count: s.questions.length
+  }));
+  playEntry = "list";
   show("stage");
   setNav(null);
   markView("play", () => startPlay(s));
@@ -1226,6 +1349,7 @@ function renderQ() {
   saveProgress();                                // 中断しても続きから戻れるよう毎問保存
   const q = cur.questions[idx];
   order = shuffle(q.options.map((_, i) => i));   // 選択肢をシャッフル
+  track("quiz_question_view", Object.assign(questionParams(q), { total: cur.questions.length }));
   $("scoreBox").innerHTML = `${ic("star", 1)} <b>${live}</b> / ${cur.questions.length}`;
   $("stageBody").innerHTML = `
     <div class="bar"><i style="width:${idx / cur.questions.length * 100}%"></i></div>
@@ -1275,6 +1399,9 @@ function choose(disp) {
     st: q.step, q: q.q, ok,
     chosen: q.options[orig], corr: q.options[q.correct], reason: q.reason
   });
+  track("quiz_answer", Object.assign(questionParams(q), {
+    is_correct: ok ? "correct" : "incorrect"
+  }));
   // 復習で正解できた問題は間違いノートから外す（克服済みとして別に記録）
   if (ok && cur.__review && q.__src) store.addCleared([`${q.__src.id}|${q.q}`]);
   const corrMark = MARKS[order.indexOf(q.correct)];
@@ -1293,6 +1420,11 @@ function choose(disp) {
 function playResult() {
   const n = cur.questions.length;
   store.clearProgress();          // 完走したので中断状態は破棄
+  track("quiz_complete", Object.assign({}, articleParams(cur), {
+    score: live, total: n, score_rate: Math.round(live / n * 100),
+    duration_sec: playStartedAt ? Math.round((Date.now() - playStartedAt) / 1000) : undefined
+  }));
+  trackView("result", cur);
   // 成績をローカル保存（復習モードは保存しない）
   if (!cur.__review) {
     store.addResult({
@@ -1315,7 +1447,7 @@ function playResult() {
     <button class="btn primary" id="again">もう一度 ${ic("replay")}</button></div>`;
   $("scoreBox").innerHTML = "";
   $("stageBody").innerHTML = h;
-  $("again").onclick = () => startPlay(cur);
+  $("again").onclick = () => { playEntry = "again"; startPlay(cur); };
   if (cur.calls && cur.calls.length) loadCalls();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -1344,7 +1476,7 @@ function showAnswers(s) {
   h += `<div class="row" style="justify-content:center;margin-top:6px;">
     <button class="btn primary" id="goPlay">挑戦する ${ic("rocket_launch")}</button></div>`;
   $("stageBody").innerHTML = h;
-  $("goPlay").onclick = () => startPlay(s);
+  $("goPlay").onclick = () => { playEntry = "answers"; startPlay(s); };
   if (s.calls && s.calls.length) loadCalls();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -1381,6 +1513,9 @@ async function loadCalls() {
     const d = await callsPromise;
     if (!d) throw 0;
     if (d.__err) throw d.__err;    // prefetch が理由付きで失敗していた場合
+    track("calls_view", Object.assign({}, articleParams(cur), {
+      calls_count: (d.calls || []).length
+    }));
     let h = `<b class="ct">${ic("casino")} シニアアナリストの遊びコール</b>
       <p class="cnote callintro">${CALL_INTRO}</p>`;
     d.calls.forEach(c => {
@@ -1639,7 +1774,7 @@ function showStats() {
   const pdc = $("pdClear");
   if (pdc) pdc.onclick = () => { statsDate = ""; showStats(); };
   $("csBtn").onclick = () => loadCallStats(true);
-  $("expBtn").onclick = () => exportResults();
+  $("expBtn").onclick = () => { track("results_export"); exportResults(); };
   $("impBtn").onclick = () => $("impFile").click();
   $("impFile").onchange = ev => { if (ev.target.files[0]) importResults(ev.target.files[0]); };
   $("clearBtn").onclick = () => {
@@ -2022,6 +2157,7 @@ function showNotes() {
       try { await ensureDetail(s); } catch (e) { b.disabled = false; b.innerHTML = orig; return; }
       b.disabled = false;
       b.innerHTML = orig;
+      playEntry = "notes";
       startPlay(s);
     };
   });
@@ -2058,6 +2194,11 @@ async function startWrongReview() {
   callsPromise = null;
   idx = 0; live = 0; sessionAnswers = [];
   pushBack();                 // 戻り先＝間違いノート（早期returnの後なので空振りしない）
+  playStartedAt = Date.now();
+  track("review_start", { item_count: cur.questions.length });
+  track("quiz_start", Object.assign({}, articleParams(cur), {
+    entry: "review", item_count: cur.questions.length
+  }));
   show("stage");
   setNav(null);
   markView("play", () => startWrongReview());
@@ -2080,5 +2221,24 @@ function burstConfetti() {
     setTimeout(() => s.remove(), 5000);
   }
 }
+
+/* 出典リンク（外部サイトへの離脱）。委譲で受けるので再描画されても効く。
+   一覧カードから押された場合は、そのカードの記事を文脈にする */
+document.addEventListener("click", ev => {
+  const a = ev.target.closest && ev.target.closest("a.src.link");
+  if (!a) return;
+  let s = cur;
+  const card = a.closest(".scard");
+  if (card) {
+    const btn = card.querySelector("[data-i]");
+    if (btn) s = sessions[+btn.dataset.i] || cur;
+  }
+  track("source_click", Object.assign({}, articleParams(s), {
+    source_name: a.textContent.trim(),
+    link_url: a.href
+  }));
+}, true);
+
+window.addEventListener("appinstalled", () => track("pwa_install"));
 
 boot();

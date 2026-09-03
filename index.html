@@ -55,6 +55,38 @@
   if(m)m.setAttribute("content",d?"#0d121d":"#fdece5");
 }catch(e){}})();
 </script>
+
+<!-- Google Consent Mode v2 の初期値。
+     いまは同意バナー（CMP）を置いていないため、解析のみ既定で許可し、
+     広告系は常に拒否する。CMPを入れるときは analytics_storage を "denied" に変え、
+     同意取得後に gtag('consent','update',{analytics_storage:'granted'}) を呼ぶだけでよい。 -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  ad_storage: 'denied',
+  ad_user_data: 'denied',
+  ad_personalization: 'denied',
+  analytics_storage: 'granted',
+  wait_for_update: 500
+});
+</script>
+
+<!-- Google Tag Manager
+     コンテナ GTM-5LCBKQHC（GA4測定ID G-1BF5N4Z58E をGTM側のタグで設定）。
+     何を送るかの判断はすべてGTM側にあるため、計測の追加・停止でこのファイルは触らない。
+     GTM_ID が未設定（GTM-XXXXXXX）のときは読み込まないガードを残している。
+     このアプリはJavaScript必須のため、noscript版のiframeは置いていない。 -->
+<script>
+window.GTM_ID = "GTM-5LCBKQHC";
+(function(w,d,s,l,i){
+  if(!i||/^GTM-X+$/.test(i))return;
+  w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+  var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+  j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+  f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer',window.GTM_ID);
+</script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -126,10 +158,10 @@
 
   <footer>
     <p class="disc">これは思考訓練であり、投資助言ではありません。</p>
-    <p class="ver">v2026.09.03-f776e33</p>
+    <p class="ver">v2026.09.03-963cba2</p>
     <p class="copy">&copy;<a class="cplink" href="https://wonder-bros.com" target="_blank" rel="noopener noreferrer">WONDER BROTHERS INC.</a></p>
   </footer>
 </div>
-<script src="app.js?v=f17c33aa"></script>
+<script src="app.js?v=7ab6ef13"></script>
 </body>
 </html>
