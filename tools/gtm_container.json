@@ -1,11 +1,12 @@
 {
   "exportFormatVersion": 2,
-  "exportTime": "2026-09-03 05:23:57",
+  "exportTime": "2026-09-03 09:02:27",
   "containerVersion": {
     "path": "accounts/0/containers/0/versions/0",
     "accountId": "0",
     "containerId": "0",
     "containerVersionId": "0",
+    "fingerprint": "0",
     "name": "RENSOU GAME - 計測一式",
     "description": "変数27 / トリガー2 / タグ3（GA4: G-1BF5N4Z58E）",
     "container": {
@@ -24,7 +25,7 @@
         "accountId": "0",
         "containerId": "0",
         "variableId": "1",
-        "name": "DLV - screen_name",
+        "name": "DLV - view_name",
         "type": "v",
         "fingerprint": "0",
         "parameter": [
@@ -41,7 +42,7 @@
           {
             "type": "TEMPLATE",
             "key": "name",
-            "value": "screen_name"
+            "value": "view_name"
           }
         ]
       },
@@ -701,9 +702,9 @@
         "accountId": "0",
         "containerId": "0",
         "triggerId": "100",
+        "fingerprint": "0",
         "name": "CE - vpv（仮想ページビュー）",
         "type": "CUSTOM_EVENT",
-        "fingerprint": "0",
         "customEventFilter": [
           {
             "type": "EQUALS",
@@ -726,9 +727,9 @@
         "accountId": "0",
         "containerId": "0",
         "triggerId": "101",
+        "fingerprint": "0",
         "name": "CE - アプリ内イベント（全）",
         "type": "CUSTOM_EVENT",
-        "fingerprint": "0",
         "customEventFilter": [
           {
             "type": "MATCH_REGEX",
@@ -847,12 +848,12 @@
                   {
                     "type": "TEMPLATE",
                     "key": "parameter",
-                    "value": "screen_name"
+                    "value": "view_name"
                   },
                   {
                     "type": "TEMPLATE",
                     "key": "parameterValue",
-                    "value": "{{DLV - screen_name}}"
+                    "value": "{{DLV - view_name}}"
                   }
                 ]
               },
@@ -1319,7 +1320,6 @@
         ],
         "tagFiringOption": "ONCE_PER_EVENT"
       }
-    ],
-    "fingerprint": "0"
+    ]
   }
 }

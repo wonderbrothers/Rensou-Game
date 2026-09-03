@@ -12,7 +12,7 @@ let callsPromise = null;   // 遊びコールの株価: スタート直後に先
    GTMのデータレイヤーは値が次のpushへ持ち越されるため、既知のキーを毎回
    undefined で打ち消してから積む（前のイベントの article_id 等の混入を防ぐ）。 */
 const TRACK_KEYS = [
-  "screen_name", "page_path", "page_title",
+  "view_name", "page_path", "page_title",
   "article_id", "article_date", "article_title", "category",
   "entry", "review_mode", "step_no", "step_name", "question_index",
   "is_correct", "score", "total", "score_rate", "duration_sec",
@@ -83,7 +83,7 @@ function trackView(kind, s) {
   if (path === lastViewKey) return;
   lastViewKey = path;
   track("vpv", Object.assign({
-    screen_name: kind,
+    view_name: kind,
     page_path: path,
     page_title: (VIEW_TITLE[kind] || kind) + "｜RENSOU GAME"
   }, withArticle ? articleParams(s) : {}));
