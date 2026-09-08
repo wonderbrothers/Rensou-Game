@@ -319,6 +319,14 @@ a.src .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opac
 .tik{font-size:calc(11px * var(--fs));color:var(--ink-2);background:rgba(var(--fill),.08);border-radius:999px;padding:1px 9px;font-weight:800;}
 .dir{font-size:calc(11.5px * var(--fs));font-weight:800;border-radius:999px;padding:2px 12px;margin-left:auto;color:var(--on-color);flex:none;white-space:nowrap;}
 .tik{flex:none;white-space:nowrap;}
+/* 銘柄コードはYahoo!ファイナンスへのリンク。見た目のトーンはバッジのまま、
+   出典バッジ（a.src）と同じ作法でホバーと外部リンクのアイコンを付ける。
+   .tik は遊びコールのカード（.chd）でしか使っていないので影響はそこだけ */
+a.tik{text-decoration:none;cursor:pointer;color:var(--ink-2);
+  transition:background .15s,color .15s;}
+a.tik:hover{background:rgba(var(--fill),.18);color:var(--ink);}
+a.tik:focus-visible{outline:2px solid var(--sup);outline-offset:1px;}
+a.tik .ms:last-child{font-size:.95em;vertical-align:-0.12em;margin-left:1px;opacity:.7;}
 .dir.up{background:var(--pos-deep);}
 .dir.dn{background:var(--pri-deep);}
 .basis{font-size:calc(12.5px * var(--fs));color:var(--ink-2);margin:4px 0 6px;}
@@ -485,6 +493,11 @@ button.calc:active{transform:translateY(0);}
 .hrow:first-of-type{border-top:0;}
 .hdate{flex:none;font-size:calc(11px * var(--fs));color:var(--ink-3);font-weight:700;}
 .hname{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+/* 成績表の銘柄一覧だけ、銘柄名の右に銘柄コードのバッジ（Yahoo!ファイナンスへのリンク）を置く。
+   .hname は「直近のプレイ」の見出し行でも使う共有クラスなので、
+   .csrow の中だけに効くよう限定する。名前側を省略記号で詰め、バッジは常に見せる */
+.csrow .hnmrow{display:flex;align-items:center;gap:6px;min-width:0;}
+.csrow .hnm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .hname small.hnews{display:block;font-size:calc(10.5px * var(--fs));color:var(--ink-3);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hwin{flex:none;font-size:calc(11px * var(--fs));color:var(--sup-deep);background:var(--sup-soft);border-radius:99px;padding:1px 9px;font-weight:800;}
 .hscore{flex:none;font-weight:800;font-size:calc(12.5px * var(--fs));white-space:nowrap;}

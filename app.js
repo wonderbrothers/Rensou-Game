@@ -1532,7 +1532,7 @@ async function loadCalls() {
       const dir = c.direction === "+"
         ? `<span class="dir up">${ic("trending_up")} 上がるかも</span>`
         : `<span class="dir dn">${ic("trending_down")} 下がるかも</span>`;
-      h += `<div class="call"><div class="chd"><b>${c.name}</b><span class="tik">${c.ticker}</span>${dir}</div>
+      h += `<div class="call"><div class="chd"><b>${c.name}</b>${tickerBadgeHTML(c.ticker, c.name)}${dir}</div>
         <p class="basis">${c.basis}</p>`;
       if (c.status === "recorded") {
         h += `<p class="verdict rec">${ic("push_pin", 1)} ニュース当日（${c.called_at}）の株価 ${yen}${c.price_at_call.toLocaleString()} を記録。答え合わせは数日後にもう一度！</p>`;
@@ -1886,6 +1886,37 @@ let statsDate = "";        // 直近のプレイの日付フィルタ
 
 /* 出典バッヂ（source_url があればリンク・無ければただのバッヂ）。
    HOMEのカード／プレイ画面／解答一覧で共通に使う */
+/* ティッカーからYahoo!ファイナンスの銘柄ページのURLを作る。
+
+   日本語版（finance.yahoo.co.jp）が扱うのは日本株と米国株だけ。
+   日本株は取引所の接尾辞つき（8628.T）、米国株は接尾辞なし（NVDA）で引ける。
+   韓国（.KS/.KQ）・香港（.HK）・欧州（.PA/.DE）は日本語版に銘柄ページが無いため、
+   同じティッカーで引ける英語版（finance.yahoo.com）へ送る。
+   ティッカーはyfinanceの表記をそのまま使っているので、どちらもこの形で通る。 */
+const JP_MARKET = /\.(T|O|N|F|S)$/;        // 東証・大証・名証・福証・札証
+function yahooFinanceUrl(ticker) {
+  const t = String(ticker || "").trim();
+  if (!t) return "";
+  const jp = JP_MARKET.test(t) || !t.includes(".");   // 接尾辞なし＝米国株
+  return (jp ? "https://finance.yahoo.co.jp/quote/" : "https://finance.yahoo.com/quote/")
+    + encodeURIComponent(t);
+}
+
+/* 属性値に入れる文字列のエスケープ。銘柄名には & が入る
+   （T&Dホールディングス・KT&G・三井E&S・セブン&アイ）ので、
+   title に素で埋めると実体参照と解釈されうる */
+const escAttr = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/* 銘柄コードのバッジ。出典バッジ（srcBadgeHTML）と同じ作りで別タブへ開く */
+function tickerBadgeHTML(ticker, name) {
+  const url = yahooFinanceUrl(ticker);
+  if (!url) return "";
+  const who = name ? `${name}（${ticker}）` : ticker;
+  return `<a class="tik link" href="${escAttr(url)}" target="_blank" rel="noopener noreferrer"
+    title="${escAttr(`Yahoo!ファイナンスで${who}の株価を見る`)}">${escAttr(ticker)} ${ic("open_in_new")}</a>`;
+}
+
 function srcBadgeHTML(news) {
   if (!news || !news.source) return "";
   return news.source_url
@@ -2021,7 +2052,7 @@ function renderCSView() {
     const isOpen = r.sid && csOpen === key;
     h += `<div class="hrow csrow${isOpen ? " open" : ""}" data-k="${k}" title="タップで詳細を表示">
       ${dateChipHTML(r.date)}
-      <span class="hname">${r.name}<small class="hnews">${r.news}</small></span>
+      <span class="hname"><span class="hnmrow"><span class="hnm">${r.name}</span>${tickerBadgeHTML(r.ticker, r.name)}</span><small class="hnews">${r.news}</small></span>
       <span class="hwin">${r.market || ""}・${r.win}</span>
       <span class="hscore"><span class="${relCls}">${r.dir}コール 市場相対 ${s}${r.rel}%</span> ${judgeBadge(r.rel, r.dir)} <span class="ms csarrow">${isOpen ? "expand_less" : "expand_more"}</span></span></div>`;
     if (isOpen) h += csDetailHTML(r);
@@ -2053,7 +2084,9 @@ function renderCSView() {
   });
   // 銘柄行クリック → チャートと詳細を展開
   $("csBody").querySelectorAll(".csrow").forEach(el => {
-    el.onclick = async () => {
+    el.onclick = async (ev) => {
+      // 銘柄コードのリンクは行の開閉を起こさない（別タブで開くだけにする）
+      if (ev && ev.target && ev.target.closest("a")) return;
       const r = listRows[+el.dataset.k];
       if (!r) return;
       if (!r.sid) {   // 旧形式の集計キャッシュは詳細を引けない。無言で無視しない
