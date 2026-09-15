@@ -91,6 +91,14 @@ def check_file(path):
         marks = [bool(DASH.search(o)) for o in opts]
         if marks[c] and sum(marks) == 1:
             errs.append(f"{tag}: 正解だけがダッシュ等の記号を含む（読まずに当てられる）")
+        # 記号バイアス2: 正解だけに読点「、」や中黒「・」があると読まずに当てられる。
+        # 「Aに風、Bに影」「X・Y・Z」の型を正解に多用してきた偏りへの対策。
+        # 2026-09-16以降の新規作成分から適用（過去分は不問とするユーザー指示）
+        if d.get("date", "") >= "2026-09-16":
+            PUNCT = re.compile(r"[、・]")
+            pmarks = [bool(PUNCT.search(o)) for o in opts]
+            if pmarks[c] and sum(pmarks) == 1:
+                errs.append(f"{tag}: 正解だけが「、」「・」を含む（読まずに当てられる。罠にも配るか正解から外す）")
 
         # --- 語尾バイアス（言い切っている選択肢を消すだけで絞れるのを防ぐ） ---
         # 罠を「〜のはずである」「必ず〜」で書き、正解だけ含みのある表現に
