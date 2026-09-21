@@ -16,25 +16,19 @@
       "ticker": "8058.T",
       "name": "三菱商事",
       "direction": "+",
-      "basis": "分散された事業投資と還元の実績で保有価値の割引を縮めてきた対照群の側",
-      "price_at_call": 4738.0,
-      "called_at": "2026-08-04"
+      "basis": "分散された事業投資と還元の実績で保有価値の割引を縮めてきた対照群の側"
     },
     {
       "ticker": "9984.T",
       "name": "ソフトバンクグループ",
       "direction": "-",
-      "basis": "OpenAI傾斜という集中と調達依存の懸念が試される決算の当事者",
-      "price_at_call": 5228.0,
-      "called_at": "2026-08-04"
+      "basis": "OpenAI傾斜という集中と調達依存の懸念が試される決算の当事者"
     },
     {
       "ticker": "ARM",
       "name": "Arm Holdings",
       "direction": "-",
-      "basis": "親会社の資金需要と保有比率の観測に需給が左右されるSBG系の側",
-      "price_at_call": 280.56,
-      "called_at": "2026-08-04"
+      "basis": "親会社の資金需要と保有比率の観測に需給が左右されるSBG系の側"
     }
   ],
   "questions": [

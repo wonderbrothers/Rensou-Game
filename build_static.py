@@ -17,9 +17,7 @@ import subprocess
 import sys
 
 import server
-from server import (DATA, BASE, bench_symbol, cached, compute_eval,
-                    fetch_history, fetch_price, fetch_price_on, prefetch_all,
-                    summary_of)
+from server import DATA, BASE, bench_symbol, prefetch_all, summary_of
 
 OUT = os.path.join(BASE, "api")
 
@@ -46,7 +44,7 @@ def is_frozen(payload):
     if not calls:
         return False
     for c in calls:
-        if c.get("status") == "error" or not c.get("price_at_call"):
+        if c.get("status") == "error" or not c.get("series"):
             return False
         t20 = (c.get("eval") or {}).get("t20") or {}
         if t20.get("status") != "done":
@@ -63,9 +61,16 @@ def load_previous_payloads():
     for fn in os.listdir(calls_dir):
         try:
             with open(os.path.join(calls_dir, fn), encoding="utf-8") as fp:
-                prev[fn] = json.load(fp)
+                payload = json.load(fp)
         except Exception:
-            pass
+            continue
+        # 実価格を持つ旧形式のスナップショットは再利用しない。
+        # 凍結して使い回すと、公開物から実価格が消えないまま配られ続ける
+        # （2026-09-21の方針変更。1度だけ全件を取り直せば新形式に入れ替わる）。
+        calls = payload.get("calls") or []
+        if calls and not any(c.get("series") for c in calls):
+            continue
+        prev[fn] = payload
     return prev
 
 
@@ -126,64 +131,15 @@ def write_build_report(bad_calls, blocking, generated_at):
 
 
 def build_calls(d, generated_at):
-    """server.calls() と同じ構造を組み立てる（ファイルへの書き戻しも行う）"""
-    call_list = d.get("calls", [])
-    if not call_list:
-        return {"calls": []}
+    """server.calls_payload() をそのまま使い、生成時刻だけ足す。
 
-    today = datetime.date.today().isoformat()
-    news_date = d.get("date") or today
-    bench_cache = {}
-    changed = False
-    results = []
-
-    for c in call_list:
-        r = dict(c)
-        try:
-            if not c.get("price_at_call"):
-                p0 = fetch_price_on(c["ticker"], news_date)
-                c["price_at_call"] = round(p0, 2)
-                c["called_at"] = news_date
-                changed = True
-            r["price_at_call"] = c["price_at_call"]
-            r["called_at"] = c["called_at"]
-
-            price = cached(f"px|{c['ticker']}|{today}",
-                           lambda t=c["ticker"]: fetch_price(t))
-            chg = (price - c["price_at_call"]) / c["price_at_call"] * 100
-            r.update(current=round(price, 2), change_pct=round(chg, 2))
-            r["status"] = "recorded" if c["called_at"] == today else "checked"
-
-            try:
-                r["history"] = cached(
-                    f"hist|{c['ticker']}|{c['called_at']}|{today}",
-                    lambda t=c["ticker"], s=c["called_at"]: fetch_history(t, s))
-            except Exception:
-                r["history"] = []
-
-            try:
-                bsym, bname = bench_symbol(c["ticker"])
-                if bsym not in bench_cache:
-                    bench_cache[bsym] = cached(
-                        f"hist|{bsym}|{news_date}|{today}",
-                        lambda b=bsym: fetch_history(b, news_date))
-                if r["history"]:
-                    r["eval"] = compute_eval(r["history"], bench_cache[bsym], c["called_at"])
-                    r["bench"] = bname
-                    r["bench_history"] = bench_cache[bsym]
-            except Exception:
-                pass
-        except Exception as e:
-            r.update(status="error", message=str(e))
-        results.append(r)
-
-    if changed:
-        path = os.path.join(DATA, f"{d['id']}.json")
-        with open(path, "w", encoding="utf-8") as fp:
-            json.dump(d, fp, ensure_ascii=False, indent=2)
-            fp.write("\n")
-
-    return {"calls": results, "generated_at": generated_at}
+    以前はここに同じ処理のコピーがあり、devと本番で実装が二重化していた
+    （CLAUDE.md「APIは2箇所を揃える」）。株価の扱いを変えるときに片方だけ
+    直す事故を防ぐため、計算はサーバー側の1実装に寄せる。
+    """
+    payload = server.calls_payload(d["id"]) or {"calls": []}
+    payload["generated_at"] = generated_at
+    return payload
 
 
 def sanitize_payload(payload):
@@ -210,18 +166,35 @@ def sanitize_payload(payload):
         return isinstance(o, float) and not math.isfinite(o)
 
     for c in payload.get("calls", []):
-        for k in ("history", "bench_history"):
+        for k in ("series", "bench_series"):
             if isinstance(c.get(k), list):
-                c[k] = [r for r in c[k] if finite(r.get("p"))]
+                c[k] = [r for r in c[k] if finite(r.get("rate"))]
+        # eval は騰落率から作れないため（元の終値が要る）、壊れていたら落とす
         if has_bad(c.get("eval", {})):
-            try:
-                c["eval"] = compute_eval(c["history"], c.get("bench_history") or [],
-                                         c.get("called_at"))
-            except Exception:
-                c.pop("eval", None)
-        for k in ("current", "change_pct", "price_at_call"):
-            if k in c and not finite(c[k]):
-                c.pop(k, None)
+            c.pop("eval", None)
+        if "rate" in c and not finite(c["rate"]):
+            c.pop("rate", None)
+    return payload
+
+
+# 公開物に載せてはいけないフィールド（実価格そのもの、または実価格の系列）
+PRICE_FIELDS = ("price_at_call", "current", "change_pct", "history", "bench_history")
+
+
+def assert_no_prices(payload, sid):
+    """書き出す直前の関所。実価格が1つでも残っていたらビルドを止める。
+
+    Yahoo Finance のデータは再配布が制限されているため、公開するJSONには
+    騰落率しか載せない。将来だれかが history を戻しても、ここで止まる。
+    """
+    for c in payload.get("calls", []):
+        for k in PRICE_FIELDS:
+            if k in c:
+                raise SystemExit(f"✗ {sid}: 公開物に実価格が残っています（{k}）")
+        for k in ("series", "bench_series"):
+            for row in c.get(k) or []:
+                if "p" in row or "close" in row or "price" in row:
+                    raise SystemExit(f"✗ {sid}: {k} に実価格の列が残っています")
     return payload
 
 
@@ -439,6 +412,7 @@ def main():
             if sid in frozen_ids:
                 payload = sanitize_payload(prev[sid])
                 payload["frozen"] = True
+                assert_no_prices(payload, sid)
                 write(os.path.join(OUT, "calls", sid), payload)
                 built[sid] = payload
                 ok += 1
@@ -447,12 +421,13 @@ def main():
             payload = sanitize_payload(build_calls(d, generated_at))
             if is_frozen(payload):
                 payload["frozen"] = True   # 次回ビルドから再取得しない
+            assert_no_prices(payload, sid)
             write(os.path.join(OUT, "calls", sid), payload)
             built[sid] = payload
             ok += 1
             print(f"✓ api/calls/{sid}")
             for c in payload.get("calls", []):
-                if c.get("status") == "error" or not c.get("price_at_call"):
+                if c.get("status") == "error" or not c.get("series"):
                     bad_calls.append((sid, c.get("ticker", "?"),
                                       c.get("name", ""), c.get("message", "")))
         except Exception as e:
@@ -501,6 +476,7 @@ def main():
             payload = sanitize_payload(p)
             if is_frozen(payload):
                 payload["frozen"] = True
+            assert_no_prices(payload, sid)
             write(os.path.join(OUT, "calls", sid), payload)
             built[sid] = payload
             failed_ids.remove(sid)
@@ -516,6 +492,7 @@ def main():
                 payload = sanitize_payload(p)
                 if is_frozen(payload):
                     payload["frozen"] = True
+                assert_no_prices(payload, sid)
                 write(os.path.join(OUT, "calls", sid), payload)
                 built[sid] = payload
                 print(f"   ↩ 取得失敗のため前回スナップショットを再利用: {sid}（{b[1]}）")

@@ -16,25 +16,19 @@
       "ticker": "JPM",
       "name": "JPMorgan Chase",
       "direction": "+",
-      "basis": "金利高止まり（利下げ期待の後退）が利ざやに効く米銀の代表格。受益側",
-      "price_at_call": 344.71,
-      "called_at": "2026-07-29"
+      "basis": "金利高止まり（利下げ期待の後退）が利ざやに効く米銀の代表格。受益側"
     },
     {
       "ticker": "7182.T",
       "name": "ゆうちょ銀行",
       "direction": "+",
-      "basis": "金利のある世界の持続は運用利回りの改善に直結する受益側",
-      "price_at_call": 3216.0,
-      "called_at": "2026-07-29"
+      "basis": "金利のある世界の持続は運用利回りの改善に直結する受益側"
     },
     {
       "ticker": "PLD",
       "name": "Prologis",
       "direction": "-",
-      "basis": "金利高止まりの長期化が割引率と利回り競合で刺さる米REITの直撃側",
-      "price_at_call": 145.47,
-      "called_at": "2026-07-29"
+      "basis": "金利高止まりの長期化が割引率と利回り競合で刺さる米REITの直撃側"
     }
   ],
   "questions": [

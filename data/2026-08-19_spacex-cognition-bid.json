@@ -16,25 +16,19 @@
       "ticker": "NVDA",
       "name": "NVIDIA",
       "direction": "+",
-      "basis": "自律型AIと宇宙の運用の自動化が広げる計算需要の裾野の受益側",
-      "price_at_call": 217.56,
-      "called_at": "2026-08-19"
+      "basis": "自律型AIと宇宙の運用の自動化が広げる計算需要の裾野の受益側"
     },
     {
       "ticker": "RKLB",
       "name": "ロケット・ラボ",
       "direction": "+",
-      "basis": "宇宙の運用へのAI統合という業界のテーマの評価が波及する側",
-      "price_at_call": 75.84,
-      "called_at": "2026-08-19"
+      "basis": "宇宙の運用へのAI統合という業界のテーマの評価が波及する側"
     },
     {
       "ticker": "MSFT",
       "name": "マイクロソフト",
       "direction": "-",
-      "basis": "コーディングAIの競合の独立強化と人材争奪の消耗圧力を受ける側",
-      "price_at_call": 484.31,
-      "called_at": "2026-08-19"
+      "basis": "コーディングAIの競合の独立強化と人材争奪の消耗圧力を受ける側"
     }
   ],
   "questions": [

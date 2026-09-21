@@ -16,25 +16,19 @@
       "ticker": "3778.T",
       "name": "さくらインターネット",
       "direction": "+",
-      "basis": "需給一変の当事者。部材コストの逆風から稼働の追い風へ主語が交代",
-      "price_at_call": 3515.0,
-      "called_at": "2026-08-24"
+      "basis": "需給一変の当事者。部材コストの逆風から稼働の追い風へ主語が交代"
     },
     {
       "ticker": "9449.T",
       "name": "GMOインターネットグループ",
       "direction": "+",
-      "basis": "GPUクラウドを手がける同業。計算力の需給の逼迫の恩恵が及ぶ側",
-      "price_at_call": 4085.0,
-      "called_at": "2026-08-24"
+      "basis": "GPUクラウドを手がける同業。計算力の需給の逼迫の恩恵が及ぶ側"
     },
     {
       "ticker": "3993.T",
       "name": "PKSHA Technology",
       "direction": "-",
-      "basis": "計算力を借りて開発する側。GPUの調達コストの上昇が採算に刺さる側",
-      "price_at_call": 3335.0,
-      "called_at": "2026-08-24"
+      "basis": "計算力を借りて開発する側。GPUの調達コストの上昇が採算に刺さる側"
     }
   ],
   "questions": [

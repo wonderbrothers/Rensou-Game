@@ -16,25 +16,19 @@
       "ticker": "ARES",
       "name": "Ares Management",
       "direction": "+",
-      "basis": "貸し手優位への転換で、選別と条件を突きつける側に立つプライベートクレジット大手",
-      "price_at_call": 128.09,
-      "called_at": "2026-08-02"
+      "basis": "貸し手優位への転換で、選別と条件を突きつける側に立つプライベートクレジット大手"
     },
     {
       "ticker": "9984.T",
       "name": "ソフトバンクグループ",
       "direction": "-",
-      "basis": "巨額の債務と継続的な資金調達に依存する体質。調達条件の硬化の逆風側",
-      "price_at_call": 5260.0,
-      "called_at": "2026-08-02"
+      "basis": "巨額の債務と継続的な資金調達に依存する体質。調達条件の硬化の逆風側"
     },
     {
       "ticker": "CHTR",
       "name": "Charter Communications",
       "direction": "-",
-      "basis": "高レバレッジの債務構造を抱え、借換えコストの上昇が利益を直撃する側",
-      "price_at_call": 144.98,
-      "called_at": "2026-08-02"
+      "basis": "高レバレッジの債務構造を抱え、借換えコストの上昇が利益を直撃する側"
     }
   ],
   "questions": [

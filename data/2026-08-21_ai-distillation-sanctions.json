@@ -16,25 +16,19 @@
       "ticker": "GOOGL",
       "name": "アルファベット",
       "direction": "+",
-      "basis": "自前のデータとモデルの堀を持つ側。蒸留への規制は堀の防護壁",
-      "price_at_call": 340.67,
-      "called_at": "2026-08-21"
+      "basis": "自前のデータとモデルの堀を持つ側。蒸留への規制は堀の防護壁"
     },
     {
       "ticker": "BIDU",
       "name": "百度",
       "direction": "-",
-      "basis": "制裁警告の矛先が向く中国のAI開発の一角。規制リスクを負う側",
-      "price_at_call": 91.97,
-      "called_at": "2026-08-21"
+      "basis": "制裁警告の矛先が向く中国のAI開発の一角。規制リスクを負う側"
     },
     {
       "ticker": "BABA",
       "name": "アリババグループ",
       "direction": "-",
-      "basis": "中国のAIモデル開発のもう一角。米の規制の網の警戒が乗る側",
-      "price_at_call": 130.53,
-      "called_at": "2026-08-21"
+      "basis": "中国のAIモデル開発のもう一角。米の規制の網の警戒が乗る側"
     }
   ],
   "questions": [

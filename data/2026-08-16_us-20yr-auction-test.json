@@ -16,25 +16,19 @@
       "ticker": "8750.T",
       "name": "第一生命ホールディングス",
       "direction": "+",
-      "basis": "超長期の高い利回りが運用の再投資の改善に効く生保側の受益",
-      "price_at_call": 1874.0,
-      "called_at": "2026-08-16"
+      "basis": "超長期の高い利回りが運用の再投資の改善に効く生保側の受益"
     },
     {
       "ticker": "O",
       "name": "Realty Income",
       "direction": "-",
-      "basis": "国債利回り5%台との利回り競合が評価に刺さる米REITの側",
-      "price_at_call": 62.74,
-      "called_at": "2026-08-16"
+      "basis": "国債利回り5%台との利回り競合が評価に刺さる米REITの側"
     },
     {
       "ticker": "EQIX",
       "name": "Equinix",
       "direction": "-",
-      "basis": "データセンターREIT。長期金利の高止まりが調達と利回り競合の両面で重い側",
-      "price_at_call": 1102.1,
-      "called_at": "2026-08-16"
+      "basis": "データセンターREIT。長期金利の高止まりが調達と利回り競合の両面で重い側"
     }
   ],
   "questions": [

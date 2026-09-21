@@ -16,25 +16,19 @@
       "ticker": "4307.T",
       "name": "野村総合研究所",
       "direction": "+",
-      "basis": "市況サイクルの外で安定収益を積むITサービス。恐怖相場の相対的な避難先",
-      "price_at_call": 4826.0,
-      "called_at": "2026-08-07"
+      "basis": "市況サイクルの外で安定収益を積むITサービス。恐怖相場の相対的な避難先"
     },
     {
       "ticker": "285A.T",
       "name": "キオクシアホールディングス",
       "direction": "-",
-      "basis": "低PERの見かけの割安の裏で、市況の山の織り込みが進む当事者の警戒側",
-      "price_at_call": 47910.0,
-      "called_at": "2026-08-07"
+      "basis": "低PERの見かけの割安の裏で、市況の山の織り込みが進む当事者の警戒側"
     },
     {
       "ticker": "WDC",
       "name": "Western Digital",
       "direction": "-",
-      "basis": "NANDの同業。サイクルの山の織り込みを共有する同輩の警戒側",
-      "price_at_call": 451.52,
-      "called_at": "2026-08-07"
+      "basis": "NANDの同業。サイクルの山の織り込みを共有する同輩の警戒側"
     }
   ],
   "questions": [

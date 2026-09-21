@@ -16,25 +16,19 @@
       "ticker": "5016.T",
       "name": "JX金属",
       "direction": "+",
-      "basis": "寡占の当事者。眠っていた素材の堀に需要の光が当たる側",
-      "price_at_call": 3534.0,
-      "called_at": "2026-09-04"
+      "basis": "寡占の当事者。眠っていた素材の堀に需要の光が当たる側"
     },
     {
       "ticker": "5802.T",
       "name": "住友電気工業",
       "direction": "+",
-      "basis": "寡占のもう一角。10倍増産の需要の実在の受益",
-      "price_at_call": 2103.0,
-      "called_at": "2026-09-04"
+      "basis": "寡占のもう一角。10倍増産の需要の実在の受益"
     },
     {
       "ticker": "AXTI",
       "name": "AXT",
       "direction": "-",
-      "basis": "基板の競合。品薄の追い風の後、8割寡占の増産は巻き戻し",
-      "price_at_call": 56.2,
-      "called_at": "2026-09-04"
+      "basis": "基板の競合。品薄の追い風の後、8割寡占の増産は巻き戻し"
     }
   ],
   "questions": [

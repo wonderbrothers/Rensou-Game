@@ -16,25 +16,19 @@
       "ticker": "MSFT",
       "name": "Microsoft",
       "direction": "+",
-      "basis": "AI収益化の証拠を数字で示した先頭走者。証拠相場の資金集中の受益側",
-      "price_at_call": 451.1,
-      "called_at": "2026-07-31"
+      "basis": "AI収益化の証拠を数字で示した先頭走者。証拠相場の資金集中の受益側"
     },
     {
       "ticker": "3626.T",
       "name": "TIS",
       "direction": "+",
-      "basis": "クラウド・AI導入の国内実装を担う側。MSの勢いが案件として波及する受益側",
-      "price_at_call": 3780.0,
-      "called_at": "2026-07-31"
+      "basis": "クラウド・AI導入の国内実装を担う側。MSの勢いが案件として波及する受益側"
     },
     {
       "ticker": "IBM",
       "name": "IBM",
       "direction": "-",
-      "basis": "クラウド・AIの勝者総取りで相対的に選ばれにくくなる旧世代IT側の劣後",
-      "price_at_call": 221.74,
-      "called_at": "2026-07-31"
+      "basis": "クラウド・AIの勝者総取りで相対的に選ばれにくくなる旧世代IT側の劣後"
     }
   ],
   "questions": [

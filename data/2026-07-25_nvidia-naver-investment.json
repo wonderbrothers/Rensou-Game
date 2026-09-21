@@ -16,25 +16,19 @@
       "ticker": "035420.KS",
       "name": "ネイバー",
       "direction": "+",
-      "basis": "出資対象。資金・GPU優先供給・NVIDIAの信認という三点セットを獲得",
-      "price_at_call": 207500.0,
-      "called_at": "2026-07-25"
+      "basis": "出資対象。資金・GPU優先供給・NVIDIAの信認という三点セットを獲得"
     },
     {
       "ticker": "000660.KS",
       "name": "SKハイニックス",
       "direction": "+",
-      "basis": "提携拡充の裏でHBM（AI用メモリ）供給が増える川上の受益者",
-      "price_at_call": 1759000.0,
-      "called_at": "2026-07-25"
+      "basis": "提携拡充の裏でHBM（AI用メモリ）供給が増える川上の受益者"
     },
     {
       "ticker": "035720.KS",
       "name": "カカオ",
       "direction": "-",
-      "basis": "NVIDIAの資本・供給支援を受けられない韓国内の競合。相対劣後リスク",
-      "price_at_call": 36200.0,
-      "called_at": "2026-07-25"
+      "basis": "NVIDIAの資本・供給支援を受けられない韓国内の競合。相対劣後リスク"
     }
   ],
   "questions": [

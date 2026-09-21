@@ -1,9 +1,10 @@
 """連想ゲーム Webサーバー
 - 静的ファイル配信（index.html / style.css / app.js）
 - /api/sessions        : data/ の全セッションJSONを返す
-- /api/calls/<sid>     : 遊びコールの株価を取得。
-                         初回は price_at_call をJSONに記録、
-                         2回目以降は現在価格と比較して答え合わせを返す。
+- /api/calls/<sid>     : 遊びコールの騰落率を返す。
+                         実価格は取得してもメモリ上でのみ使い、
+                         公開するJSONには騰落率（series / rate）だけを載せる
+                         （Yahoo Financeのデータは再配布が制限されているため）。
 """
 import datetime
 import glob
@@ -273,10 +274,36 @@ def bench_symbol(ticker: str):
     return "^GSPC", "S&P500"
 
 
+def baseline_index(isos, called_at):
+    """騰落率の基準になる行（ニュース日、休場ならその直後の営業日）の位置。
+
+    **基準の求め方はここ1か所に集約する。** かつては T+5/T+20 の判定が
+    履歴から導いた終値を、グラフと騰落率バッヂが別に保存した price_at_call を
+    使っており、2つの基準が併存していた。yfinance の履歴は分割・配当で
+    さかのぼって調整されるのに保存値は初回ビルド時のまま固定されるため、
+    時間が経つほど両者がずれ、表示される騰落率が壊れていた
+    （2026-09-21に実測: 773件中の半数が0.5pt以上ずれ、AVBは -63.71% と
+     表示されていたが実際は +1.35% だった）。
+    """
+    return next((i for i, s in enumerate(isos) if s >= called_at), 0)
+
+
+def rate_series(hist, p0):
+    """終値の系列を騰落率の系列へ変換する（公開するのはこちらだけ）。
+
+    Yahoo Finance のデータは再配布が制限されているため、実価格は
+    ビルドのメモリ上でのみ扱い、ファイルには騰落率しか書き出さない。
+    """
+    # 小数3桁。表示はどこでも2桁だが、グラフの折れ線がわずかに動くのを防ぐため
+    # 1桁ぶん余裕を持たせる（2桁だと最大0.62px、3桁なら0.06pxのズレに収まる）
+    return [{"date": h["iso"], "rate": round((h["p"] / p0 - 1) * 100, 3)}
+            for h in hist if _finite(h.get("p")) and p0]
+
+
 def compute_eval(hist, bhist, called_at):
     """T+5 / T+20 営業日の絶対・相対（対ベンチマーク）リターンを計算"""
     isos = [h["iso"] for h in hist]
-    ni = next((i for i, s in enumerate(isos) if s >= called_at), 0)
+    ni = baseline_index(isos, called_at)
     p0 = hist[ni]["p"]
 
     def bench_at(iso):
@@ -342,37 +369,31 @@ def calls_payload(sid):
     if not call_list:
         return {"calls": []}
 
-    changed = False
     results = []
     today = datetime.date.today().isoformat()
     news_date = d.get("date") or today
     bench_cache = {}
 
     for c in call_list:
-        r = dict(c)
+        # 出力に載せるのは銘柄の情報と騰落率だけ。実価格はこの関数のローカル変数に留める
+        r = {k: v for k, v in c.items() if k != "price_at_call"}
+        r["called_at"] = news_date
         try:
-            if not c.get("price_at_call"):
-                # 初回: ニュース日付の終値を基準価格として記録
-                p0 = fetch_price_on(c["ticker"], news_date)
-                c["price_at_call"] = round(p0, 2)
-                c["called_at"] = news_date
-                changed = True
-            r["price_at_call"] = c["price_at_call"]
-            r["called_at"] = c["called_at"]
+            # 日次終値（メモリ上のみ）。これ1本から基準値も系列も評価も導く
+            hist = cached(f"hist|{c['ticker']}|{news_date}|{today}",
+                          lambda t=c["ticker"]: fetch_history(t, news_date))
+            if not hist:
+                raise RuntimeError(f"history unavailable: {c['ticker']}")
+            isos = [h["iso"] for h in hist]
+            p0 = hist[baseline_index(isos, news_date)]["p"]
 
-            price = cached(f"px|{c['ticker']}|{today}",
-                           lambda t=c["ticker"]: fetch_price(t))
-            chg = (price - c["price_at_call"]) / c["price_at_call"] * 100
-            r.update(current=round(price, 2), change_pct=round(chg, 2))
+            r["series"] = rate_series(hist, p0)
+            # サマリー表示用の現在の騰落率。系列(3桁)を再度丸めると二重丸めで
+            # 末尾がずれることがあるため、終値から直接2桁に丸める
+            r["rate"] = round((hist[-1]["p"] / p0 - 1) * 100, 2) if r["series"] else None
             # ニュース当日は答え合わせにならないので「記録」扱い
-            r["status"] = "recorded" if c["called_at"] == today else "checked"
-            # 損益グラフ用の日次履歴（失敗しても本体は返す）
-            try:
-                r["history"] = cached(
-                    f"hist|{c['ticker']}|{c['called_at']}|{today}",
-                    lambda t=c["ticker"], s=c["called_at"]: fetch_history(t, s))
-            except Exception:
-                r["history"] = []
+            r["status"] = "recorded" if news_date == today else "checked"
+
             # T+5 / T+20 の絶対・相対リターン（ベンチマーク比較）
             try:
                 bsym, bname = bench_symbol(c["ticker"])
@@ -380,22 +401,37 @@ def calls_payload(sid):
                     bench_cache[bsym] = cached(
                         f"hist|{bsym}|{news_date}|{today}",
                         lambda b=bsym: fetch_history(b, news_date))
-                if r["history"]:
-                    r["eval"] = compute_eval(r["history"], bench_cache[bsym], c["called_at"])
-                    r["bench"] = bname
-                    r["bench_history"] = bench_cache[bsym]
+                bhist = bench_cache[bsym]
+                r["eval"] = compute_eval(hist, bhist, news_date)
+                r["bench"] = bname
+                if bhist:
+                    bisos = [b["iso"] for b in bhist]
+                    b0 = bhist[baseline_index(bisos, news_date)]["p"]
+                    r["bench_series"] = rate_series(bhist, b0)
             except Exception:
                 pass
         except Exception as e:
             r.update(status="error", message=str(e))
         results.append(r)
 
-    if changed:
-        with open(path, "w", encoding="utf-8") as fp:
-            json.dump(d, fp, ensure_ascii=False, indent=2)
-            fp.write("\n")
-
     return {"calls": results}
+
+
+def _snapshot_rates(sid):
+    """前回ビルドの api/calls/<sid> から、騰落率まわりだけを読み出す。
+
+    snapshot_payload() と違って data/ の更新時刻を見ない。ここで借りるのは
+    株価から導いた値（series / rate / eval）だけで、basis や name のような
+    編集対象のフィールドは使わないため、data/ を直したあとでも古い内容を
+    配ることにはならない。
+    """
+    path = os.path.join(BASE, "api", "calls", sid)
+    try:
+        with open(path, encoding="utf-8") as fp:
+            snap = json.load(fp)
+    except Exception:
+        return {}
+    return {c.get("ticker"): c for c in snap.get("calls", []) if c.get("series")}
 
 
 @app.route("/api/calls/<sid>")
@@ -403,6 +439,24 @@ def calls(sid):
     payload = calls_payload(sid)
     if payload is None:
         return jsonify({"error": "session not found"}), 404
+
+    # 株価の取得に失敗したコールは、前回ビルドの騰落率で埋める。
+    # devではYahooのレート制限で散発的に失敗し、そのコールだけ騰落率も
+    # グラフも消えて「根拠の一文しか出ない」状態になっていた（2026-09-21）。
+    # ビルド側は calls_payload をそのまま使うので、取得できない銘柄で
+    # ビルドを止める関所の動きはこの補完に影響されない。
+    prev = _snapshot_rates(sid)
+    for c in payload.get("calls", []):
+        if c.get("status") != "error":
+            continue
+        p = prev.get(c.get("ticker"))
+        if not p:
+            continue
+        for k in ("series", "bench_series", "rate", "eval", "bench", "status"):
+            if k in p:
+                c[k] = p[k]
+        c["stale"] = True          # 前回取得時点の値であることを画面に出す
+        c.pop("message", None)
     return jsonify(payload)
 
 
@@ -475,32 +529,6 @@ def callstats():
     return jsonify(rows)
 
 
-def record_all():
-    """全セッションの遊びコールにニュース日付の基準株価を一括記録する。"""
-    for f in sorted(glob.glob(os.path.join(DATA, "*.json"))):
-        with open(f, encoding="utf-8") as fp:
-            d = json.load(fp)
-        news_date = d.get("date")
-        changed = False
-        for c in d.get("calls", []):
-            if c.get("price_at_call"):
-                print(f"  = {c['ticker']:8s} 記録済み ({c['price_at_call']} @ {c['called_at']})")
-                continue
-            try:
-                p0 = fetch_price_on(c["ticker"], news_date)
-                c["price_at_call"] = round(p0, 2)
-                c["called_at"] = news_date
-                changed = True
-                print(f"  + {c['ticker']:8s} {c['price_at_call']} @ {news_date} を記録")
-            except Exception as e:
-                print(f"  ! {c['ticker']:8s} 取得失敗: {e}")
-        if changed:
-            with open(f, "w", encoding="utf-8") as fp:
-                json.dump(d, fp, ensure_ascii=False, indent=2)
-                fp.write("\n")
-        print(os.path.basename(f), "→ 更新" if changed else "→ 変更なし")
-
-
 def _content_checker():
     """作問の機械検査は tools/check_content.py に一本化して読み込む。
 
@@ -535,9 +563,20 @@ def check_data(verify_tickers=True):
                     d = json.load(fp)
             except Exception:
                 d = {}
+            # 既に api/calls のスナップショットに載っている銘柄は、過去のビルドで
+            # 実際に引けている実績があるので毎回叩き直さない（以前は price_at_call の
+            # 有無で判定していたが、実価格を保存しなくなったため実績で判定する）
+            proven = set()
+            for snap in glob.glob(os.path.join(BASE, "api", "calls", "*")):
+                try:
+                    for sc in json.load(open(snap, encoding="utf-8")).get("calls", []):
+                        if sc.get("series"):
+                            proven.add(sc.get("ticker"))
+                except Exception:
+                    pass
             for c in d.get("calls", []):
                 t = c.get("ticker", "")
-                if not t or c.get("price_at_call"):
+                if not t or t in proven:
                     continue
                 try:
                     fetch_price(t)
@@ -571,9 +610,7 @@ def lan_ip():
 
 if __name__ == "__main__":
     import sys
-    if "--record" in sys.argv:
-        record_all()
-    elif "--check" in sys.argv:
+    if "--check" in sys.argv:
         check_data(verify_tickers="--offline" not in sys.argv)
     else:
         print("🎯 連想ゲーム")

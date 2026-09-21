@@ -16,25 +16,19 @@
       "ticker": "GOOGL",
       "name": "アルファベット",
       "direction": "+",
-      "basis": "アンソロピックの大株主。IPOへの前進は持ち分の価値の顕在化",
-      "price_at_call": 344.2,
-      "called_at": "2026-08-18"
+      "basis": "アンソロピックの大株主。IPOへの前進は持ち分の価値の顕在化"
     },
     {
       "ticker": "MS",
       "name": "モルガン・スタンレー",
       "direction": "+",
-      "basis": "与信とIPOを巡る金融の胴元側。大型案件の手数料の候補",
-      "price_at_call": 217.55,
-      "called_at": "2026-08-18"
+      "basis": "与信とIPOを巡る金融の胴元側。大型案件の手数料の候補"
     },
     {
       "ticker": "MSFT",
       "name": "マイクロソフト",
       "direction": "-",
-      "basis": "競合AI陣営の後ろ盾。相手の資金力強化は投資競争の消耗圧力",
-      "price_at_call": 481.63,
-      "called_at": "2026-08-18"
+      "basis": "競合AI陣営の後ろ盾。相手の資金力強化は投資競争の消耗圧力"
     }
   ],
   "questions": [

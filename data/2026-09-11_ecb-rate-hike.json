@@ -16,25 +16,19 @@
       "ticker": "DBK.DE",
       "name": "ドイツ銀行",
       "direction": "+",
-      "basis": "利上げは利ざやの追い風。9/7の−から反転、駆動は金利",
-      "price_at_call": 35.04,
-      "called_at": "2026-09-11"
+      "basis": "利上げは利ざやの追い風。9/7の−から反転、駆動は金利"
     },
     {
       "ticker": "SAN",
       "name": "バンコ・サンタンデール",
       "direction": "+",
-      "basis": "欧州の銀行の列の同輩。金利のある世界の商いの受益",
-      "price_at_call": 14.68,
-      "called_at": "2026-09-11"
+      "basis": "欧州の銀行の列の同輩。金利のある世界の商いの受益"
     },
     {
       "ticker": "VNA.DE",
       "name": "ボノビア",
       "direction": "-",
-      "basis": "独の住宅不動産の代表格。金利敏感の利回り資産の重石",
-      "price_at_call": 18.5,
-      "called_at": "2026-09-11"
+      "basis": "独の住宅不動産の代表格。金利敏感の利回り資産の重石"
     }
   ],
   "questions": [

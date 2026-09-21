@@ -16,25 +16,19 @@
       "ticker": "6752.T",
       "name": "パナソニックホールディングス",
       "direction": "+",
-      "basis": "当事者。EVの重石をAIの需要で書き換える転用の物語",
-      "price_at_call": 4197.0,
-      "called_at": "2026-09-04"
+      "basis": "当事者。EVの重石をAIの需要で書き換える転用の物語"
     },
     {
       "ticker": "6674.T",
       "name": "ジーエス・ユアサ",
       "direction": "+",
-      "basis": "電池の列への連想の受益。AIサーバー電源の需要の広がり",
-      "price_at_call": 4972.0,
-      "called_at": "2026-09-04"
+      "basis": "電池の列への連想の受益。AIサーバー電源の需要の広がり"
     },
     {
       "ticker": "TSLA",
       "name": "テスラ",
       "direction": "-",
-      "basis": "供給元の転用が語るEV需要の細りの裏書き。相対の重石",
-      "price_at_call": 376.36,
-      "called_at": "2026-09-04"
+      "basis": "供給元の転用が語るEV需要の細りの裏書き。相対の重石"
     }
   ],
   "questions": [

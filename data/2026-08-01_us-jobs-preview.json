@@ -16,25 +16,19 @@
       "ticker": "JPM",
       "name": "JPMorgan Chase",
       "direction": "+",
-      "basis": "雇用の強さ→金利高止まりの経路で、貸出利回りと金利収益が支えられる側",
-      "price_at_call": 351.79,
-      "called_at": "2026-08-01"
+      "basis": "雇用の強さ→金利高止まりの経路で、貸出利回りと金利収益が支えられる側"
     },
     {
       "ticker": "DHI",
       "name": "D.R. Horton",
       "direction": "-",
-      "basis": "強い雇用が金利とローン金利の高止まりに繋がれば、住宅需要の逆風が続く側",
-      "price_at_call": 143.06,
-      "called_at": "2026-08-01"
+      "basis": "強い雇用が金利とローン金利の高止まりに繋がれば、住宅需要の逆風が続く側"
     },
     {
       "ticker": "RKLB",
       "name": "Rocket Lab",
       "direction": "-",
-      "basis": "遠い将来の利益を織り込む無収益グロース。割引率の高止まりの直撃側",
-      "price_at_call": 64.95,
-      "called_at": "2026-08-01"
+      "basis": "遠い将来の利益を織り込む無収益グロース。割引率の高止まりの直撃側"
     }
   ],
   "questions": [

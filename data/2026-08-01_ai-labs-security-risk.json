@@ -16,25 +16,19 @@
       "ticker": "PLTR",
       "name": "Palantir Technologies",
       "direction": "+",
-      "basis": "安全・安保要求の制度化で、政府調達の審査適合の実績が武器になる側の受益",
-      "price_at_call": 123.06,
-      "called_at": "2026-08-01"
+      "basis": "安全・安保要求の制度化で、政府調達の審査適合の実績が武器になる側の受益"
     },
     {
       "ticker": "CRWD",
       "name": "CrowdStrike",
       "direction": "+",
-      "basis": "AIの安全・セキュリティ要求の強化が、そのまま需要になるセキュリティ側の受益",
-      "price_at_call": 190.86,
-      "called_at": "2026-08-01"
+      "basis": "AIの安全・セキュリティ要求の強化が、そのまま需要になるセキュリティ側の受益"
     },
     {
       "ticker": "3993.T",
       "name": "PKSHA Technology",
       "direction": "-",
-      "basis": "安全対応の固定費が相対的に重く効く、体力の小さい新興AI側の劣後",
-      "price_at_call": 2787.0,
-      "called_at": "2026-08-01"
+      "basis": "安全対応の固定費が相対的に重く効く、体力の小さい新興AI側の劣後"
     }
   ],
   "questions": [

@@ -1,7 +1,54 @@
-"""compute_eval / bench_symbol のユニットテスト
+"""compute_eval / bench_symbol と、モジュールの静的な健全性のテスト
 実行: python3 test_server.py（ネットワーク不要）
 """
-from server import compute_eval, bench_symbol
+import ast
+import builtins
+import os
+
+from server import compute_eval, bench_symbol, baseline_index, rate_series
+
+
+def test_no_undefined_names():
+    """server.py / build_static.py に未定義の名前が無いこと。
+
+    2026-09-21に、使わなくなったと思って from server import から
+    bench_symbol を外したが1箇所で使われたままで、ビルドが
+    NameError で落ちた。import の整理は目視だと取りこぼすので機械で見る。
+    """
+    base = os.path.dirname(os.path.abspath(__file__))
+    for fn in ("server.py", "build_static.py"):
+        tree = ast.parse(open(os.path.join(base, fn), encoding="utf-8").read())
+        # モジュール実行時に自動で入る名前
+        defined = set(dir(builtins)) | {"__file__", "__name__", "__doc__"}
+        for n in ast.walk(tree):
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                defined.add(n.name)
+            elif isinstance(n, ast.Name) and isinstance(n.ctx, (ast.Store, ast.Del)):
+                defined.add(n.id)
+            elif isinstance(n, (ast.Import, ast.ImportFrom)):
+                defined.update((a.asname or a.name).split(".")[0] for a in n.names)
+            elif isinstance(n, ast.ExceptHandler) and n.name:
+                defined.add(n.name)
+            elif isinstance(n, ast.arg):
+                defined.add(n.arg)
+        missing = sorted({n.id for n in ast.walk(tree)
+                          if isinstance(n, ast.Name)
+                          and isinstance(n.ctx, ast.Load) and n.id not in defined})
+        assert not missing, f"{fn} に未定義の名前: {missing}"
+    print("✓ 未定義の名前なし（server.py / build_static.py）")
+
+
+def test_rate_series_has_no_prices():
+    """公開する系列に実価格が混ざらないこと（終値は rate へ変換される）"""
+    hist = [{"iso": "2026-09-17", "d": "09/17", "p": 100.0},
+            {"iso": "2026-09-18", "d": "09/18", "p": 110.0},
+            {"iso": "2026-09-19", "d": "09/19", "p": 99.0}]
+    i = baseline_index([h["iso"] for h in hist], "2026-09-18")
+    assert i == 1, i
+    s = rate_series(hist, hist[i]["p"])
+    assert [r["rate"] for r in s] == [-9.091, 0.0, -10.0], s
+    assert all(set(r) == {"date", "rate"} for r in s), s
+    print("✓ 騰落率の系列に実価格が混ざらない")
 
 
 def make_hist(prices, start_day=1):
@@ -60,6 +107,8 @@ def test_now_uses_latest():
 
 
 if __name__ == "__main__":
+    test_no_undefined_names()
+    test_rate_series_has_no_prices()
     test_bench_symbol()
     test_t5_absolute_return()
     test_relative_return_cancels_market()

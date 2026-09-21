@@ -16,25 +16,19 @@
       "ticker": "JBS",
       "name": "JBS（ブラジル食肉最大手）",
       "direction": "-",
-      "basis": "対EU販路を失うリスクの直撃側",
-      "price_at_call": 12.13,
-      "called_at": "2026-07-24"
+      "basis": "対EU販路を失うリスクの直撃側"
     },
     {
       "ticker": "TSN",
       "name": "タイソン・フーズ（米）",
       "direction": "+",
-      "basis": "空いたEUの棚を埋める代替供給側",
-      "price_at_call": 56.75,
-      "called_at": "2026-07-24"
+      "basis": "空いたEUの棚を埋める代替供給側"
     },
     {
       "ticker": "2282.T",
       "name": "日本ハム",
       "direction": "+",
-      "basis": "行き場を失ったブラジル産の流入で仕入れコスト低下の可能性",
-      "price_at_call": 6251.0,
-      "called_at": "2026-07-24"
+      "basis": "行き場を失ったブラジル産の流入で仕入れコスト低下の可能性"
     }
   ],
   "questions": [

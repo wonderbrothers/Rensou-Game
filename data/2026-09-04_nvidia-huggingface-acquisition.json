@@ -16,25 +16,19 @@
       "ticker": "NVDA",
       "name": "エヌビディア",
       "direction": "+",
-      "basis": "計算の堀の上にモデルの流通の入口を重ねる生態系の増築",
-      "price_at_call": 228.45,
-      "called_at": "2026-09-04"
+      "basis": "計算の堀の上にモデルの流通の入口を重ねる生態系の増築"
     },
     {
       "ticker": "AMD",
       "name": "AMD",
       "direction": "-",
-      "basis": "中立だった流通の広場の消失。競合チップの相対の逆風",
-      "price_at_call": 456.16,
-      "called_at": "2026-09-04"
+      "basis": "中立だった流通の広場の消失。競合チップの相対の逆風"
     },
     {
       "ticker": "MSFT",
       "name": "マイクロソフト",
       "direction": "-",
-      "basis": "GitHubと開発者の入口で正面競合の相対。攻守の変化",
-      "price_at_call": 510.12,
-      "called_at": "2026-09-04"
+      "basis": "GitHubと開発者の入口で正面競合の相対。攻守の変化"
     }
   ],
   "questions": [

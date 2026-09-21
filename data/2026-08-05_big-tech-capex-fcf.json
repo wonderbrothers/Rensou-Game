@@ -16,25 +16,19 @@
       "ticker": "NVDA",
       "name": "NVIDIA",
       "direction": "+",
-      "basis": "IT大手のキャッシュフロー悪化の裏側——巨額CapExを売上として受け取る側",
-      "price_at_call": 211.94,
-      "called_at": "2026-08-05"
+      "basis": "IT大手のキャッシュフロー悪化の裏側——巨額CapExを売上として受け取る側"
     },
     {
       "ticker": "VRT",
       "name": "Vertiv Holdings",
       "direction": "+",
-      "basis": "データセンターの電源・冷却設備。AI設備投資の膨張が受注になる側",
-      "price_at_call": 269.93,
-      "called_at": "2026-08-05"
+      "basis": "データセンターの電源・冷却設備。AI設備投資の膨張が受注になる側"
     },
     {
       "ticker": "ORCL",
       "name": "Oracle",
       "direction": "-",
-      "basis": "借入に依存してAI投資を賄う体質。物差しがFCFへ切り替わる日の脆弱側",
-      "price_at_call": 145.74,
-      "called_at": "2026-08-05"
+      "basis": "借入に依存してAI投資を賄う体質。物差しがFCFへ切り替わる日の脆弱側"
     }
   ],
   "questions": [

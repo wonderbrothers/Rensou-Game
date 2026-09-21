@@ -16,25 +16,19 @@
       "ticker": "JPM",
       "name": "JPモルガン・チェース",
       "direction": "+",
-      "basis": "長短の利回りの差の拡大が貸出と運用の採算に効く米銀の側",
-      "price_at_call": 360.96,
-      "called_at": "2026-08-18"
+      "basis": "長短の利回りの差の拡大が貸出と運用の採算に効く米銀の側"
     },
     {
       "ticker": "PLD",
       "name": "プロロジス",
       "direction": "-",
-      "basis": "利回り競合と調達コストの両面が刺さる物流REITの側",
-      "price_at_call": 140.62,
-      "called_at": "2026-08-18"
+      "basis": "利回り競合と調達コストの両面が刺さる物流REITの側"
     },
     {
       "ticker": "NEE",
       "name": "ネクステラ・エナジー",
       "direction": "-",
-      "basis": "巨額の設備投資を借入で賄う金利敏感な公益・再エネの側",
-      "price_at_call": 86.22,
-      "called_at": "2026-08-18"
+      "basis": "巨額の設備投資を借入で賄う金利敏感な公益・再エネの側"
     }
   ],
   "questions": [

@@ -16,25 +16,19 @@
       "ticker": "CRM",
       "name": "セールスフォース",
       "direction": "+",
-      "basis": "当事者。AIの課金が受注に乗り始めた回収の側の一番手",
-      "price_at_call": 205.62,
-      "called_at": "2026-08-27"
+      "basis": "当事者。AIの課金が受注に乗り始めた回収の側の一番手"
     },
     {
       "ticker": "NOW",
       "name": "サービスナウ",
       "direction": "+",
-      "basis": "販路を持つ応用ソフトの列の再評価の連想。同じ回収の側",
-      "price_at_call": 125.8,
-      "called_at": "2026-08-27"
+      "basis": "販路を持つ応用ソフトの列の再評価の連想。同じ回収の側"
     },
     {
       "ticker": "DBX",
       "name": "ドロップボックス",
       "direction": "-",
-      "basis": "単機能の道具のソフトはAIの働き手に吸収される側の懸念",
-      "price_at_call": 34.8,
-      "called_at": "2026-08-27"
+      "basis": "単機能の道具のソフトはAIの働き手に吸収される側の懸念"
     }
   ],
   "questions": [

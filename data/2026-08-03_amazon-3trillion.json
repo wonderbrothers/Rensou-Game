@@ -16,25 +16,19 @@
       "ticker": "AMZN",
       "name": "Amazon",
       "direction": "+",
-      "basis": "クラウドの従量課金という検証可能なAI収益化の実績が評価を支える当事者",
-      "price_at_call": 284.02,
-      "called_at": "2026-08-03"
+      "basis": "クラウドの従量課金という検証可能なAI収益化の実績が評価を支える当事者"
     },
     {
       "ticker": "DDOG",
       "name": "Datadog",
       "direction": "+",
-      "basis": "クラウドの利用拡大がそのまま売上になる監視ソフト。クラブの裾野の受益側",
-      "price_at_call": 273.6,
-      "called_at": "2026-08-03"
+      "basis": "クラウドの利用拡大がそのまま売上になる監視ソフト。クラブの裾野の受益側"
     },
     {
       "ticker": "EBAY",
       "name": "eBay",
       "direction": "-",
-      "basis": "ECの勝者総取りで資金と顧客の集中の外に置かれる相対劣後の側",
-      "price_at_call": 107.13,
-      "called_at": "2026-08-03"
+      "basis": "ECの勝者総取りで資金と顧客の集中の外に置かれる相対劣後の側"
     }
   ],
   "questions": [

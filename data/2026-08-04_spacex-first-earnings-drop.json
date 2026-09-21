@@ -16,25 +16,19 @@
       "ticker": "LMT",
       "name": "Lockheed Martin",
       "direction": "+",
-      "basis": "受注残と実績で審査に耐える宇宙・防衛の対照群。選別の相対受益側",
-      "price_at_call": 589.33,
-      "called_at": "2026-08-04"
+      "basis": "受注残と実績で審査に耐える宇宙・防衛の対照群。選別の相対受益側"
     },
     {
       "ticker": "RKLB",
       "name": "Rocket Lab",
       "direction": "-",
-      "basis": "宇宙セクターの評価の連動。旗艦の急落がテーマ全体の倍率を圧縮する側",
-      "price_at_call": 74.48,
-      "called_at": "2026-08-04"
+      "basis": "宇宙セクターの評価の連動。旗艦の急落がテーマ全体の倍率を圧縮する側"
     },
     {
       "ticker": "ASTS",
       "name": "AST SpaceMobile",
       "direction": "-",
-      "basis": "収益の実績に乏しい宇宙グロース。審査の厳格化が最も強く効く側",
-      "price_at_call": 70.31,
-      "called_at": "2026-08-04"
+      "basis": "収益の実績に乏しい宇宙グロース。審査の厳格化が最も強く効く側"
     }
   ],
   "questions": [

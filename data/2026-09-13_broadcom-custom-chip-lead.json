@@ -16,25 +16,19 @@
       "ticker": "AVGO",
       "name": "ブロードコム",
       "direction": "+",
-      "basis": "カスタムチップの設計と接続半導体の受託の主。主役交代の受益の当事者",
-      "price_at_call": 361.99,
-      "called_at": "2026-09-13"
+      "basis": "カスタムチップの設計と接続半導体の受託の主。主役交代の受益の当事者"
     },
     {
       "ticker": "TSM",
       "name": "台湾積体電路製造（TSMC）ADR",
       "direction": "+",
-      "basis": "GPUもカスタムも焼く受託製造。設計の多様化は客の増加の側",
-      "price_at_call": 433.24,
-      "called_at": "2026-09-13"
+      "basis": "GPUもカスタムも焼く受託製造。設計の多様化は客の増加の側"
     },
     {
       "ticker": "NVDA",
       "name": "エヌビディア",
       "direction": "-",
-      "basis": "一強のプレミアムに代替の問い。9/9と同方向の相対の重石",
-      "price_at_call": 218.29,
-      "called_at": "2026-09-13"
+      "basis": "一強のプレミアムに代替の問い。9/9と同方向の相対の重石"
     }
   ],
   "questions": [

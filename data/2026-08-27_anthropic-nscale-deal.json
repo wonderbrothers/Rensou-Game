@@ -16,25 +16,19 @@
       "ticker": "NVDA",
       "name": "エヌビディア",
       "direction": "+",
-      "basis": "新興クラウドの巨大契約もGPUの買い手の増加。裾野の頂点",
-      "price_at_call": 209.66,
-      "called_at": "2026-08-27"
+      "basis": "新興クラウドの巨大契約もGPUの買い手の増加。裾野の頂点"
     },
     {
       "ticker": "6367.T",
       "name": "ダイキン工業",
       "direction": "+",
-      "basis": "AIデータセンターの熱の処理、冷却の裾野の受益の連想",
-      "price_at_call": 20950.0,
-      "called_at": "2026-08-27"
+      "basis": "AIデータセンターの熱の処理、冷却の裾野の受益の連想"
     },
     {
       "ticker": "MSFT",
       "name": "マイクロソフト",
       "direction": "-",
-      "basis": "対抗の陣営。発注の分散はクラウド寡占の相対の逆風",
-      "price_at_call": 496.37,
-      "called_at": "2026-08-27"
+      "basis": "対抗の陣営。発注の分散はクラウド寡占の相対の逆風"
     }
   ],
   "questions": [

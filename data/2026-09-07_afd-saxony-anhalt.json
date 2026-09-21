@@ -16,25 +16,19 @@
       "ticker": "NEM",
       "name": "ニューモント",
       "direction": "+",
-      "basis": "政治の不確実性の受け皿の金の側。8/29と同方向",
-      "price_at_call": 128.09,
-      "called_at": "2026-09-07"
+      "basis": "政治の不確実性の受け皿の金の側。8/29と同方向"
     },
     {
       "ticker": "RHM.DE",
       "name": "ラインメタル",
       "direction": "-",
-      "basis": "支援と再軍備の政治の土台の揺らぎ。停戦観測とも同方向",
-      "price_at_call": 1034.0,
-      "called_at": "2026-09-07"
+      "basis": "支援と再軍備の政治の土台の揺らぎ。停戦観測とも同方向"
     },
     {
       "ticker": "DBK.DE",
       "name": "ドイツ銀行",
       "direction": "-",
-      "basis": "政治の不安定と政策の霧は独金融の相対の重石",
-      "price_at_call": 35.57,
-      "called_at": "2026-09-07"
+      "basis": "政治の不安定と政策の霧は独金融の相対の重石"
     }
   ],
   "questions": [

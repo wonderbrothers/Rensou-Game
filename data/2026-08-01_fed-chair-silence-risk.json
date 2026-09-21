@@ -16,25 +16,19 @@
       "ticker": "CBOE",
       "name": "Cboe Global Markets",
       "direction": "+",
-      "basis": "ボラ警戒の高まりがオプション・ヘッジ売買の手数料になる取引所側の受益",
-      "price_at_call": 310.23,
-      "called_at": "2026-08-01"
+      "basis": "ボラ警戒の高まりがオプション・ヘッジ売買の手数料になる取引所側の受益"
     },
     {
       "ticker": "CME",
       "name": "CME Group",
       "direction": "+",
-      "basis": "金利の不確実性が金利先物・ヘッジ需要を押し上げる取引所側の受益",
-      "price_at_call": 267.79,
-      "called_at": "2026-08-01"
+      "basis": "金利の不確実性が金利先物・ヘッジ需要を押し上げる取引所側の受益"
     },
     {
       "ticker": "COIN",
       "name": "Coinbase",
       "direction": "-",
-      "basis": "リスク選好の温度計。ボラ警戒と不確実性の局面で最初に売られる高ベータ側",
-      "price_at_call": 146.26,
-      "called_at": "2026-08-01"
+      "basis": "リスク選好の温度計。ボラ警戒と不確実性の局面で最初に売られる高ベータ側"
     }
   ],
   "questions": [

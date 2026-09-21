@@ -16,25 +16,19 @@
       "ticker": "AVGO",
       "name": "Broadcom",
       "direction": "+",
-      "basis": "AI収益化の証拠を持つ半導体側。最高値圏の米株を主導する証拠相場の受益",
-      "price_at_call": 392.23,
-      "called_at": "2026-08-03"
+      "basis": "AI収益化の証拠を持つ半導体側。最高値圏の米株を主導する証拠相場の受益"
     },
     {
       "ticker": "9201.T",
       "name": "日本航空",
       "direction": "+",
-      "basis": "原油急落が燃料コストの改善に直結する航空側の受益",
-      "price_at_call": 2979.5,
-      "called_at": "2026-08-03"
+      "basis": "原油急落が燃料コストの改善に直結する航空側の受益"
     },
     {
       "ticker": "1605.T",
       "name": "INPEX",
       "direction": "-",
-      "basis": "原油価格の急落が販売価格と採算に直結する資源開発側の逆風",
-      "price_at_call": 3519.0,
-      "called_at": "2026-08-03"
+      "basis": "原油価格の急落が販売価格と採算に直結する資源開発側の逆風"
     }
   ],
   "questions": [

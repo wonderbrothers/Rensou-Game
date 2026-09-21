@@ -16,25 +16,19 @@
       "ticker": "BAC",
       "name": "Bank of America",
       "direction": "+",
-      "basis": "長短金利差の拡大（スティープ化）が利ざやの追い風になる米銀の受益側",
-      "price_at_call": 61.73,
-      "called_at": "2026-07-30"
+      "basis": "長短金利差の拡大（スティープ化）が利ざやの追い風になる米銀の受益側"
     },
     {
       "ticker": "MET",
       "name": "MetLife",
       "direction": "+",
-      "basis": "超長期の利回り上昇が運用利回りの改善に効く生保の受益側",
-      "price_at_call": 97.07,
-      "called_at": "2026-07-30"
+      "basis": "超長期の利回り上昇が運用利回りの改善に効く生保の受益側"
     },
     {
       "ticker": "NEE",
       "name": "NextEra Energy",
       "direction": "-",
-      "basis": "長期金利上昇が調達コストと利回り競合で刺さる金利敏感ユーティリティの逆風側",
-      "price_at_call": 87.93,
-      "called_at": "2026-07-30"
+      "basis": "長期金利上昇が調達コストと利回り競合で刺さる金利敏感ユーティリティの逆風側"
     }
   ],
   "questions": [

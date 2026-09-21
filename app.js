@@ -1527,31 +1527,32 @@ async function loadCalls() {
     let h = `<b class="ct">${ic("casino")} シニアアナリストの遊びコール</b>
       <p class="cnote callintro">${CALL_INTRO}</p>`;
     d.calls.forEach(c => {
-      const yen = c.ticker.endsWith(".T") ? "¥"
-        : (c.ticker.endsWith(".KS") || c.ticker.endsWith(".KQ")) ? "₩" : "$";
       const dir = c.direction === "+"
         ? `<span class="dir up">${ic("trending_up")} 上がるかも</span>`
         : `<span class="dir dn">${ic("trending_down")} 下がるかも</span>`;
       h += `<div class="call"><div class="chd"><b>${c.name}</b>${tickerBadgeHTML(c.ticker, c.name)}${dir}</div>
         <p class="basis">${c.basis}</p>`;
       if (c.status === "recorded") {
-        h += `<p class="verdict rec">${ic("push_pin", 1)} ニュース当日（${c.called_at}）の株価 ${yen}${c.price_at_call.toLocaleString()} を記録。答え合わせは数日後にもう一度！</p>`;
+        h += `<p class="verdict rec">${ic("push_pin", 1)} ニュース当日（${c.called_at}）を基準に記録。答え合わせは数日後にもう一度！</p>`;
       } else if (c.status === "checked") {
-        const chg = c.change_pct;
+        // rate は新形式のサマリー。古いスナップショットが混ざっても崩れないよう eval で代替する
+        const chg = (c.rate != null) ? c.rate : ((c.eval && c.eval.now) ? c.eval.now.chg : null);
         const sign = chg > 0 ? "+" : "";
         let nowRel = "";
         if (c.eval && c.eval.now) {
           const r = c.eval.now.rel, s = r > 0 ? "+" : "";
           nowRel = `（${c.bench || "市場"}比 ${s}${r}%）`;
         }
-        h += `<p class="verdict">ニュース時（${c.called_at}）${yen}${c.price_at_call.toLocaleString()} → 現在 ${yen}${c.current.toLocaleString()}（${sign}${chg}%）${nowRel}</p>`;
+        if (chg != null) {
+          h += `<p class="verdict">ニュース時（${c.called_at}）を基準に ${sign}${chg}%${nowRel}${c.stale ? "（前回取得時点）" : ""}</p>`;
+        }
         if (c.eval) {
           h += `<p class="verdict evalline">${fmtWin(c.eval.t5, "T+5", c.bench, c.direction)}<br>${fmtWin(c.eval.t20, "T+20", c.bench, c.direction)}</p>`;
         }
       } else {
-        h += `<p class="verdict err">${ic("warning")} 株価を取得できませんでした（${c.ticker}）</p>`;
+        h += `<p class="verdict err">${ic("warning")} 株価を取得できませんでした（${tickerLabel(c.ticker)}）</p>`;
       }
-      if (c.history && c.history.length > 1 && c.price_at_call) h += buildOneChart(c);
+      if (c.series && c.series.length > 1) h += buildOneChart(c);
       h += `</div>`;
     });
     h += judgeLegendHTML();
@@ -1575,9 +1576,11 @@ async function loadCalls() {
 
 /* ---------- 騰落率チャート ---------- */
 function buildOneChart(c) {
-  const vals = c.history.map(hh => (hh.p / c.price_at_call - 1) * 100);
-  const dates = c.history.map(hh => hh.d);
-  const isos = c.history.map(hh => hh.iso || "");
+  // 系列はサーバー側で既に「ニュース日の終値＝0%」の騰落率になっている
+  const mmdd = iso => (iso || "").slice(5).replace("-", "/");
+  const vals = c.series.map(s => s.rate);
+  const dates = c.series.map(s => mmdd(s.date));
+  const isos = c.series.map(s => s.date);
   const n = vals.length;
   let min = 0, max = 0;
   vals.forEach(v => { min = Math.min(min, v); max = Math.max(max, v); });
@@ -1602,19 +1605,16 @@ function buildOneChart(c) {
 
   // ベンチマーク線（ニュース日=0%基準）を薄く重ねる
   let hasBench = false;
-  if (c.bench_history && c.bench_history.length > 1) {
-    const bmap = c.bench_history.map(b => ({ iso: b.iso, p: b.p }));
+  if (c.bench_series && c.bench_series.length > 1) {
+    // ベンチマークもニュース日＝0%に揃った騰落率。営業日がずれることがあるので
+    // 「その日以前の直近の値」を拾う（階段状に引き延ばす）
     const benchAt = iso => {
       let prev = null;
-      for (const b of bmap) { if (b.iso <= iso) prev = b.p; else break; }
+      for (const b of c.bench_series) { if (b.date <= iso) prev = b.rate; else break; }
       return prev;
     };
-    const b0 = benchAt(isos[newsIdx]);
-    if (b0) {
-      const bvals = isos.map(iso => {
-        const bp = benchAt(iso);
-        return bp ? (bp / b0 - 1) * 100 : null;
-      });
+    {
+      const bvals = isos.map(iso => benchAt(iso));
       const bd = bvals.map((v, i) => v === null ? "" : `${i && bvals[i - 1] !== null ? "L" : "M"}${x(i).toFixed(1)},${y(Math.max(min, Math.min(max, v))).toFixed(1)}`).join("");
       if (bd) {
         svg += `<path d="${bd}" fill="none" stroke="var(--sup)" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" opacity=".9"/>`;
@@ -1656,13 +1656,15 @@ function buildOneChart(c) {
   }
   svg += `</svg>`;
 
-  const sign = chg > 0 ? "+" : "";
+  // バッヂは丸め済みの rate を優先する（系列から再度丸めると末尾が0.01ずれる）
+  const shown = (c.rate != null) ? c.rate : chg;
+  const sign = shown > 0 ? "+" : "";
   // 基準はニュース日の終値。「その終値と比べて何%か」を明示する
-  const chgBadge = `<span class="chg ${chg >= 0 ? "cpos" : "cneg"}">${dates[newsIdx]}終値比 ${sign}${chg.toFixed(2)}%</span>`;
+  const chgBadge = `<span class="chg ${chg >= 0 ? "cpos" : "cneg"}">${dates[newsIdx]}終値比 ${sign}${shown.toFixed(2)}%</span>`;
   const markerLegend = drawnMarkers
     .map(([col, label]) => `<span class="lg"><i style="background:${col}"></i>${label}</span>`).join("");
   const legend = hasBench
-    ? `<div class="legend"><span class="lg"><i style="background:var(--ink)"></i>${c.name}</span><span class="lg"><i style="background:var(--sup)"></i>${c.bench || "ベンチマーク"}</span>${markerLegend}</div>`
+    ? `<div class="legend"><span class="lg"><i style="background:var(--ink)"></i>${c.name}</span><span class="lg"><i style="background:var(--sup)"></i>${c.bench || "ベンチマーク"}（参考）</span>${markerLegend}</div>`
     : "";
   return `<div class="chartwrap">
     <div class="chead2"><b class="ct2">${ic("show_chart")} 騰落率（ニュース日の終値 = 0%）</b>${chgBadge}</div>
@@ -1908,13 +1910,31 @@ function yahooFinanceUrl(ticker) {
 const escAttr = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
   .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+/* 画面に出す銘柄コードの表記。
+
+   `.T` のような取引所の接尾辞は yfinance と Yahoo!ファイナンスの都合であって、
+   読む人には意味が薄い。市場名に置き換えて「東証 2181」の形で見せる。
+   **リンク先と title には正式なティッカーを使う**（`.T` を外すと銘柄ページを引けない）。
+   米国株は接尾辞が無く、それ自体が正式な表記なのでそのまま出す。 */
+const MARKET_LABEL = [
+  [/\.T$/, "東証"], [/\.(KS|KQ)$/, "韓国"], [/\.HK$/, "香港"],
+  [/\.DE$/, "独"], [/\.PA$/, "仏"],
+];
+function tickerLabel(ticker) {
+  const t = String(ticker || "");
+  for (const [re, market] of MARKET_LABEL) {
+    if (re.test(t)) return `${market} ${t.replace(re, "")}`;
+  }
+  return t;
+}
+
 /* 銘柄コードのバッジ。出典バッジ（srcBadgeHTML）と同じ作りで別タブへ開く */
 function tickerBadgeHTML(ticker, name) {
   const url = yahooFinanceUrl(ticker);
   if (!url) return "";
   const who = name ? `${name}（${ticker}）` : ticker;
   return `<a class="tik link" href="${escAttr(url)}" target="_blank" rel="noopener noreferrer"
-    title="${escAttr(`Yahoo!ファイナンスで${who}の株価を見る`)}">${escAttr(ticker)} ${ic("open_in_new")}</a>`;
+    title="${escAttr(`Yahoo!ファイナンスで${who}の株価を見る`)}">${escAttr(tickerLabel(ticker))} ${ic("open_in_new")}</a>`;
 }
 
 function srcBadgeHTML(news) {
@@ -1957,18 +1977,20 @@ function csDetailHTML(r) {
   if (!p) return "";
   const c = (p.calls || []).find(x => x.ticker === r.ticker);
   if (!c) return "";
-  const yen = c.ticker.endsWith(".T") ? "¥"
-    : (c.ticker.endsWith(".KS") || c.ticker.endsWith(".KQ")) ? "₩" : "$";
   let h = `<div class="csdetail">`;
   if (c.basis) h += `<p class="basis">${ic("psychology")} ${c.basis}</p>`;
-  if (c.price_at_call && c.current != null) {
-    const sign = c.change_pct > 0 ? "+" : "";
-    h += `<p class="verdict">ニュース時（${c.called_at}）${yen}${c.price_at_call.toLocaleString()} → ${yen}${c.current.toLocaleString()}（${sign}${c.change_pct}%）</p>`;
+  if (c.status === "error") {
+    // 黙って空欄にすると「グラフが出ない」だけに見えて原因が分からない
+    h += `<p class="verdict err">${ic("warning")} 株価を取得できませんでした（${tickerLabel(c.ticker)}）</p>`;
+  }
+  if (c.rate != null) {
+    const sign = c.rate > 0 ? "+" : "";
+    h += `<p class="verdict">ニュース時（${c.called_at}）を基準に ${sign}${c.rate}%${c.stale ? "（前回取得時点）" : ""}</p>`;
   }
   if (c.eval) {
     h += `<p class="verdict evalline">${fmtWin(c.eval.t5, "T+5", c.bench, c.direction)}<br>${fmtWin(c.eval.t20, "T+20", c.bench, c.direction)}</p>`;
   }
-  if (c.history && c.history.length > 1 && c.price_at_call) h += buildOneChart(c);
+  if (c.series && c.series.length > 1) h += buildOneChart(c);
   h += `</div>`;
   return h;
 }

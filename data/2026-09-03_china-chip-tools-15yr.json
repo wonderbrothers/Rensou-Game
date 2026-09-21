@@ -16,25 +16,19 @@
       "ticker": "ASML",
       "name": "ASMLホールディング",
       "direction": "+",
-      "basis": "露光の独占の堀の深さの証言。装置の頂点の受益",
-      "price_at_call": 1682.3,
-      "called_at": "2026-09-03"
+      "basis": "露光の独占の堀の深さの証言。装置の頂点の受益"
     },
     {
       "ticker": "8035.T",
       "name": "東京エレクトロン",
       "direction": "+",
-      "basis": "装置の列の堀の確認。蓄積の時間の壁の側の受益",
-      "price_at_call": 53730.0,
-      "called_at": "2026-09-03"
+      "basis": "装置の列の堀の確認。蓄積の時間の壁の側の受益"
     },
     {
       "ticker": "0981.HK",
       "name": "SMIC",
       "direction": "-",
-      "basis": "最先端の製造の壁の再確認。国産化の期待の側の重石",
-      "price_at_call": 68.4,
-      "called_at": "2026-09-03"
+      "basis": "最先端の製造の壁の再確認。国産化の期待の側の重石"
     }
   ],
   "questions": [
