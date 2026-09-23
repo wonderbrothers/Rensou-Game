@@ -11,7 +11,6 @@ import hashlib
 import json
 import os
 import re
-import shutil
 import subprocess
 
 import sys
@@ -334,6 +333,9 @@ def stamp_assets():
         print("✓ index.html のキャッシュ用バージョンを更新")
 
 
+WRITTEN = set()   # このビルドで書き出したパス（後始末で「消してよいもの」を決める）
+
+
 def write(path, obj):
     """静的APIの唯一の書き出し口。allow_nan=False で NaN/Infinity を構造的に禁止する。
 
@@ -350,6 +352,30 @@ def write(path, obj):
     with open(path, "w", encoding="utf-8") as fp:
         fp.write(text)
         fp.write("\n")
+    WRITTEN.add(os.path.abspath(path))
+
+
+def prune_stale():
+    """今回のビルドで書き出さなかった api/ のファイルを削除する。
+
+    **関所を全部通過したあと、main() の最後にだけ呼ぶこと。**
+    かつては main() の冒頭で shutil.rmtree(OUT) して作り直していたが、
+    途中で失敗すると api/ が欠けたまま残る。2026-09-21に実際に起きた:
+    NameError で止まったビルドが api/calls/* と api/callstats を消したまま
+    終わり、その状態がコミットされた（次の成功ビルドで復旧）。
+    「先に全部書き、最後に余りを消す」なら、どこで失敗しても
+    前回の api/ がそのまま残り、公開サイトは無傷でいられる。
+    """
+    stale = 0
+    for root, _, files in os.walk(OUT):
+        for fn in files:
+            p = os.path.abspath(os.path.join(root, fn))
+            if p not in WRITTEN:
+                os.remove(p)
+                stale += 1
+    if stale:
+        print(f"✓ 不要になった api/ のファイルを削除: {stale}件")
+    return stale
 
 
 def main():
@@ -363,8 +389,8 @@ def main():
     prev = load_previous_payloads()
     frozen_ids = {sid for sid, p in prev.items() if p.get("frozen") or is_frozen(p)}
 
-    if os.path.isdir(OUT):
-        shutil.rmtree(OUT)
+    # **ここで api/ を消さない。**（理由は prune_stale() の説明を読むこと）
+    # 全部書き出してから、最後に prune_stale() で余りだけを消す。
 
     # --- 静的APIの生成 ---
     # api/sessions      : 全記事の完全な配列（互換用・旧クライアント向け）
@@ -539,6 +565,8 @@ def main():
         print("  履歴自体は取れているため、市場休場・データ反映待ちと判断しました。")
         print("  基準価格は未記録のまま残り、次回のビルドで自動的に再取得されます。")
         print("-" * 60)
+
+    prune_stale()
 
     print("\n公開反映: ./sync-public.sh && cd ../Rensou-Game-public && git push")
 
