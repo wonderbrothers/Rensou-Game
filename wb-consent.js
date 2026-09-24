@@ -1,4 +1,4 @@
-/*! wb-consent.js v1.1.0 — WONDER BROTHERS 共通 Cookie 同意 + Google Consent Mode v2（Basic）
+/*! wb-consent.js v1.1.1 — WONDER BROTHERS 共通 Cookie 同意 + Google Consent Mode v2（Basic）
  *
  * ■ 正本と配置
  *   正本は corporate-site/src/scripts/wb-consent.js（このファイル）。
@@ -43,7 +43,7 @@
   if (w.WBConsent) return; /* 二重読み込みの保険 */
 
   /* ---------------- 設定 ---------------- */
-  var VERSION = "1.1.0";
+  var VERSION = "1.1.1";
   var COOKIE_NAME = "wb_consent_v1";
   var OLD_COOKIES = [];              /* 版を上げたら、ここに古い名前を足す（例: "wb_consent_v1"） */
   var MAX_AGE = 180 * 24 * 60 * 60;  /* 180日 = 15552000 秒 */
@@ -250,7 +250,11 @@
     ":where(.wbc) .wbc-btn--secondary{background:transparent;color:var(--wbc-fg,#1a1a1a);}" +
     ":where(.wbc) .wbc-btn--primary{background:var(--wbc-accent,#1a1a1a);color:var(--wbc-accent-fg,#fff);}" +
     ":where(.wbc) .wbc-btn:hover{opacity:.86;}" +
-    ":where(.wbc-btn:focus-visible,.wbc-switch:focus-visible,.wbc-x:focus-visible,.wbc-link:focus-visible){outline:2px solid var(--wbc-focus,var(--wbc-accent,#1a1a1a));outline-offset:2px;}" +
+    ":where(.wbc-btn:focus-visible,.wbc-x:focus-visible,.wbc-link:focus-visible){outline:2px solid var(--wbc-focus,var(--wbc-accent,#1a1a1a));outline-offset:2px;}" +
+    /* スイッチのフォーカス枠は、ボタン全体の四角ではなくトラック（丸いつまみの溝）の形に出す */
+    ":where(.wbc) .wbc-switch:focus-visible{outline:none;}" +
+    ":where(.wbc-switch:focus-visible) :where(.wbc-track){outline:2px solid var(--wbc-focus,var(--wbc-accent,#1a1a1a));outline-offset:2px;}" +
+    ":where(.wbc) .wbc-dialog:focus,:where(.wbc) .wbc-dialog:focus-visible{outline:none;}" +
     "@media (max-width:640px){:where(.wbc-banner) :where(.wbc-card){flex-direction:column;align-items:stretch;}" +
       ":where(.wbc-actions){width:100%;} :where(.wbc-actions) :where(.wbc-act){min-width:0;}}" +
     ":where(.wbc-dialog){box-sizing:border-box;width:min(480px,calc(100vw - 2 * var(--wbc-gutter,16px)));max-width:none;" +
@@ -362,6 +366,7 @@
     injectCss();
     dialog = el("dialog", "wbc wbc-dialog");
     dialog.setAttribute("aria-labelledby", "wbc-title");
+    dialog.setAttribute("tabindex", "-1"); /* 開いた直後はダイアログ自体にフォーカスを置く（open() 参照） */
     dialog.innerHTML =
       '<div class="wbc-panel">' +
         '<div class="wbc-head"><h2 class="wbc-title" id="wbc-title">' + esc(TEXT.title) + "</h2>" +
@@ -400,7 +405,10 @@
     if (dialog.open) return;
     if (typeof dialog.showModal === "function") dialog.showModal();
     else { dialog.classList.add("wbc-fallback"); dialog.setAttribute("open", ""); }
-    sw.focus();
+    /* 最初のフォーカスはスイッチではなくダイアログ自体に置く。
+       スイッチに置くと、タップで開いただけでも iPhone などでフォーカス枠が出てしまうため。
+       Tab キーを押せば、閉じる → スイッチ → 保存 の順に移る */
+    try { dialog.focus({ preventScroll: true }); } catch (e) { dialog.focus(); }
   }
   function close() {
     if (!dialog || !dialog.open) return;
