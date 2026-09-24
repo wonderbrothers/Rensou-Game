@@ -1,5 +1,6 @@
 const MARKS = ["A", "B", "C", "D", "E"];
-const ic = (n, f) => `<span class="ms${f ? " fill" : ""}">${n}</span>`;
+// アイコン（Material Symbols の合字）。読み上げでは英字の名前になるので隠す（意味は隣の文字か aria-label で伝える）
+const ic = (n, f) => `<span class="ms${f ? " fill" : ""}" aria-hidden="true">${n}</span>`;
 let sessions = [], cur = null, idx = 0, live = 0, answered = false;
 let activeCat = null;
 let order = [];            // 選択肢シャッフルの表示順（表示位置 → 元インデックス）
@@ -258,6 +259,7 @@ function openSettings() {
     <p class="modalnote">設定はこの端末のブラウザに保存されます。切り替えていない間は、端末の外観設定（ライト／ダーク）に自動で追従します。</p>
   </div>`;
   document.body.appendChild(ov);
+  dialogA11y(ov);
   const onKey = e => { if (e.key === "Escape") close(); };
   const close = () => { document.removeEventListener("keydown", onKey); ov.remove(); };
   document.addEventListener("keydown", onKey);
@@ -357,6 +359,56 @@ function initNavShrink() {
   }, { passive: true });
 }
 
+/* ---------- モーダル（.calov）の読み上げとキーボード操作 ----------
+   設定・カレンダー・カテゴリ・ステップ説明の4つのモーダルで共通。
+   - スクリーンリーダーに「ダイアログ」として伝える（role / aria-modal / 見出しから名前）
+   - アイコンだけの閉じるボタン・月送りボタンに名前を付ける
+   - 開いたらフォーカスをモーダルの中へ移し、Tab はモーダルの中だけを巡回させる
+   - Esc で閉じる（閉じるボタンと同じ後始末を通す）。閉じたら開く前の場所へフォーカスを戻す
+   最初のフォーカスはボタンではなくパネル自体に置く（タップで開いただけでフォーカス枠が出ないように） */
+function dialogA11y(ov) {
+  if (!ov._a11y) ov._opener = document.activeElement;   // 閉じたらここへ戻す
+  ov.setAttribute("role", "dialog");
+  ov.setAttribute("aria-modal", "true");
+  const title = ov.querySelector(".calhd b");
+  if (title) {
+    const t = title.cloneNode(true);
+    t.querySelectorAll(".ms").forEach(x => x.remove());   // アイコンの合字（英字）は読み上げない
+    ov.setAttribute("aria-label", t.textContent.trim());
+  }
+  ov.querySelectorAll(".calx").forEach(b => { b.type = "button"; b.setAttribute("aria-label", "閉じる"); });
+  ov.querySelectorAll('.calnav[data-nav="-1"]').forEach(b => b.setAttribute("aria-label", "前の月"));
+  ov.querySelectorAll('.calnav[data-nav="1"]').forEach(b => b.setAttribute("aria-label", "次の月"));
+  const box = ov.querySelector(".calbox");
+  if (box) box.tabIndex = -1;
+  if (!ov.contains(document.activeElement) && box) box.focus({ preventScroll: true });
+  if (ov._a11y) return;
+  ov._a11y = true;
+  const focusables = () => [...ov.querySelectorAll(
+    'button:not([disabled]),a[href],input:not([disabled]),select,textarea,[tabindex]:not([tabindex="-1"])'
+  )].filter(e => e.offsetParent !== null);
+  ov.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+      const x = ov.querySelector(".calx");
+      if (x) { e.stopPropagation(); x.click(); }
+      return;
+    }
+    if (e.key !== "Tab") return;
+    const f = focusables();
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && (document.activeElement === first || document.activeElement === ov.querySelector(".calbox"))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  const mo = new MutationObserver(() => {
+    if (ov.isConnected) return;
+    mo.disconnect();
+    const o = ov._opener;
+    if (o && o !== document.body && o.isConnected && o.focus) o.focus({ preventScroll: true });
+  });
+  mo.observe(document.body, { childList: true });
+}
+
 /* ---------- トースト通知 ----------
    PWAには再読み込みボタンが無いため、更新はこのトーストから手動で行う */
 function showToast({ icon, title, body, actionLabel, onAction, key }) {
@@ -371,11 +423,11 @@ function showToast({ icon, title, body, actionLabel, onAction, key }) {
   const t = document.createElement("div");
   t.className = "toast";
   if (key) t.dataset.key = key;
-  t.innerHTML = `<span class="ms ticon">${icon || "info"}</span>
+  t.innerHTML = `<span class="ms ticon" aria-hidden="true">${icon || "info"}</span>
     <div class="ttxt"><b>${title}</b>${body ? `<small>${body}</small>` : ""}</div>
     <div class="tact">
       ${actionLabel ? `<button class="btn primary sm tgo">${actionLabel}</button>` : ""}
-      <button class="tclose" aria-label="閉じる"><span class="ms">close</span></button>
+      <button class="tclose" aria-label="閉じる"><span class="ms" aria-hidden="true">close</span></button>
     </div>`;
   box.appendChild(t);
   requestAnimationFrame(() => t.classList.add("show"));
@@ -520,7 +572,7 @@ function renderResumeBar() {
   $("resumeGo").onclick = async () => {
     const btn = $("resumeGo");
     btn.disabled = true;
-    btn.innerHTML = `<span class="ms spin">progress_activity</span> 読み込み中…`;
+    btn.innerHTML = `<span class="ms spin" aria-hidden="true">progress_activity</span> 読み込み中…`;
     try { await ensureDetail(s); } catch (e) {
       btn.disabled = false; btn.innerHTML = `再開する ${ic("play_arrow")}`;
       alert("記事の読み込みに失敗しました。通信環境をご確認ください。");
@@ -736,6 +788,7 @@ function openCalendar(counts, onPick, note) {
     </div>`;
     ov.onclick = e => { if (e.target === ov) close(); };
     ov.querySelector(".calx").onclick = close;
+    dialogA11y(ov);   // 月を移るたびに中身を描き直すので、そのたびに呼ぶ（2回目以降はラベルの更新だけ）
     ov.querySelectorAll(".calnav").forEach(b => {
       b.onclick = () => {
         const nd = new Date(Y, M - 1 + (+b.dataset.nav), 1);
@@ -899,7 +952,7 @@ function showCalendar() {
       const s = sessions[+b.dataset.i];
       const orig = b.innerHTML;
       b.disabled = true;
-      b.innerHTML = `<span class="ms spin">progress_activity</span> 読み込み中…`;
+      b.innerHTML = `<span class="ms spin" aria-hidden="true">progress_activity</span> 読み込み中…`;
       try { await ensureDetail(s); }
       catch (e) { b.disabled = false; b.innerHTML = orig; alert("記事の読み込みに失敗しました。通信環境をご確認ください。"); return; }
       b.disabled = false;
@@ -925,6 +978,7 @@ function openCategoryModal() {
     </div>
   </div>`;
   document.body.appendChild(ov);
+  dialogA11y(ov);
   const close = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) close(); };
   ov.querySelector(".calx").onclick = close;
@@ -944,7 +998,7 @@ function renderToolbar() {
   tb.innerHTML = `
     <div class="searchrow">
       <label class="searchbox">
-        <span class="ms">search</span>
+        <span class="ms" aria-hidden="true">search</span>
         <input type="search" id="kw" placeholder="見出し・銘柄名などで検索" value="${keyword.replace(/"/g, "&quot;")}">
       </label>
       <div class="filtrow">
@@ -1016,7 +1070,7 @@ function renderList() {
   // 件数表示と無限スクロールの番人
   const foot = $("listFoot");
   if (view.length > slice.length) {
-    foot.innerHTML = `<div class="sentinel" id="sentinel"><span class="ms spin">progress_activity</span> 読み込み中…</div>`;
+    foot.innerHTML = `<div class="sentinel" id="sentinel"><span class="ms spin" aria-hidden="true">progress_activity</span> 読み込み中…</div>`;
     observeSentinel();
   } else {
     foot.innerHTML = view.length
@@ -1029,7 +1083,7 @@ function renderList() {
 let loadingMore = false;
 function skeletonCardHTML() {
   return `
-    <span class="ms spin sksp">progress_activity</span>
+    <span class="ms spin sksp" aria-hidden="true">progress_activity</span>
     <div class="badges"><span class="skl" style="width:86px;height:18px;"></span><span class="skl" style="width:72px;height:18px;"></span><span class="skl" style="width:58px;height:18px;"></span></div>
     <div class="skl" style="height:16px;margin:6px 0 7px;"></div>
     <div class="skl" style="height:16px;width:68%;margin-bottom:13px;"></div>
@@ -1082,7 +1136,7 @@ function renderHome(keepScroll) {
     // 記事データの取得中はボタンにスピナーを表示
     const orig = b.innerHTML;
     b.disabled = true;
-    b.innerHTML = `<span class="ms spin">progress_activity</span> 読み込み中…`;
+    b.innerHTML = `<span class="ms spin" aria-hidden="true">progress_activity</span> 読み込み中…`;
     try {
       await ensureDetail(s);
     } catch (e) {
@@ -1356,6 +1410,7 @@ function openStepModal(step) {
     <p class="modalnote">6ステップ（本質→一次影響→逆側→二次影響→逆シナリオ→検証）で、ニュースから波及を辿る型を身につけます。</p>
   </div>`;
   document.body.appendChild(ov);
+  dialogA11y(ov);
   const close = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) close(); };
   ov.querySelector(".calx").onclick = close;
@@ -1715,7 +1770,7 @@ function showStats() {
     const streak = calcStreak(rs);
     const rank = calcTitle(rs);
     h += `<div class="titlecard">
-      <span class="ms fill" style="font-size:30px;">workspace_premium</span>
+      <span class="ms fill" style="font-size:30px;" aria-hidden="true">workspace_premium</span>
       <div><b>${rank.title}</b>
       <small>通算正解 ${rank.totalCorrect} 問${rank.next ? `｜あと ${rank.next.need} 問で ${rank.next.name} に昇進` : "｜最高位です"}</small></div>
     </div>`;
@@ -1845,7 +1900,7 @@ async function loadCallStats(force) {
   const btn = $("csBtn");
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = `<span class="ms spin">progress_activity</span> 集計中…`;
+    btn.innerHTML = `<span class="ms spin" aria-hidden="true">progress_activity</span> 集計中…`;
   }
   $("csNote").textContent = "集計中…（全ニュースの株価を取得しています）";
   $("csBody").innerHTML = csSkeletonHTML();
@@ -2098,7 +2153,7 @@ function renderCSView() {
       ${dateChipHTML(r.date)}
       <span class="hname"><span class="hnmrow"><span class="hnm">${r.name}</span>${tickerBadgeHTML(r.ticker, r.name)}</span><small class="hnews">${r.news}</small></span>
       <span class="hwin">${r.market || ""}・${r.win}</span>
-      <span class="hscore"><span class="${relCls}">${r.dir}コール 市場相対 ${s}${r.rel}%</span> ${judgeBadge(r.rel, r.dir)} <span class="ms csarrow">${isOpen ? "expand_less" : "expand_more"}</span></span></div>`;
+      <span class="hscore"><span class="${relCls}">${r.dir}コール 市場相対 ${s}${r.rel}%</span> ${judgeBadge(r.rel, r.dir)} <span class="ms csarrow" aria-hidden="true">${isOpen ? "expand_less" : "expand_more"}</span></span></div>`;
     if (isOpen) h += csDetailHTML(r);
   });
   h += `</div>`;
@@ -2222,8 +2277,8 @@ function showNotes() {
           <div class="badges"><span class="ast" style="margin:0;">${w.st}</span></div>
           <p class="cnote chl">${w.headline}</p></div></div>
         <div class="aq qlabel">${w.q}</div>
-        <div class="aopt ng"><span class="mk"><span class="ms">close</span></span><span>${w.chosen}</span><span class="abadge ng">あなた</span></div>
-        <div class="aopt ok"><span class="mk"><span class="ms">check</span></span><span>${w.corr}</span><span class="abadge">正解</span></div>
+        <div class="aopt ng"><span class="mk"><span class="ms" aria-hidden="true">close</span></span><span>${w.chosen}</span><span class="abadge ng">あなた</span></div>
+        <div class="aopt ok"><span class="mk"><span class="ms" aria-hidden="true">check</span></span><span>${w.corr}</span><span class="abadge">正解</span></div>
         <div class="areason"><b>解説</b>${subMarks(w.reason)}</div>
         ${hasSession ? `<div class="row" style="margin-top:10px;"><button class="btn ghost sm" data-retry="${w.id}">${ic("rocket_launch")} このニュースを解き直す</button></div>` : ""}
       </div>`;
@@ -2238,7 +2293,7 @@ function showNotes() {
       if (!s) return;
       const orig = b.innerHTML;
       b.disabled = true;
-      b.innerHTML = `<span class="ms spin">progress_activity</span> 読み込み中…`;
+      b.innerHTML = `<span class="ms spin" aria-hidden="true">progress_activity</span> 読み込み中…`;
       try { await ensureDetail(s); } catch (e) { b.disabled = false; b.innerHTML = orig; return; }
       b.disabled = false;
       b.innerHTML = orig;

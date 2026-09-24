@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- 存在しないURLで GitHub Pages が返すページ（HTTPステータスは 404 のまま）。
+     どの階層のURLでも同じ中身が返るので、アセットはすべてルートからの絶対パスで書く。
+     アクセス解析は行わない（wb-consent.js も GTM も読み込まない）。 -->
+<title>ページが見つかりません｜連想ゲーム</title>
+<meta name="robots" content="noindex">
+<meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/fonts/local.css">
+<link rel="stylesheet" href="/style.css?v=465a5322">
+<meta name="theme-color" content="#fdece5">
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48 64x64 128x128">
+<link rel="apple-touch-icon" href="/images/icon-180.png">
+<script>
+/* 末尾スラッシュ違いの救済: /privacy/ で来た人を /privacy へ送る（GitHub Pages ではサーバー側の
+   リダイレクトを設定できないため）。ステータスは 404 のままなので、検索エンジンは /privacy/ を
+   別URLとして扱わない。 */
+if (/^\/privacy\/?(index\.html)?$/.test(location.pathname) && location.pathname !== "/privacy") {
+  location.replace("/privacy" + location.search + location.hash);
+}
+</script>
+<script>
+/* ちらつき防止: トップと同じく、描画前にテーマと文字サイズを確定させる。
+   ※このブロックにアセット名を書かないこと（build_static.py の stamp_assets() の検査対象） */
+(function(){try{
+  var t=localStorage.getItem("rensou_theme");
+  var d=t?t==="dark":(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.setAttribute("data-theme",d?"dark":"light");
+  document.documentElement.setAttribute("data-fs",localStorage.getItem("rensou_fontsize")||"s");
+  var m=document.querySelector('meta[name="theme-color"]');
+  if(m)m.setAttribute("content",d?"#0d121d":"#fdece5");
+}catch(e){}})();
+</script>
+<style>
+/* このページ専用。共通クラスには手を入れない */
+.nf{text-align:center;margin:0 auto 36px;max-width:520px;}
+.nf h1{font-size:calc(20px * var(--fs));margin:8px 0 10px;color:var(--ink);}
+.nf p{color:var(--ink-2);font-size:calc(13px * var(--fs));line-height:1.9;margin:0 0 22px;}
+.nf .btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;}
+.nf .btn .ms{vertical-align:0;}
+.nf .sub{display:block;margin-top:18px;font-size:calc(12px * var(--fs));color:var(--ink-2);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="deco" aria-hidden="true"></div>
+  <header class="hd">
+    <a href="/" aria-label="連想ゲームのトップへ"><img class="logo" src="/images/logo.svg" alt="連想ゲーム" width="987" height="278"></a>
+  </header>
+  <main class="nf">
+    <h1>ページが見つかりません</h1>
+    <p>お探しのページは移動したか、削除された可能性があります。<br>ニュースの一覧はトップページからご覧いただけます。</p>
+    <a class="btn primary" href="/"><span class="ms" aria-hidden="true">home</span>連想ゲームのトップへ</a>
+    <a class="sub" href="/privacy">プライバシーポリシー</a>
+  </main>
+  <footer>
+    <p class="disc">これは思考訓練であり、投資助言ではありません。</p>
+    <p class="copy">&copy;<a class="cplink" href="https://wonder-bros.com" target="_blank" rel="noopener noreferrer">WONDER BROTHERS INC.</a></p>
+  </footer>
+</div>
+</body>
+</html>

@@ -37,9 +37,10 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<!-- アイコン（Material Symbols Rounded）は自己ホストのみ。使っているアイコンだけに絞ったサブセット（npm run font で作り直す） -->
 <link rel="stylesheet" href="fonts/local.css">
-<link rel="stylesheet" href="style.css?v=40b921c0">
+<link rel="stylesheet" href="style.css?v=465a5322">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#fdece5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -216,7 +217,7 @@ dataLayer.push({
 <div class="wrap">
 
   <div class="pp-nav">
-    <a class="backlink" href="./"><span class="ms">arrow_back</span>連想ゲームへ戻る</a>
+    <a class="backlink" href="./"><span class="ms" aria-hidden="true">arrow_back</span>連想ゲームへ戻る</a>
   </div>
 
   <main class="pp">
@@ -232,17 +233,17 @@ dataLayer.push({
 
     <div class="pp-map" role="list">
       <div role="listitem">
-        <span class="ms">smartphone</span>
+        <span class="ms" aria-hidden="true">smartphone</span>
         <b>あなたの端末の中</b>
         <p>プレイ記録・選んだ回答・間違いノート・設定は、お使いのブラウザ内に保存されます。</p>
       </div>
       <div role="listitem">
-        <span class="ms">domain</span>
+        <span class="ms" aria-hidden="true">domain</span>
         <b>運営者（WONDER BROTHERS）</b>
         <p>プレイ内容を受け取るサーバーはありません。利用状況は、Google アナリティクスの集計で把握しています。</p>
       </div>
       <div role="listitem">
-        <span class="ms">public</span>
+        <span class="ms" aria-hidden="true">public</span>
         <b>外部のサービス</b>
         <p>アクセス解析（Google・許可した場合のみ）、フォント配信（Google）、ページ配信（GitHub）との間で通信が発生します。</p>
       </div>
@@ -312,7 +313,7 @@ dataLayer.push({
       <p>
         このほか、オフラインでも起動できるように、本サービスのページやニュースのデータの写しをブラウザのキャッシュ（Service Worker のキャッシュ）に保存します。これは本サービスが公開しているファイルのコピーで、あなたに関する情報は含みません。
       </p>
-      <p class="note"><span class="ms">info</span>本サービス自身は sessionStorage・IndexedDB を使っていません。Cookie は、アクセス解析を許可したかどうかの記録にだけ使います。アクセス解析を許可した場合は、Google アナリティクスも Cookie を利用します（<a href="#cookie">6</a>）。</p>
+      <p class="note"><span class="ms" aria-hidden="true">info</span>本サービス自身は sessionStorage・IndexedDB を使っていません。Cookie は、アクセス解析を許可したかどうかの記録にだけ使います。アクセス解析を許可した場合は、Google アナリティクスも Cookie を利用します（<a href="#cookie">6</a>）。</p>
 
       <h3>保存期間</h3>
       <p>
@@ -361,7 +362,7 @@ dataLayer.push({
       <p>
         <strong>現在、本サービスでは Google アナリティクスを広告配信やリマーケティングの目的では利用していません。</strong>Google の同意モードで広告用の保存・利用を常に「拒否」に設定しており、広告のためのタグも設置していません。
       </p>
-      <p class="note"><span class="ms">info</span><a href="https://support.google.com/analytics/answer/2763052?hl=ja" target="_blank" rel="noopener noreferrer">Google の説明<span class="ms">open_in_new</span></a>によれば、Google アナリティクス 4 は IPアドレスを記録・保存しません（おおよその地域の推定には使われます）。</p>
+      <p class="note"><span class="ms" aria-hidden="true">info</span><a href="https://support.google.com/analytics/answer/2763052?hl=ja" target="_blank" rel="noopener noreferrer">Google の説明<span class="ms" aria-hidden="true">open_in_new</span></a>によれば、Google アナリティクス 4 は IPアドレスを記録・保存しません（おおよその地域の推定には使われます）。</p>
 
       <h3>記録している操作</h3>
       <p>
@@ -390,19 +391,19 @@ dataLayer.push({
           </tbody>
         </table>
       </div>
-      <p class="note"><span class="ms">info</span>プレイやニュースに関する操作には、どのニュースでの操作かを示す情報（ニュースのID・見出し・日付・カテゴリ）と、復習モードかどうかもあわせて送ります。</p>
-      <p class="note"><span class="ms">info</span>検索機能を利用した際は、検索の実行、入力文字数、検索結果件数など、入力内容そのものを含まない利用状況を Google アナリティクスへ送信する場合があります。検索欄に入力された文字列そのものは送信しません。</p>
+      <p class="note"><span class="ms" aria-hidden="true">info</span>プレイやニュースに関する操作には、どのニュースでの操作かを示す情報（ニュースのID・見出し・日付・カテゴリ）と、復習モードかどうかもあわせて送ります。</p>
+      <p class="note"><span class="ms" aria-hidden="true">info</span>検索機能を利用した際は、検索の実行、入力文字数、検索結果件数など、入力内容そのものを含まない利用状況を Google アナリティクスへ送信する場合があります。検索欄に入力された文字列そのものは送信しません。</p>
 
       <h3>送信を止めたいとき</h3>
       <p>
         右上の設定（歯車）にある「Cookie設定」から、いつでもアクセス解析を拒否に変えられます（許可に戻すこともできます）。拒否に変えると、その時点で送信を止め、Google アナリティクスが保存した Cookie も削除します。
       </p>
-      <p><button type="button" class="btn ghost pp-cookie" data-wb-consent-open><span class="ms">cookie</span>Cookie設定を開く</button></p>
+      <p><button type="button" class="btn ghost pp-cookie" data-wb-consent-open><span class="ms" aria-hidden="true">cookie</span>Cookie設定を開く</button></p>
       <p>
-        このほか、Google が提供する<a href="https://tools.google.com/dlpage/gaoptout?hl=ja" target="_blank" rel="noopener noreferrer">Google アナリティクス オプトアウト アドオン<span class="ms">open_in_new</span></a>を使うか、ブラウザで Cookie を無効にすることで、送信を止められます。止めても、本サービスはこれまでどおり遊べます。
+        このほか、Google が提供する<a href="https://tools.google.com/dlpage/gaoptout?hl=ja" target="_blank" rel="noopener noreferrer">Google アナリティクス オプトアウト アドオン<span class="ms" aria-hidden="true">open_in_new</span></a>を使うか、ブラウザで Cookie を無効にすることで、送信を止められます。止めても、本サービスはこれまでどおり遊べます。
       </p>
       <p>
-        Google による情報の取り扱いについては、<a href="https://policies.google.com/technologies/partner-sites?hl=ja" target="_blank" rel="noopener noreferrer">Google のサービスを使用するサイトやアプリから収集した情報の Google による使用<span class="ms">open_in_new</span></a>と<a href="https://policies.google.com/privacy?hl=ja" target="_blank" rel="noopener noreferrer">Google プライバシーポリシー<span class="ms">open_in_new</span></a>をご覧ください。
+        Google による情報の取り扱いについては、<a href="https://policies.google.com/technologies/partner-sites?hl=ja" target="_blank" rel="noopener noreferrer">Google のサービスを使用するサイトやアプリから収集した情報の Google による使用<span class="ms" aria-hidden="true">open_in_new</span></a>と<a href="https://policies.google.com/privacy?hl=ja" target="_blank" rel="noopener noreferrer">Google プライバシーポリシー<span class="ms" aria-hidden="true">open_in_new</span></a>をご覧ください。
       </p>
     </section>
 
@@ -421,29 +422,29 @@ dataLayer.push({
           </tr></thead>
           <tbody>
             <tr><th scope="row">選んだ回答</th>
-              <td><span class="yes local"><span class="ms">check_circle</span>保存</span></td>
-              <td><span class="no"><span class="ms">remove</span>送信しない</span></td>
-              <td><span class="no"><span class="ms">remove</span>送信しない</span></td></tr>
+              <td><span class="yes local"><span class="ms" aria-hidden="true">check_circle</span>保存</span></td>
+              <td><span class="no"><span class="ms" aria-hidden="true">remove</span>送信しない</span></td>
+              <td><span class="no"><span class="ms" aria-hidden="true">remove</span>送信しない</span></td></tr>
             <tr><th scope="row">回答履歴</th>
-              <td><span class="yes local"><span class="ms">check_circle</span>保存</span></td>
-              <td><span class="no"><span class="ms">remove</span>送信しない</span></td>
-              <td><span class="no"><span class="ms">remove</span>送信しない</span></td></tr>
+              <td><span class="yes local"><span class="ms" aria-hidden="true">check_circle</span>保存</span></td>
+              <td><span class="no"><span class="ms" aria-hidden="true">remove</span>送信しない</span></td>
+              <td><span class="no"><span class="ms" aria-hidden="true">remove</span>送信しない</span></td></tr>
             <tr><th scope="row">正解・不正解</th>
-              <td><span class="yes local"><span class="ms">check_circle</span>保存</span></td>
-              <td><span class="no"><span class="ms">remove</span>送信しない</span></td>
-              <td><span class="yes ga"><span class="ms">send</span>送信する</span><small>1問ごと</small></td></tr>
+              <td><span class="yes local"><span class="ms" aria-hidden="true">check_circle</span>保存</span></td>
+              <td><span class="no"><span class="ms" aria-hidden="true">remove</span>送信しない</span></td>
+              <td><span class="yes ga"><span class="ms" aria-hidden="true">send</span>送信する</span><small>1問ごと</small></td></tr>
             <tr><th scope="row">スコア</th>
-              <td><span class="yes local"><span class="ms">check_circle</span>保存</span></td>
-              <td><span class="no"><span class="ms">remove</span>送信しない</span></td>
-              <td><span class="yes ga"><span class="ms">send</span>送信する</span><small>1プレイごと</small></td></tr>
+              <td><span class="yes local"><span class="ms" aria-hidden="true">check_circle</span>保存</span></td>
+              <td><span class="no"><span class="ms" aria-hidden="true">remove</span>送信しない</span></td>
+              <td><span class="yes ga"><span class="ms" aria-hidden="true">send</span>送信する</span><small>1プレイごと</small></td></tr>
             <tr><th scope="row">プレイ結果の累計<small>成績表・称号・連続日数</small></th>
-              <td><span class="yes local"><span class="ms">check_circle</span>保存</span></td>
-              <td><span class="no"><span class="ms">remove</span>送信しない</span></td>
-              <td><span class="no"><span class="ms">remove</span>送信しない</span></td></tr>
+              <td><span class="yes local"><span class="ms" aria-hidden="true">check_circle</span>保存</span></td>
+              <td><span class="no"><span class="ms" aria-hidden="true">remove</span>送信しない</span></td>
+              <td><span class="no"><span class="ms" aria-hidden="true">remove</span>送信しない</span></td></tr>
             <tr><th scope="row">間違いノート</th>
-              <td><span class="yes local"><span class="ms">check_circle</span>保存</span></td>
-              <td><span class="no"><span class="ms">remove</span>送信しない</span></td>
-              <td><span class="no"><span class="ms">remove</span>送信しない</span></td></tr>
+              <td><span class="yes local"><span class="ms" aria-hidden="true">check_circle</span>保存</span></td>
+              <td><span class="no"><span class="ms" aria-hidden="true">remove</span>送信しない</span></td>
+              <td><span class="no"><span class="ms" aria-hidden="true">remove</span>送信しない</span></td></tr>
           </tbody>
         </table>
       </div>
@@ -527,12 +528,12 @@ dataLayer.push({
         <dt>所在地</dt>
         <dd>〒150-0043 東京都渋谷区道玄坂1-10-8 渋谷道玄坂東急ビル2F-C</dd>
         <dt>お問い合わせ</dt>
-        <dd><a href="https://wonder-bros.com/contact/" target="_blank" rel="noopener noreferrer">WONDER BROTHERS 公式サイトのお問い合わせフォーム<span class="ms">open_in_new</span></a></dd>
+        <dd><a href="https://wonder-bros.com/contact/" target="_blank" rel="noopener noreferrer">WONDER BROTHERS 公式サイトのお問い合わせフォーム<span class="ms" aria-hidden="true">open_in_new</span></a></dd>
       </dl>
     </section>
 
     <div class="pp-back">
-      <a class="btn primary" href="./"><span class="ms">arrow_back</span>連想ゲームへ戻る</a>
+      <a class="btn primary" href="./"><span class="ms" aria-hidden="true">arrow_back</span>連想ゲームへ戻る</a>
     </div>
   </main>
 

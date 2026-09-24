@@ -1018,6 +1018,15 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
 :root[data-theme="dark"] .gnav-item:hover{background:rgba(255,255,255,.07);}
 :root[data-theme="dark"] .gnav-item.active{background:rgba(255,255,255,.12);}
 
+/* モーダルのパネル自体に置く最初のフォーカス（dialogA11y）。枠は出さない。
+   Tab で中のボタンへ移れば、各ボタンのフォーカス表示が出る */
+.calbox:focus{outline:none;}
+
+/* 読み込み中（一覧・プレイ画面・読み込み失敗のどれもまだ出ていない間）はフッターを出さない。
+   ヘッダーの直下に出たフッターが、一覧の表示と同時に下へ押し出されて
+   レイアウトシフト（CLS 約0.1）になっていたため。出すのは一覧などと同時 */
+.wrap:has(> #loader.hidden):has(> #home.hidden):has(> #stage.hidden) > footer{visibility:hidden;}
+
 /* ===== Cookie 同意バナー／Cookie設定（wb-consent.js・3サイト共通） =====
    仕組みと文言は共通。ここでは見た目のトークンだけをこのアプリに合わせる。
    色は意味変数を使うので、ダークモードでもそのまま切り替わる。

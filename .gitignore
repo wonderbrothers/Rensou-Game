@@ -4,8 +4,9 @@ __pycache__/
 .cache_prices.json
 .DS_Store
 node_modules/
-fonts/material-symbols-rounded.woff2
 
 # 非公開（作問ガイド等）
 CONTENT_GUIDE.md
 *.private.md
+
+# fonts/ は公開する（アイコンは自己ホストの Material Symbols サブセット。約120KB）

@@ -37,9 +37,10 @@
 <meta name="twitter:image" content="https://rensougame.wonder-bros.com/ogimage.png?v=7610ebee">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<!-- アイコン（Material Symbols Rounded）は自己ホストのみ。使っているアイコンだけに絞ったサブセット（npm run font で作り直す） -->
 <link rel="stylesheet" href="fonts/local.css">
-<link rel="stylesheet" href="style.css?v=40b921c0">
+<link rel="stylesheet" href="style.css?v=465a5322">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#fdece5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -62,23 +63,23 @@
 }catch(e){}})();
 </script>
 
+<!-- 構造化データ。トップの WebSite は Google 検索の「サイト名」の手がかりになる。
+     WebApplication は使わない（Google はアプリのリッチリザルトに評価・レビューを必須にしており、
+     無いと Rich Results Test でエラーになるため） -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "WebApplication",
+  "@type": "WebSite",
   "name": "連想ゲーム",
   "alternateName": ["THE ASSOCIATION GAME", "RENSOU GAME"],
   "url": "https://rensougame.wonder-bros.com/",
   "description": "最新の経済ニュースから市場への波及を6ステップで読み解く連想力トレーニングゲーム。本質→一次影響→相対優位→二次影響→逆シナリオ→検証ポイントの型を、クイズ形式で楽しく身につける。",
-  "applicationCategory": "EducationalApplication",
-  "operatingSystem": "Web",
   "inLanguage": "ja",
-  "isAccessibleForFree": true,
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
   "publisher": {
     "@type": "Organization",
-    "name": "WONDER BROTHERS INC.",
-    "url": "https://wonder-bros.com"
+    "name": "株式会社ワンダーブラザース",
+    "alternateName": "WONDER BROTHERS INC.",
+    "url": "https://wonder-bros.com/"
   }
 }
 </script>
@@ -91,29 +92,29 @@
   <div class="deco" aria-hidden="true"></div>
 
   <div class="navrow">
-  <button class="backlink hidden" id="backBtn" type="button"><span class="ms">arrow_back</span>戻る</button>
+  <button class="backlink hidden" id="backBtn" type="button"><span class="ms" aria-hidden="true">arrow_back</span>戻る</button>
   <nav class="gnav" aria-label="グローバルメニュー">
-    <button class="gnav-item" data-nav="home" id="homeBtn"><span class="ms">home</span><span class="gt">HOME</span><span class="gts">HOME</span></button>
-    <button class="gnav-item" data-nav="patterns" id="patternsBtn"><span class="ms">menu_book</span><span class="gt">パターン図鑑</span><span class="gts">パターン</span></button>
-    <button class="gnav-item" data-nav="stats" id="statsBtn"><span class="ms">leaderboard</span><span class="gt">成績表</span><span class="gts">成績表</span></button>
-    <button class="gnav-item" data-nav="notes" id="notesBtn"><span class="ms">edit_note</span><span class="gt">間違いノート</span><span class="gts">ノート</span></button>
-    <button class="gnav-item" data-nav="calendar" id="calNavBtn"><span class="ms">calendar_month</span><span class="gt">カレンダー</span><span class="gts">カレンダー</span></button>
+    <button class="gnav-item" data-nav="home" id="homeBtn"><span class="ms" aria-hidden="true">home</span><span class="gt">HOME</span><span class="gts">HOME</span></button>
+    <button class="gnav-item" data-nav="patterns" id="patternsBtn"><span class="ms" aria-hidden="true">menu_book</span><span class="gt">パターン図鑑</span><span class="gts">パターン</span></button>
+    <button class="gnav-item" data-nav="stats" id="statsBtn"><span class="ms" aria-hidden="true">leaderboard</span><span class="gt">成績表</span><span class="gts">成績表</span></button>
+    <button class="gnav-item" data-nav="notes" id="notesBtn"><span class="ms" aria-hidden="true">edit_note</span><span class="gt">間違いノート</span><span class="gts">ノート</span></button>
+    <button class="gnav-item" data-nav="calendar" id="calNavBtn"><span class="ms" aria-hidden="true">calendar_month</span><span class="gt">カレンダー</span><span class="gts">カレンダー</span></button>
   </nav>
-  <button class="gear" id="gearBtn" aria-label="設定"><span class="ms">settings</span></button>
+  <button class="gear" id="gearBtn" aria-label="設定"><span class="ms" aria-hidden="true">settings</span></button>
   </div>
 
   <header class="hd">
     <h1><img class="logo" id="homeLink" src="images/logo.svg" alt="連想ゲーム" title="トップへ戻る"></h1>
     <p class="tag">ニュースから描く、経済のつながり地図。</p>
     <div class="row" style="justify-content:center;margin-bottom:6px;">
-      <button class="chip tgl" id="guideBtn"><span class="ms">videogame_asset</span> 遊び方を見る</button>
+      <button class="chip tgl" id="guideBtn"><span class="ms" aria-hidden="true">videogame_asset</span> 遊び方を見る</button>
     </div>
     <img class="hero" src="images/hero.webp" alt="連想ゲームのなかまたち" width="2066" height="507" decoding="async">
   </header>
 
   <div id="loader" class="loader hidden">
     <p>データを自動で読み込めませんでした。<span class="errnote"></span><br><b>data フォルダ内のJSONファイル</b>を選択してください（複数可・index.json は不要）。</p>
-    <label><span class="ms">folder_open</span> ファイルを選択<input type="file" id="filePick" accept=".json" multiple></label>
+    <label><span class="ms" aria-hidden="true">folder_open</span> ファイルを選択<input type="file" id="filePick" accept=".json" multiple></label>
   </div>
 
   <div id="home" class="hidden">
@@ -137,6 +138,6 @@
     <p class="copy">&copy;<a class="cplink" href="https://wonder-bros.com" target="_blank" rel="noopener noreferrer">WONDER BROTHERS INC.</a></p>
   </footer>
 </div>
-<script src="app.js?v=31bfe94b"></script>
+<script src="app.js?v=12fde0d6"></script>
 </body>
 </html>

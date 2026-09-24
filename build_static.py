@@ -312,11 +312,38 @@ def stamp_assets():
 
 # app.js / style.css を参照するHTML。ページを増やしたらここに足す
 # （キャッシュ用クエリの更新と、sw.js の版数計算の両方がこの一覧を見る）
-PAGES = ("index.html", "privacy.html")
+PAGES = ("index.html", "privacy.html", "404.html")
 
 # ?v= を付けるアセット（sw.js の版数計算もこの一覧を見る）。
 # wb-consent.js は Cookie 同意（3サイト共通）。正本は ../corporate-site/src/scripts/wb-consent.js
 ASSETS = ("app.js", "style.css", "wb-consent.js")
+
+
+def check_icons():
+    """使っているアイコンがサブセットフォントに入っているかを確かめる（開発リポジトリだけ）。
+
+    fonts/material-symbols-rounded.woff2 は、アプリで使っているアイコンだけに絞ったサブセット
+    （tools/subset_icons.py が作る）。新しいアイコンを app.js などで使い始めたのに作り直さないと、
+    そのアイコンだけ「home」のような英字で表示されてしまう。黙って公開しないよう、ここで止める。
+    tools/ の無い環境（公開リポジトリの GitHub Actions）では何もしない。
+    """
+    tools = os.path.join(BASE, "tools", "fonts")
+    used_p = os.path.join(tools, "icons.txt")
+    all_p = os.path.join(tools, "all-icon-names.txt")
+    if not (os.path.exists(used_p) and os.path.exists(all_p)):
+        return
+    used = set(open(used_p, encoding="utf-8").read().split())
+    names = set(open(all_p, encoding="utf-8").read().split())
+    toks = set()
+    for name in ("app.js", "index.html", "privacy.html", "404.html"):
+        p = os.path.join(BASE, name)
+        if os.path.exists(p):
+            toks.update(re.findall(r"[a-z][a-z0-9_]{1,40}", open(p, encoding="utf-8").read()))
+    missing = sorted((toks & names) - used)
+    if missing:
+        raise SystemExit(
+            "✗ アイコンフォントに入っていないアイコンがあります: " + ", ".join(missing) +
+            "\n  npm run font を実行して、サブセットを作り直してください。")
 
 
 def sync_consent():
@@ -351,7 +378,7 @@ def _stamp_page(page):
             continue
         h = hashlib.md5(open(path, "rb").read()).hexdigest()[:8]
         html = re.sub(
-            rf'((?:src|href)=")({re.escape(asset)})(?:\?v=[^"\n]*)?(")',
+            rf'((?:src|href)="/?)({re.escape(asset)})(?:\?v=[^"\n]*)?(")',   # 404.html は "/style.css" のような絶対パス
             rf'\1\2?v={h}\3',
             html,
         )
@@ -506,6 +533,7 @@ def main():
     write_sitemap(sessions)
     stamp_version()
     sync_consent()
+    check_icons()
     stamp_assets()
     stamp_sw()   # ← app.js/style.css のハッシュ更新後に実行する
 
