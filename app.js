@@ -16,7 +16,7 @@ const TRACK_KEYS = [
   "article_id", "article_date", "article_title", "category",
   "entry", "review_mode", "step_no", "step_name", "question_index",
   "is_correct", "score", "total", "score_rate", "duration_sec",
-  "calls_count", "source_name", "link_url", "search_term",
+  "calls_count", "source_name", "link_url", "query_length", "results_count",
   "filter_type", "filter_value", "item_count",
   "setting_name", "setting_value", "error_message"
 ];
@@ -941,11 +941,13 @@ function renderToolbar() {
   const kwInput = $("kw");
   kwInput.oninput = () => {
     keyword = kwInput.value; shown = PAGE; renderList();
-    // 1文字ごとに送らず、入力が止まってから1回だけ送る
+    // 1文字ごとに送らず、入力が止まってから1回だけ送る。
+    // 検索欄は自由入力のため、入力した文字列そのもの（ハッシュ・部分文字列も含む）は
+    // dataLayer にも積まない。送るのは文字数と該当件数だけ（入力内容を復元できない値）
     clearTimeout(kwTimer);
     kwTimer = setTimeout(() => {
-      const t = keyword.trim();
-      if (t.length >= 2) track("search", { search_term: t, item_count: filteredSessions().length });
+      const len = keyword.trim().length;
+      if (len >= 2) track("search", { query_length: len, results_count: filteredSessions().length });
     }, 900);
   };
   $("unplayed").onclick = () => {
