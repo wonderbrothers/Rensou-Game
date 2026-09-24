@@ -1188,7 +1188,7 @@ function showGuide() {
       <p class="gtxt"><b>成績表</b>でカテゴリ別・ステップ別の正答率が見えるので、自分の弱点が分かります。
       間違えた問題は<b>間違いノート</b>に自動で貯まり、まとめて解き直せます。
       学んだ「型」は<b>パターン図鑑</b>に蓄積され、次のニュースを読むときの引き出しになります。</p>
-      <p class="cnote">${ic("lock")} 成績はこの端末のブラウザ内にのみ保存されます（サーバー送信なし）。</p>
+      <p class="cnote">${ic("lock")} 成績はこの端末のブラウザ内にのみ保存されます（サーバー送信なし）。保存される情報とアクセス解析については<a class="pplink" href="privacy">プライバシーポリシー</a>をご覧ください。</p>
     </div>
 
     <div class="row" style="justify-content:center;margin-top:6px;">
