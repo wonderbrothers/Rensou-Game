@@ -211,6 +211,10 @@ def write_sitemap(sessions):
         f'    <lastmod>{lastmod}</lastmod>\n'
         '    <changefreq>daily</changefreq>\n'
         '  </url>\n'
+        '  <url>\n'
+        '    <loc>https://rensougame.wonder-bros.com/privacy</loc>\n'
+        '    <changefreq>monthly</changefreq>\n'
+        '  </url>\n'
         '</urlset>\n'
     )
     with open(os.path.join(BASE, "sitemap.xml"), "w", encoding="utf-8") as fp:
@@ -274,7 +278,7 @@ def stamp_sw():
     if not os.path.exists(sw):
         return
     h = hashlib.md5()
-    for name in ("index.html", "app.js", "style.css"):
+    for name in (*PAGES, "app.js", "style.css"):
         p = os.path.join(BASE, name)
         if os.path.exists(p):
             h.update(open(p, "rb").read())
@@ -302,7 +306,17 @@ def stamp_assets():
     スクリプトを破壊した（テーマと文字サイズの先行適用が効かなくなっていた）。
     属性値の中に閉じ込め、引用符も改行も越えられないようにして再発を防ぐ。
     """
-    index = os.path.join(BASE, "index.html")
+    for page in PAGES:
+        _stamp_page(page)
+
+
+# app.js / style.css を参照するHTML。ページを増やしたらここに足す
+# （キャッシュ用クエリの更新と、sw.js の版数計算の両方がこの一覧を見る）
+PAGES = ("index.html", "privacy.html")
+
+
+def _stamp_page(page):
+    index = os.path.join(BASE, page)
     if not os.path.exists(index):
         return
     html = open(index, encoding="utf-8").read()
@@ -323,14 +337,14 @@ def stamp_assets():
     stray = re.search(r'(?<!["/])\b(?:app\.js|style\.css)\?v=', html)
     if stray:
         raise SystemExit(
-            "✗ index.html: 属性の外に ?v= が付いています（置換の巻き込み）: "
+            f"✗ {page}: 属性の外に ?v= が付いています（置換の巻き込み）: "
             + html[max(0, stray.start() - 40):stray.end() + 20]
         )
 
     if html != before:
         with open(index, "w", encoding="utf-8") as fp:
             fp.write(html)
-        print("✓ index.html のキャッシュ用バージョンを更新")
+        print(f"✓ {page} のキャッシュ用バージョンを更新")
 
 
 WRITTEN = set()   # このビルドで書き出したパス（後始末で「消してよいもの」を決める）

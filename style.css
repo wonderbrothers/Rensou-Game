@@ -537,6 +537,9 @@ footer{margin-top:auto;padding-top:16px;font-size:calc(11.5px * var(--fs));color
   background:var(--ink-bg);color:var(--ink-tx);border-radius:18px;padding:13px 17px;font-size:calc(12.5px * var(--fs));line-height:1.7;
   box-shadow:0 12px 30px rgba(var(--sh),.35);}
 .notice b{color:var(--hl);}
+.notice .noticelink{color:var(--ink-tx);font-weight:700;margin-left:4px;white-space:nowrap;
+  text-decoration:underline;text-decoration-color:rgba(255,255,255,.5);text-underline-offset:3px;}
+.notice .noticelink:hover{text-decoration-color:currentColor;}
 .notice button{flex:none;background:var(--pri);color:var(--on-color);border:none;border-radius:999px;
   padding:8px 20px;font-size:calc(13px * var(--fs));font-weight:800;cursor:pointer;font-family:inherit;}
 .linkbtn{background:none;border:none;color:var(--pri-deep);text-decoration:underline;
@@ -894,6 +897,13 @@ div.skl{display:block;}
 .setrow.confirm .stx b{color:var(--neg-deep);}
 .setrow .crow{flex:none;display:flex;gap:8px;margin-left:auto;}
 .setrow.hidden{display:none;}
+/* 設定モーダル: プライバシーポリシーへのリンク行（.setrow を <a> で使う修飾クラス） */
+.setrow.setlink{text-decoration:none;color:inherit;transition:background .15s;}
+.setrow.setlink .chev{flex:none;font-size:calc(20px * var(--fs));color:var(--ink);vertical-align:0;
+  transition:transform .15s;}
+.setrow.setlink:hover{background:rgba(var(--pri-rgb),.08);}
+.setrow.setlink:hover .chev{transform:translateX(3px);}
+.setrow.setlink:focus-visible{outline:2px solid var(--pri);outline-offset:2px;}
 @media(max-width:420px){
   .setrow.confirm .crow{width:100%;justify-content:flex-end;}
 }

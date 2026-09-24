@@ -86,7 +86,7 @@ function trackView(kind, s) {
   track("vpv", Object.assign({
     view_name: kind,
     page_path: path,
-    page_title: (VIEW_TITLE[kind] || kind) + "｜RENSOU GAME"
+    page_title: (VIEW_TITLE[kind] || kind) + "｜連想ゲーム"
   }, withArticle ? articleParams(s) : {}));
 }
 
@@ -245,6 +245,11 @@ function openSettings() {
         <button class="btn sm danger solid" id="clrYes" type="button">削除する</button>
       </span>
     </div>
+    <a class="setrow setlink" href="privacy">
+      <span class="sic ms">shield_person</span>
+      <span class="stx"><b>プライバシーポリシー</b><small>保存される情報とアクセス解析について</small></span>
+      <span class="ms chev" aria-hidden="true">chevron_right</span>
+    </a>
     <p class="modalnote">設定はこの端末のブラウザに保存されます。切り替えていない間は、端末の外観設定（ライト／ダーク）に自動で追従します。</p>
   </div>`;
   document.body.appendChild(ov);
@@ -610,7 +615,7 @@ function showStorageNotice() {
   if (localStorage.getItem("rensou_notice_ok")) return;
   const bar = document.createElement("div");
   bar.className = "notice";
-  bar.innerHTML = `<span>${ic("lock")} 成績・間違いノートは<b>この端末のブラウザ内にのみ</b>保存されます。サーバーや外部への送信はありません。削除はいつでも右上の設定から。</span>
+  bar.innerHTML = `<span>${ic("lock")} 成績・間違いノートは<b>この端末のブラウザ内にのみ</b>保存され、サーバーには保存されません。削除はいつでも右上の設定から。<a class="noticelink" href="privacy">プライバシーポリシー</a></span>
     <button id="noticeOk">OK</button>`;
   document.body.appendChild(bar);
   document.body.classList.add("has-notice");   // トーストを重ならない位置へ逃がす

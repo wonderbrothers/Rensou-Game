@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
+<title>プライバシーポリシー｜連想ゲーム</title>
+<meta name="description" content="連想ゲームにおける利用情報、端末内保存、アクセス解析、外部送信等の取り扱いについて説明します。">
+<meta name="author" content="連想ゲーム">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://rensougame.wonder-bros.com/privacy">
+<meta name="application-name" content="連想ゲーム">
+
+<!-- OGP（トップの設定を踏襲。URL・タイトル・説明だけこのページ用） -->
+<meta property="og:url" content="https://rensougame.wonder-bros.com/privacy">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="連想ゲーム">
+<meta property="og:title" content="プライバシーポリシー｜連想ゲーム">
+<meta property="og:description" content="連想ゲームにおける利用情報、端末内保存、アクセス解析、外部送信等の取り扱いについて説明します。">
+<meta property="og:image" content="https://rensougame.wonder-bros.com/ogimage.png?v=7610ebee">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="連想ゲーム｜ニュース連想力トレーニングゲーム">
+<meta property="og:locale" content="ja_JP">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="プライバシーポリシー｜連想ゲーム">
+<meta name="twitter:description" content="連想ゲームにおける利用情報、端末内保存、アクセス解析、外部送信等の取り扱いについて説明します。">
+<meta name="twitter:image" content="https://rensougame.wonder-bros.com/ogimage.png?v=7610ebee">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts/local.css">
+<link rel="stylesheet" href="style.css?v=4bf49830">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#fdece5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="images/icon-180.png">
+<link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64 128x128">
+<link rel="icon" type="image/png" href="images/icon-192.png" sizes="192x192">
+<script>
+/* ちらつき防止: トップと同じく、描画前にテーマと文字サイズを確定させる。
+   ※このブロックにアセット名を書かないこと（build_static.py の stamp_assets() の検査対象） */
+(function(){try{
+  var t=localStorage.getItem("rensou_theme");
+  var d=t?t==="dark":(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.setAttribute("data-theme",d?"dark":"light");
+  document.documentElement.setAttribute("data-fs",localStorage.getItem("rensou_fontsize")||"s");
+  var m=document.querySelector('meta[name="theme-color"]');
+  if(m)m.setAttribute("content",d?"#0d121d":"#fdece5");
+}catch(e){}})();
+</script>
+
+<!-- Google Consent Mode v2 の初期値（トップの index.html と同じ値にそろえること） -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  ad_storage: 'denied',
+  ad_user_data: 'denied',
+  ad_personalization: 'denied',
+  analytics_storage: 'granted',
+  wait_for_update: 500
+});
+/* このページの閲覧を仮想ページビューとして送る（トップの trackView と同じ形） */
+dataLayer.push({
+  event: "vpv",
+  view_name: "privacy",
+  page_path: "/privacy",
+  page_title: "プライバシーポリシー｜連想ゲーム"
+});
+</script>
+
+<!-- Google Tag Manager（トップと同じコンテナ） -->
+<script>
+window.GTM_ID = "GTM-5LCBKQHC";
+(function(w,d,s,l,i){
+  if(!i||/^GTM-X+$/.test(i))return;
+  w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+  var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+  j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+  f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer',window.GTM_ID);
+</script>
+
+<style>
+/* ============================================
+   プライバシーポリシー（このページ専用）
+   共通の配色・ガラス面・フッター・戻るリンクは共通スタイルシートをそのまま使い、
+   ここでは .pp 配下の読み物レイアウトだけを足す（共有クラスには手を入れない）
+   ============================================ */
+/* 戻るボタンの位置を他画面にそろえる。他画面の .navrow はグローバルナビ（高さ61px・
+   文字サイズ設定で変わらない固定寸法）の高さになり、戻るボタンはその上下中央に置かれる */
+.pp-nav{position:relative;min-height:61px;margin:0 0 8px;}
+.pp-nav .backlink{text-decoration:none;}
+@media(max-width:640px){.pp-nav{min-height:36px;}}
+
+.pp{width:100%;max-width:780px;margin:0 auto 40px;color:var(--ink);}
+.pp-hd{text-align:center;margin:6px 0 30px;}
+.pp-logo{display:inline-block;width:min(180px,48vw);height:auto;margin:0 0 14px;}
+.pp-logo img{display:block;width:100%;height:auto;}
+:root[data-theme="dark"] .pp-logo img{content:url("images/logo-dark.svg");filter:brightness(.94) saturate(.95);}
+.pp h1{display:block;margin:0 0 8px;line-height:1.4;font-size:calc(26px * var(--fs));
+  font-weight:800;letter-spacing:.06em;}
+.pp-date{margin:0;font-size:calc(11.5px * var(--fs));color:var(--ink-3);letter-spacing:.04em;}
+
+.pp-lead{margin:0 0 26px;font-size:calc(14.5px * var(--fs));line-height:2;color:var(--ink);}
+
+/* ひと目でわかる3つの置き場所 */
+.pp-map{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 34px;}
+.pp-map>div{border-radius:20px;padding:16px 16px 14px;
+  background:var(--glass-2);border:1px solid var(--glass-line);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:0 10px 26px rgba(var(--sh),.08);}
+.pp-map .ms{font-size:calc(22px * var(--fs));color:var(--pri);vertical-align:0;}
+.pp-map b{display:block;margin:6px 0 4px;font-size:calc(13.5px * var(--fs));line-height:1.6;}
+.pp-map p{margin:0;font-size:calc(12.5px * var(--fs));line-height:1.8;color:var(--ink-2);}
+@media(max-width:720px){.pp-map{grid-template-columns:1fr;}}
+
+/* セクション = ガラスのカード */
+.pp-sec{border-radius:26px;padding:28px 30px 26px;margin:0 0 22px;
+  background:var(--glass-2);border:1px solid var(--glass-line);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:0 10px 30px rgba(var(--sh),.10);
+  scroll-margin-top:24px;}
+@media(max-width:640px){.pp-sec{padding:22px 18px 20px;border-radius:22px;scroll-margin-top:64px;}}
+.pp h2{display:flex;align-items:center;gap:10px;margin:0 0 16px;
+  font-size:calc(18px * var(--fs));line-height:1.5;font-weight:800;}
+.pp h2 .num{flex:none;display:inline-flex;align-items:center;justify-content:center;
+  width:calc(28px * var(--fs));height:calc(28px * var(--fs));border-radius:50%;
+  background:var(--pri);color:var(--on-color);font-size:calc(13px * var(--fs));font-weight:800;}
+.pp h3{margin:22px 0 8px;font-size:calc(14.5px * var(--fs));line-height:1.6;font-weight:800;
+  padding-left:11px;border-left:3px solid var(--pri);}
+.pp p,.pp li{font-size:calc(14px * var(--fs));line-height:1.95;}
+.pp p{margin:0 0 12px;}
+.pp ul{margin:0 0 14px;padding-left:1.3em;}
+.pp li{margin:0 0 6px;}
+.pp li::marker{color:var(--pri);}
+.pp strong{font-weight:800;background:linear-gradient(transparent 62%,rgba(var(--pri-rgb),.20) 62%);}
+.pp .note{font-size:calc(12.5px * var(--fs));line-height:1.85;color:var(--ink-2);margin:0 0 12px;}
+.pp .note .ms{color:var(--ink-3);font-size:1.1em;vertical-align:-0.18em;margin-right:2px;}
+.pp *:last-child{margin-bottom:0;}
+
+/* リンク = プライマリ（本文は紺のまま） */
+.pp a:not(.btn){color:var(--pri-deep);font-weight:700;text-decoration:underline;
+  text-decoration-color:rgba(var(--pri-rgb),.45);text-decoration-thickness:1.5px;text-underline-offset:3px;
+  border-radius:4px;transition:background .15s,text-decoration-color .15s;overflow-wrap:anywhere;}
+.pp a:not(.btn):hover{text-decoration-color:var(--pri);background:rgba(var(--pri-rgb),.10);}
+.pp a .ms{font-size:1em;vertical-align:-0.14em;margin-left:1px;}
+
+/* 目次 */
+.pp-toc{margin:0 0 34px;padding:16px 20px;border-radius:20px;
+  background:var(--glass);border:1px solid var(--glass-line);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);}
+.pp-toc b{display:block;font-size:calc(12px * var(--fs));color:var(--ink-3);letter-spacing:.1em;margin:0 0 6px;}
+.pp-toc ol{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:2px 18px;}
+.pp-toc li{margin:0;font-size:calc(13px * var(--fs));line-height:1.9;}
+.pp-toc a:not(.btn){text-decoration:none;font-weight:700;}
+.pp-toc .n{display:inline-block;min-width:1.4em;color:var(--pri);font-weight:800;}
+@media(max-width:560px){.pp-toc ol{grid-template-columns:1fr;}}
+
+/* 送信先・送信内容・目的の組 */
+.pp-dl{display:grid;grid-template-columns:8.5em 1fr;margin:4px 0 16px;border-radius:16px;overflow:hidden;
+  border:1px solid rgba(var(--fill),.12);background:rgba(var(--fill),.03);}
+.pp-dl dt,.pp-dl dd{margin:0;padding:12px 16px;font-size:calc(13.5px * var(--fs));line-height:1.85;}
+.pp-dl dt{font-weight:800;color:var(--ink-2);background:rgba(var(--fill),.05);}
+.pp-dl dt+dd{border-left:1px solid rgba(var(--fill),.08);}
+.pp-dl dd+dt,.pp-dl dd+dt+dd{border-top:1px solid rgba(var(--fill),.10);}
+.pp-dl dd ul{margin:0;padding-left:1.2em;}
+.pp-dl small{display:block;margin:4px 0 0;}
+.pp-dl dd li{font-size:inherit;margin:0 0 2px;line-height:1.8;}
+@media(max-width:560px){
+  .pp-dl{grid-template-columns:1fr;}
+  .pp-dl dt{padding:10px 14px 4px;}
+  .pp-dl dd{padding:4px 14px 12px;background:rgba(var(--fill),.05);}
+  .pp-dl dt+dd{border-left:0;}
+  .pp-dl dd+dt+dd{border-top:0;}
+}
+
+/* 表（保存する情報・送信の有無） */
+.pp-tbl{width:100%;border-collapse:separate;border-spacing:0;margin:4px 0 16px;border-radius:16px;overflow:hidden;
+  border:1px solid rgba(var(--fill),.12);background:rgba(var(--fill),.03);}
+.pp-tbl th,.pp-tbl td{padding:11px 14px;font-size:calc(13px * var(--fs));line-height:1.8;text-align:left;vertical-align:top;}
+.pp-tbl thead th{font-size:calc(12px * var(--fs));font-weight:800;color:var(--ink-2);background:rgba(var(--fill),.06);}
+.pp-tbl tbody th{font-weight:800;}
+.pp-tbl tbody tr+tr>*{border-top:1px solid rgba(var(--fill),.10);}
+.pp-tbl small{display:block;color:var(--ink-2);font-size:calc(12px * var(--fs));line-height:1.7;}
+/* 送信の有無の表 */
+.pp-tbl.mx td{text-align:center;vertical-align:middle;white-space:nowrap;}
+.pp-tbl.mx thead th:not(:first-child){text-align:center;}
+.yes,.no{display:inline-flex;align-items:center;gap:3px;font-weight:800;font-size:calc(12.5px * var(--fs));}
+.yes .ms,.no .ms{font-size:1.15em;vertical-align:0;}
+.no{color:var(--ink-3);}
+.yes,.no{white-space:nowrap;}
+.pp-tbl.mx .sm{display:none;}
+.yes.local{color:var(--pos-deep);}
+.yes.ga{color:var(--pri-deep);}
+.pp-tbl.mx td small{white-space:normal;}
+@media(max-width:640px){
+  .pp-tbl th,.pp-tbl td{padding:9px 8px;font-size:calc(12px * var(--fs));}
+  .pp-tbl.mx thead th{font-size:calc(10.5px * var(--fs));line-height:1.5;}
+  .yes,.no{font-size:calc(11.5px * var(--fs));}
+  .pp-tbl.mx td{white-space:normal;}
+  .pp-tbl.mx th,.pp-tbl.mx td{padding:9px 5px;}
+  .pp-tbl.mx tr>:first-child{padding-left:10px;}
+  .yes .ms,.no .ms{display:none;}
+  .pp-tbl.mx .lg{display:none;}
+  .pp-tbl.mx .sm{display:inline;}
+}
+/* 横に長い表は、はみ出すときだけ横スクロール（ページ自体は横に揺れない） */
+.pp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:4px 0 16px;}
+.pp-scroll .pp-tbl{margin:0;}
+.pp-scroll .pp-tbl.mx{min-width:300px;}
+.pp-tbl.mx thead th{overflow-wrap:anywhere;}
+.pp-tbl:not(.mx) tbody th{width:34%;}
+
+/* 最後の戻る導線 */
+.pp-back{text-align:center;margin:34px 0 0;}
+.pp-back .btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;}
+.pp-back .btn .ms{vertical-align:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="pp-nav">
+    <a class="backlink" href="./"><span class="ms">arrow_back</span>連想ゲームへ戻る</a>
+  </div>
+
+  <main class="pp">
+    <header class="pp-hd">
+      <a class="pp-logo" href="./" aria-label="連想ゲームのトップへ"><img src="images/logo.svg" alt="連想ゲーム" width="340" height="120"></a>
+      <h1>プライバシーポリシー</h1>
+      <p class="pp-date">制定日：2026年9月24日</p>
+    </header>
+
+    <p class="pp-lead">
+      このページでは、連想ゲーム（以下「本サービス」）を遊ぶときに、どんな情報が扱われ、それがどこに置かれ、どこへ送られるのかを説明します。本サービスは、ニュースを起点に、その先に起こりうることを連想するゲームです。「あなたの端末の中にとどまる情報」と「外部へ送られる情報」を混ぜずに書くことを心がけています。
+    </p>
+
+    <div class="pp-map" role="list">
+      <div role="listitem">
+        <span class="ms">smartphone</span>
+        <b>あなたの端末の中</b>
+        <p>プレイ記録・選んだ回答・間違いノート・設定は、お使いのブラウザ内に保存されます。</p>
+      </div>
+      <div role="listitem">
+        <span class="ms">domain</span>
+        <b>運営者（WONDER BROTHERS）</b>
+        <p>プレイ内容を受け取るサーバーはありません。利用状況は、Google アナリティクスの集計で把握しています。</p>
+      </div>
+      <div role="listitem">
+        <span class="ms">public</span>
+        <b>外部のサービス</b>
+        <p>アクセス解析（Google）、フォント配信（Google）、ページ配信（GitHub）との間で通信が発生します。</p>
+      </div>
+    </div>
+
+    <nav class="pp-toc" aria-label="目次">
+      <b>目次</b>
+      <ol>
+        <li><a href="#info"><span class="n">1</span>本サービスで扱う情報</a></li>
+        <li><a href="#device"><span class="n">2</span>端末内に保存する情報</a></li>
+        <li><a href="#analytics"><span class="n">3</span>アクセス解析・外部送信</a></li>
+        <li><a href="#play"><span class="n">4</span>プレイ情報について</a></li>
+        <li><a href="#services"><span class="n">5</span>外部サービス</a></li>
+        <li><a href="#cookie"><span class="n">6</span>Cookie等について</a></li>
+        <li><a href="#links"><span class="n">7</span>外部リンクについて</a></li>
+        <li><a href="#changes"><span class="n">8</span>プライバシーポリシーの変更</a></li>
+        <li><a href="#contact"><span class="n">9</span>運営者・お問い合わせ</a></li>
+      </ol>
+    </nav>
+
+    <!-- 1 -->
+    <section class="pp-sec" id="info">
+      <h2><span class="num">1</span>本サービスで扱う情報</h2>
+      <p>
+        本サービスでは、ゲームを利用するための<strong>氏名・メールアドレス等の登録を必要としていません</strong>。アカウントやログインの仕組みもなく、これらの情報を入力していただく場面もありません。
+      </p>
+      <p>本サービスの利用にともなって扱われる情報は、次の4種類です。</p>
+
+      <h3>プレイ情報</h3>
+      <p>
+        遊んだニュース、各問題で選んだ回答、正解・不正解、スコア、プレイした日時、間違いノート、途中で中断したプレイの状態などです。これらは<a href="#device">お使いのブラウザ内</a>に保存されます。このうち正解・不正解やスコアなど一部の情報は、<a href="#analytics">アクセス解析</a>のために Google へ送信されます（どれが送られ、どれが送られないかは<a href="#play">4</a>で説明します）。
+      </p>
+
+      <h3>設定情報</h3>
+      <p>ダークモード、文字サイズ、保存についてのお知らせを確認したかどうか、などです。ブラウザ内にだけ保存されます。</p>
+
+      <h3>利用状況の情報（アクセス解析）</h3>
+      <p>どの画面を表示したか、どんな操作をしたかといった記録です。Google アナリティクスを通じて Google へ送信されます。</p>
+
+      <h3>技術情報</h3>
+      <p>
+        IPアドレス、ブラウザ・OS・端末の種類、参照元のページなどです。ページやフォントを読み込むとき、インターネットの通信の仕組み上、配信元のサーバーに届きます（<a href="#services">5</a>）。
+      </p>
+    </section>
+
+    <!-- 2 -->
+    <section class="pp-sec" id="device">
+      <h2><span class="num">2</span>端末内に保存する情報</h2>
+      <p>
+        本サービスは、次の情報を<strong>お使いのブラウザの保存領域（localStorage）</strong>に保存します。これらは<strong>WONDER BROTHERSのサーバーには送信されません</strong>。
+      </p>
+
+      <div class="pp-scroll">
+        <table class="pp-tbl">
+          <thead><tr><th scope="col">保存するもの</th><th scope="col">中身</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">プレイ記録</th><td>遊んだニュース（ID・見出し・カテゴリ）、プレイした日時、スコア、各問題で選んだ回答と正解、解説<small>成績表・カレンダー・称号の表示に使います</small></td></tr>
+            <tr><th scope="row">間違いノート</th><td>上のプレイ記録から作られます。あわせて、復習で正解できた問題の記録を保存します</td></tr>
+            <tr><th scope="row">中断中のプレイ</th><td>途中まで解いたニュースと、そこまでの回答<small>ページを閉じても続きから再開するために使います</small></td></tr>
+            <tr><th scope="row">新着の確認</th><td>前回表示したニュースのIDの一覧<small>新しいニュースが配信されたことをお知らせするために使います</small></td></tr>
+            <tr><th scope="row">設定</th><td>ダークモード、文字サイズ、保存についてのお知らせを確認したかどうか</td></tr>
+            <tr><th scope="row">答え合わせの集計</th><td>公開データから作った、関連銘柄の答え合わせの集計の一時保存<small>表示を速くするためのもので、あなた個人に関する情報は含みません</small></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        このほか、オフラインでも起動できるように、本サービスのページやニュースのデータの写しをブラウザのキャッシュ（Service Worker のキャッシュ）に保存します。これは本サービスが公開しているファイルのコピーで、あなたに関する情報は含みません。
+      </p>
+      <p class="note"><span class="ms">info</span>本サービス自身は Cookie・sessionStorage・IndexedDB を使っていません。Cookie は Google アナリティクスが利用します（<a href="#cookie">6</a>）。</p>
+
+      <h3>保存期間</h3>
+      <p>
+        自動で削除する期限は設けていません。<strong>ブラウザのデータを削除するまで保存される場合があります</strong>。一方で、次のような場合には、あなたが操作しなくても消えることがあります。
+      </p>
+      <ul>
+        <li>ブラウザの履歴やサイトデータを消去したとき</li>
+        <li>プライベートブラウズ（シークレットモード）を終了したとき</li>
+        <li>Safari で、本サービスを7日間開かなかったとき（ブラウザの仕様によるもので、本サービスからは防げません。ホーム画面に追加して使っている場合は対象外です）</li>
+      </ul>
+      <p>また、保存場所がブラウザ内のため、別の端末や別のブラウザには引き継がれません。</p>
+
+      <h3>削除とバックアップ</h3>
+      <ul>
+        <li>画面右上の設定にある「保存データの削除」で、プレイ記録・間違いノート・中断中のプレイをいつでも削除できます。設定やキャッシュも含めてすべて消したい場合は、ブラウザの設定から本サービスのサイトデータを削除してください。</li>
+        <li>成績表の「バックアップを書き出す」を押すと、プレイ記録がJSONファイルとしてお使いの端末にダウンロードされます。「読み込む」で取り込む処理もブラウザ内だけで行われ、どこにも送信されません。</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="pp-sec" id="analytics">
+      <h2><span class="num">3</span>アクセス解析・外部送信について</h2>
+      <p>
+        本サービスは、利用状況を把握するために <strong>Google アナリティクス 4</strong> を利用しています。Google アナリティクスは、<strong>Google タグマネージャー</strong>を介して読み込んでいます。これにより、次の情報が Google へ送信されます。
+      </p>
+
+      <dl class="pp-dl">
+        <dt>送信先</dt>
+        <dd>Google LLC</dd>
+        <dt>送信される情報</dt>
+        <dd>
+          <ul>
+            <li>Cookie等の識別子（ブラウザごとに割り振られるランダムなID）</li>
+            <li>表示した画面と、その日時</li>
+            <li>画面内での操作と、それに付随する情報（下の一覧）</li>
+            <li>ブラウザ・OS・端末の種類、画面サイズ、言語設定</li>
+            <li>参照元（どのページから来たか）</li>
+            <li>IPアドレスをもとに Google が推定する、おおよその地域</li>
+          </ul>
+        </dd>
+        <dt>利用目的</dt>
+        <dd>サービスの利用状況を把握し、本サービスの改善に役立てるため（問題の難しさの調整、使いにくい画面や読み込みエラーの発見など）</dd>
+      </dl>
+
+      <p>
+        <strong>現在、本サービスでは Google アナリティクスを広告配信やリマーケティングの目的では利用していません。</strong>Google の同意モードで広告用の保存・利用を常に「拒否」に設定しており、広告のためのタグも設置していません。
+      </p>
+      <p class="note"><span class="ms">info</span><a href="https://support.google.com/analytics/answer/2763052?hl=ja" target="_blank" rel="noopener noreferrer">Google の説明<span class="ms">open_in_new</span></a>によれば、Google アナリティクス 4 は IPアドレスを記録・保存しません（おおよその地域の推定には使われます）。</p>
+
+      <h3>記録している操作</h3>
+      <p>
+        本サービスは画面を切り替えてもURLが変わらないつくりのため、画面ごとに「/play/ニュースのID」のような仮想のページとして記録しています。画面の表示のほかに記録している操作は次のとおりです。
+      </p>
+      <div class="pp-scroll">
+        <table class="pp-tbl">
+          <thead><tr><th scope="col">操作</th><th scope="col">一緒に送る情報</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">画面の表示</th><td>画面の種類。ニュースに関する画面では、ニュースのID・見出し・カテゴリ</td></tr>
+            <tr><th scope="row">プレイの開始</th><td>ニュースのID・見出し・日付・カテゴリ、どこから始めたか（一覧・再開・復習など）、問題数</td></tr>
+            <tr><th scope="row">問題の表示</th><td>何問目か、どのステップの問題か</td></tr>
+            <tr><th scope="row">回答</th><td>何問目か、どのステップの問題か、<strong>正解か不正解か</strong><small>どの選択肢を選んだかは送りません</small></td></tr>
+            <tr><th scope="row">プレイの完了</th><td><strong>スコア、問題数、正答率、所要時間</strong></td></tr>
+            <tr><th scope="row">検索</th><td><strong>検索欄に入力した語句</strong>（2文字以上）と、該当した件数</td></tr>
+            <tr><th scope="row">絞り込み・並び替え</th><td>種類と選んだ値（カテゴリ・日付・未プレイのみ・並び順）</td></tr>
+            <tr><th scope="row">出典リンクのクリック</th><td>媒体名とリンク先のURL</td></tr>
+            <tr><th scope="row">答え合わせの表示</th><td>表示した関連銘柄の件数</td></tr>
+            <tr><th scope="row">一覧の追加読み込み・復習の開始</th><td>件数</td></tr>
+            <tr><th scope="row">バックアップの書き出し・読み込み</th><td>読み込んだ件数（記録の中身は送りません）</td></tr>
+            <tr><th scope="row">設定の変更</th><td>ダークモード・文字サイズの値、保存データを削除したこと</td></tr>
+            <tr><th scope="row">アプリの更新・ホーム画面への追加</th><td>操作があったこと</td></tr>
+            <tr><th scope="row">読み込みエラー</th><td>エラーの内容（先頭100文字まで）</td></tr>
+            <tr><th scope="row">外部サイトへのリンクのクリック</th><td>リンク先のURL<small>Google アナリティクスが自動で計測します</small></td></tr>
+            <tr><th scope="row">ページの下端までのスクロール</th><td>下端までスクロールしたこと<small>Google アナリティクスが自動で計測します</small></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note"><span class="ms">info</span>プレイやニュースに関する操作には、どのニュースでの操作かを示す情報（ニュースのID・見出し・日付・カテゴリ）と、復習モードかどうかもあわせて送ります。</p>
+      <p class="note"><span class="ms">info</span>検索欄に個人的な情報を入力しないでください。入力した語句はそのまま送信されます。</p>
+
+      <h3>送信を止めたいとき</h3>
+      <p>
+        Google が提供する<a href="https://tools.google.com/dlpage/gaoptout?hl=ja" target="_blank" rel="noopener noreferrer">Google アナリティクス オプトアウト アドオン<span class="ms">open_in_new</span></a>を使うか、ブラウザで Cookie を無効にすることで、送信を止められます。止めても、本サービスはこれまでどおり遊べます。
+      </p>
+      <p>
+        Google による情報の取り扱いについては、<a href="https://policies.google.com/technologies/partner-sites?hl=ja" target="_blank" rel="noopener noreferrer">Google のサービスを使用するサイトやアプリから収集した情報の Google による使用<span class="ms">open_in_new</span></a>と<a href="https://policies.google.com/privacy?hl=ja" target="_blank" rel="noopener noreferrer">Google プライバシーポリシー<span class="ms">open_in_new</span></a>をご覧ください。
+      </p>
+    </section>
+
+    <!-- 4 -->
+    <section class="pp-sec" id="play">
+      <h2><span class="num">4</span>プレイ情報について</h2>
+      <p>連想ゲームを遊んだときの情報が、それぞれどこに保存・送信されるかをまとめます。</p>
+
+      <div class="pp-scroll">
+        <table class="pp-tbl mx">
+          <thead><tr>
+            <th scope="col">情報</th>
+            <th scope="col">端末内</th>
+            <th scope="col"><span class="lg">WONDER BROTHERSの</span><span class="sm">運営者の</span>サーバー</th>
+            <th scope="col">Google アナリ<wbr>ティクス</th>
+          </tr></thead>
+          <tbody>
+            <tr><th scope="row">選んだ回答</th>
+              <td><span class="yes local"><span class="ms">check_circle</span>保存</span></td>
+              <td><span class="no"><span class="ms">remove</span>送信しない</span></td>
+              <td><span class="no"><span class="ms">remove</span>送信しない</span></td></tr>
+            <tr><th scope="row">回答履歴</th>
+              <td><span class="yes local"><span class="ms">check_circle</span>保存</span></td>
+              <td><span class="no"><span class="ms">remove</span>送信しない</span></td>
+              <td><span class="no"><span class="ms">remove</span>送信しない</span></td></tr>
+            <tr><th scope="row">正解・不正解</th>
+              <td><span class="yes local"><span class="ms">check_circle</span>保存</span></td>
+              <td><span class="no"><span class="ms">remove</span>送信しない</span></td>
+              <td><span class="yes ga"><span class="ms">send</span>送信する</span><small>1問ごと</small></td></tr>
+            <tr><th scope="row">スコア</th>
+              <td><span class="yes local"><span class="ms">check_circle</span>保存</span></td>
+              <td><span class="no"><span class="ms">remove</span>送信しない</span></td>
+              <td><span class="yes ga"><span class="ms">send</span>送信する</span><small>1プレイごと</small></td></tr>
+            <tr><th scope="row">プレイ結果の累計<small>成績表・称号・連続日数</small></th>
+              <td><span class="yes local"><span class="ms">check_circle</span>保存</span></td>
+              <td><span class="no"><span class="ms">remove</span>送信しない</span></td>
+              <td><span class="no"><span class="ms">remove</span>送信しない</span></td></tr>
+            <tr><th scope="row">間違いノート</th>
+              <td><span class="yes local"><span class="ms">check_circle</span>保存</span></td>
+              <td><span class="no"><span class="ms">remove</span>送信しない</span></td>
+              <td><span class="no"><span class="ms">remove</span>送信しない</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul>
+        <li><strong>プレイ中の回答内容そのもの（どの選択肢を選んだか）は Google アナリティクスには送信していません。</strong>送信するのは「どのニュースの何問目で、正解だったか不正解だったか」までです。</li>
+        <li>スコアは、1回のプレイを終えたときに、そのプレイの結果（スコア・問題数・正答率・所要時間）を送信します。端末に積み重なった成績の累計は送信しません。</li>
+        <li>本サービスには、プレイ情報を受け取って保存するサーバーがありません。そのため、WONDER BROTHERSがあなたの回答履歴や間違いノートを見ることはできません。</li>
+        <li>Google 以外の外部サービスには、いずれのプレイ情報も送信しません。</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="pp-sec" id="services">
+      <h2><span class="num">5</span>外部サービス</h2>
+      <p>本サービスを開くと、あなたのブラウザから次のサービスへの通信が発生します。</p>
+
+      <h3>Google アナリティクス／Google タグマネージャー</h3>
+      <dl class="pp-dl">
+        <dt>提供者</dt><dd>Google LLC</dd>
+        <dt>利用目的</dt><dd>アクセス解析（詳しくは<a href="#analytics">3</a>）</dd>
+        <dt>送信される情報</dt><dd><a href="#analytics">3</a>に記載のとおり</dd>
+      </dl>
+
+      <h3>Google Fonts</h3>
+      <dl class="pp-dl">
+        <dt>提供者</dt><dd>Google LLC</dd>
+        <dt>利用目的</dt><dd>本文の文字（Noto Sans JP）とアイコンのフォントを表示するため</dd>
+        <dt>送信される可能性のある情報</dt><dd>IPアドレス、ブラウザ・OSの種類、参照元（表示しているページのURL）、利用日時</dd>
+      </dl>
+
+      <h3>GitHub Pages</h3>
+      <dl class="pp-dl">
+        <dt>提供者</dt><dd>GitHub, Inc.</dd>
+        <dt>利用目的</dt><dd>本サービスのページとニュースのデータを配信するため</dd>
+        <dt>送信される可能性のある情報</dt><dd>IPアドレス、ブラウザ・OSの種類、アクセスしたURL、参照元、利用日時<small class="note">通常のWebサイトと同様に、配信の過程で GitHub が処理します。WONDER BROTHERSはこのアクセス記録を受け取っていません。</small></dd>
+      </dl>
+
+      <ul>
+        <li>ニュースや答え合わせのデータは、あらかじめ作成したものを本サービスと同じ場所から配信しています。ニュースや株価を取得するための外部APIへの通信は、あなたのブラウザからは発生しません。</li>
+        <li>広告、SNSの埋め込み、そのほかの外部SDKは利用していません。</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section class="pp-sec" id="cookie">
+      <h2><span class="num">6</span>Cookie等について</h2>
+      <ul>
+        <li>本サービス自身は Cookie を発行していません。ゲームの記録や設定は、Cookie ではなくブラウザの保存領域（localStorage）に保存しています（<a href="#device">2</a>）。</li>
+        <li>Google アナリティクスは、ブラウザを区別して訪問回数や再訪を数えるために、本サービスのドメインに Cookie（「_ga」「_ga_」で始まる名前のもの）を保存します。Google の標準の設定では、有効期間は最長2年間です。</li>
+        <li>広告を目的とした Cookie は利用していません。</li>
+        <li>ブラウザで Cookie を無効にしても、本サービスは遊べます。その場合、Google アナリティクスの計測は行われません。</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="pp-sec" id="links">
+      <h2><span class="num">7</span>外部リンクについて</h2>
+      <p>
+        本サービスには、ニュース記事の出典、関連銘柄の情報ページ（Yahoo!ファイナンス）、運営者の公式サイトなど、外部サイトへのリンクがあります。リンクは新しいタブで開きます。
+      </p>
+      <p>
+        リンク先での情報の取り扱いには、それぞれの外部サイトのプライバシーポリシー等が適用されます。なお、外部サイトへのリンクを押したこと（リンク先のURL）は、<a href="#analytics">アクセス解析</a>の対象として記録しています。
+      </p>
+    </section>
+
+    <!-- 8 -->
+    <section class="pp-sec" id="changes">
+      <h2><span class="num">8</span>プライバシーポリシーの変更</h2>
+      <p>
+        サービスの機能追加や、利用する外部サービスの変更などにともない、このプライバシーポリシーを変更する場合があります。変更したときは、このページで内容と日付を更新してお知らせします。
+      </p>
+    </section>
+
+    <!-- 9 -->
+    <section class="pp-sec" id="contact">
+      <h2><span class="num">9</span>運営者・お問い合わせ</h2>
+      <dl class="pp-dl">
+        <dt>運営者</dt>
+        <dd>株式会社ワンダーブラザース<br>WONDER BROTHERS INC.</dd>
+        <dt>所在地</dt>
+        <dd>〒150-0043 東京都渋谷区道玄坂1-10-8 渋谷道玄坂東急ビル2F-C</dd>
+        <dt>お問い合わせ</dt>
+        <dd><a href="https://wonder-bros.com/contact/" target="_blank" rel="noopener noreferrer">WONDER BROTHERS 公式サイトのお問い合わせフォーム<span class="ms">open_in_new</span></a></dd>
+      </dl>
+    </section>
+
+    <div class="pp-back">
+      <a class="btn primary" href="./"><span class="ms">arrow_back</span>連想ゲームへ戻る</a>
+    </div>
+  </main>
+
+  <footer>
+    <p class="disc">これは思考訓練であり、投資助言ではありません。</p>
+    <p class="copy">&copy;<a class="cplink" href="https://wonder-bros.com" target="_blank" rel="noopener noreferrer">WONDER BROTHERS INC.</a></p>
+  </footer>
+</div>
+</body>
+</html>

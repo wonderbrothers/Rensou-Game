@@ -70,6 +70,12 @@ def root():
     return send_from_directory(BASE, "index.html")
 
 
+@app.route("/privacy")
+def privacy():
+    # GitHub Pages は /privacy に privacy.html を返す。dev でも同じURLで開けるようにする
+    return send_from_directory(BASE, "privacy.html")
+
+
 @app.route("/<path:p>")
 def static_files(p):
     return send_from_directory(BASE, p)
