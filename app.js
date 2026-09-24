@@ -245,6 +245,11 @@ function openSettings() {
         <button class="btn sm danger solid" id="clrYes" type="button">削除する</button>
       </span>
     </div>
+    <button class="setrow setlink" id="cookieSet" type="button" data-wb-consent-open>
+      <span class="sic ms">cookie</span>
+      <span class="stx"><b>Cookie設定</b><small>アクセス解析（Google Analytics）の許可・拒否</small></span>
+      <span class="ms chev" aria-hidden="true">chevron_right</span>
+    </button>
     <a class="setrow setlink" href="privacy">
       <span class="sic ms">shield_person</span>
       <span class="stx"><b>プライバシーポリシー</b><small>保存される情報とアクセス解析について</small></span>
@@ -259,6 +264,9 @@ function openSettings() {
   ov._close = close;                     // ギアの再クリックからも同じ後始末を通す
   ov.onclick = e => { if (e.target === ov) close(); };
   ov.querySelector(".calx").onclick = close;
+  // Cookie設定の画面は wb-consent.js が開く（data-wb-consent-open）。こちらの設定モーダルは先に閉じる。
+  // 同意の操作は計測しない（track しない）
+  ov.querySelector("#cookieSet").addEventListener("click", close);
   const sw = ov.querySelector("#swDark");
   sw.onclick = () => {
     const next = sw.getAttribute("aria-checked") !== "true";
@@ -613,6 +621,13 @@ function calcTitle(results) {
 /* ---------- 初回のみの保存告知バナー ---------- */
 function showStorageNotice() {
   if (localStorage.getItem("rensou_notice_ok")) return;
+  // Cookie の同意バナー（wb-consent.js）が出ているあいだは、下部固定のバーを重ねない。
+  // 同意を選んでバナーが閉じてから出す
+  if (window.WBConsent && !window.WBConsent.get()) {
+    document.addEventListener("wbconsent:change", showStorageNotice, { once: true });
+    return;
+  }
+  if (document.querySelector(".notice")) return;
   const bar = document.createElement("div");
   bar.className = "notice";
   bar.innerHTML = `<span>${ic("lock")} 成績・間違いノートは<b>この端末のブラウザ内にのみ</b>保存され、サーバーには保存されません。削除はいつでも右上の設定から。<a class="noticelink" href="privacy">プライバシーポリシー</a></span>

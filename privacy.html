@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Cookie 同意 + Google Consent Mode v2（Basic）。3サイト共通の wb-consent.js（正本は corporate-site）。
+     「アクセス解析を許可した人」にだけ GTM（GTM-5LCBKQHC／GA4 G-1BF5N4Z58E はGTM側で設定）を読み込む。
+     未選択・拒否のときは GTM も GA も読み込まず、Google へは何も送らない。
+     dataLayer を触るどのスクリプトより前に置くこと。GTM のスニペットをここに直接書かないこと。 -->
+<script src="wb-consent.js?v=54fec248" data-gtm="GTM-5LCBKQHC" data-privacy="privacy"></script>
 <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
 <title>プライバシーポリシー｜連想ゲーム</title>
 <meta name="description" content="連想ゲームにおける利用情報、端末内保存、アクセス解析、外部送信等の取り扱いについて説明します。">
@@ -33,7 +38,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fonts/local.css">
-<link rel="stylesheet" href="style.css?v=e2dadb38">
+<link rel="stylesheet" href="style.css?v=28574fe1">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#fdece5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -54,36 +59,16 @@
 }catch(e){}})();
 </script>
 
-<!-- Google Consent Mode v2 の初期値（トップの index.html と同じ値にそろえること） -->
 <script>
+/* このページの閲覧を仮想ページビューとして積む（トップの trackView と同じ形）。
+   dataLayer に積むだけ。GA へ届くのはアクセス解析を許可している場合だけ（wb-consent.js が判断する） */
 window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('consent', 'default', {
-  ad_storage: 'denied',
-  ad_user_data: 'denied',
-  ad_personalization: 'denied',
-  analytics_storage: 'granted',
-  wait_for_update: 500
-});
-/* このページの閲覧を仮想ページビューとして送る（トップの trackView と同じ形） */
 dataLayer.push({
   event: "vpv",
   view_name: "privacy",
   page_path: "/privacy",
   page_title: "プライバシーポリシー｜連想ゲーム"
 });
-</script>
-
-<!-- Google Tag Manager（トップと同じコンテナ） -->
-<script>
-window.GTM_ID = "GTM-5LCBKQHC";
-(function(w,d,s,l,i){
-  if(!i||/^GTM-X+$/.test(i))return;
-  w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
-  var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
-  j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-  f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer',window.GTM_ID);
 </script>
 
 <style>
@@ -221,6 +206,9 @@ window.GTM_ID = "GTM-5LCBKQHC";
 .pp-back{text-align:center;margin:34px 0 0;}
 .pp-back .btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;}
 .pp-back .btn .ms{vertical-align:0;}
+/* 「Cookie設定を開く」（3章）。Cookie設定の画面は wb-consent.js が開く */
+.pp-sec .pp-cookie{display:inline-flex;align-items:center;gap:6px;border:none;font-family:inherit;}
+.pp-sec .pp-cookie .ms{vertical-align:0;}
 </style>
 </head>
 <body>
@@ -255,7 +243,7 @@ window.GTM_ID = "GTM-5LCBKQHC";
       <div role="listitem">
         <span class="ms">public</span>
         <b>外部のサービス</b>
-        <p>アクセス解析（Google）、フォント配信（Google）、ページ配信（GitHub）との間で通信が発生します。</p>
+        <p>アクセス解析（Google・許可した場合のみ）、フォント配信（Google）、ページ配信（GitHub）との間で通信が発生します。</p>
       </div>
     </div>
 
@@ -323,7 +311,7 @@ window.GTM_ID = "GTM-5LCBKQHC";
       <p>
         このほか、オフラインでも起動できるように、本サービスのページやニュースのデータの写しをブラウザのキャッシュ（Service Worker のキャッシュ）に保存します。これは本サービスが公開しているファイルのコピーで、あなたに関する情報は含みません。
       </p>
-      <p class="note"><span class="ms">info</span>本サービス自身は Cookie・sessionStorage・IndexedDB を使っていません。Cookie は Google アナリティクスが利用します（<a href="#cookie">6</a>）。</p>
+      <p class="note"><span class="ms">info</span>本サービス自身は sessionStorage・IndexedDB を使っていません。Cookie は、アクセス解析を許可したかどうかの記録にだけ使います。アクセス解析を許可した場合は、Google アナリティクスも Cookie を利用します（<a href="#cookie">6</a>）。</p>
 
       <h3>保存期間</h3>
       <p>
@@ -347,7 +335,8 @@ window.GTM_ID = "GTM-5LCBKQHC";
     <section class="pp-sec" id="analytics">
       <h2><span class="num">3</span>アクセス解析・外部送信について</h2>
       <p>
-        本サービスは、利用状況を把握するために <strong>Google アナリティクス 4</strong> を利用しています。Google アナリティクスは、<strong>Google タグマネージャー</strong>を介して読み込んでいます。これにより、次の情報が Google へ送信されます。
+        本サービスは、利用状況を把握するために <strong>Google アナリティクス 4</strong> を利用しています。Google アナリティクスは、<strong>Google タグマネージャー</strong>を介して読み込んでいます。
+        <strong>アクセス解析は、画面下に表示される確認で「許可する」を選んだ場合にだけ行います。</strong>許可するまで（「拒否する」を選んだ場合も）、Google アナリティクスと Google タグマネージャーは読み込まず、Google への送信も行いません。許可した場合は、次の情報が Google へ送信されます。
       </p>
 
       <dl class="pp-dl">
@@ -405,7 +394,11 @@ window.GTM_ID = "GTM-5LCBKQHC";
 
       <h3>送信を止めたいとき</h3>
       <p>
-        Google が提供する<a href="https://tools.google.com/dlpage/gaoptout?hl=ja" target="_blank" rel="noopener noreferrer">Google アナリティクス オプトアウト アドオン<span class="ms">open_in_new</span></a>を使うか、ブラウザで Cookie を無効にすることで、送信を止められます。止めても、本サービスはこれまでどおり遊べます。
+        右上の設定（歯車）にある「Cookie設定」から、いつでもアクセス解析を拒否に変えられます（許可に戻すこともできます）。拒否に変えると、その時点で送信を止め、Google アナリティクスが保存した Cookie も削除します。
+      </p>
+      <p><button type="button" class="btn ghost pp-cookie" data-wb-consent-open><span class="ms">cookie</span>Cookie設定を開く</button></p>
+      <p>
+        このほか、Google が提供する<a href="https://tools.google.com/dlpage/gaoptout?hl=ja" target="_blank" rel="noopener noreferrer">Google アナリティクス オプトアウト アドオン<span class="ms">open_in_new</span></a>を使うか、ブラウザで Cookie を無効にすることで、送信を止められます。止めても、本サービスはこれまでどおり遊べます。
       </p>
       <p>
         Google による情報の取り扱いについては、<a href="https://policies.google.com/technologies/partner-sites?hl=ja" target="_blank" rel="noopener noreferrer">Google のサービスを使用するサイトやアプリから収集した情報の Google による使用<span class="ms">open_in_new</span></a>と<a href="https://policies.google.com/privacy?hl=ja" target="_blank" rel="noopener noreferrer">Google プライバシーポリシー<span class="ms">open_in_new</span></a>をご覧ください。
@@ -498,8 +491,8 @@ window.GTM_ID = "GTM-5LCBKQHC";
     <section class="pp-sec" id="cookie">
       <h2><span class="num">6</span>Cookie等について</h2>
       <ul>
-        <li>本サービス自身は Cookie を発行していません。ゲームの記録や設定は、Cookie ではなくブラウザの保存領域（localStorage）に保存しています（<a href="#device">2</a>）。</li>
-        <li>Google アナリティクスは、ブラウザを区別して訪問回数や再訪を数えるために、本サービスのドメインに Cookie（「_ga」「_ga_」で始まる名前のもの）を保存します。Google の標準の設定では、有効期間は最長2年間です。</li>
+        <li>本サービスが発行する Cookie は、アクセス解析を許可したか拒否したかを覚えておくための「wb_consent_v1」の1つだけです。値は「許可」か「拒否」だけで、個人を識別する情報は含みません。有効期間は最後に遊んだ日から180日間で、株式会社ワンダーブラザースが運営する wonder-bros.com・64モンスターズ・連想ゲームで共通に使います。ゲームの記録や設定は、Cookie ではなくブラウザの保存領域（localStorage）に保存しています（<a href="#device">2</a>）。アクセス解析を拒否しても、ゲームの記録や設定は消えません。</li>
+        <li>アクセス解析を許可した場合、Google アナリティクスは、ブラウザを区別して訪問回数や再訪を数えるために、本サービスのドメインに Cookie（「_ga」「_ga_」で始まる名前のもの）を保存します。Google の標準の設定では、有効期間は最長2年間です。あとから拒否に変えたときは、これらの Cookie を削除します。</li>
         <li>広告を目的とした Cookie は利用していません。</li>
         <li>ブラウザで Cookie を無効にしても、本サービスは遊べます。その場合、Google アナリティクスの計測は行われません。</li>
       </ul>

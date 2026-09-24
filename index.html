@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Cookie 同意 + Google Consent Mode v2（Basic）。3サイト共通の wb-consent.js（正本は corporate-site）。
+     「アクセス解析を許可した人」にだけ GTM（GTM-5LCBKQHC／GA4 G-1BF5N4Z58E はGTM側で設定）を読み込む。
+     未選択・拒否のときは GTM も GA も読み込まず、Google へは何も送らない。
+     dataLayer を触るどのスクリプトより前に置くこと。GTM のスニペットをここに直接書かないこと。 -->
+<script src="wb-consent.js?v=54fec248" data-gtm="GTM-5LCBKQHC" data-privacy="privacy"></script>
 <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
 <title>連想ゲーム｜ニュース連想力トレーニングゲーム</title>
 <meta name="description" content="最新の経済ニュースから市場への波及を6ステップで読み解く連想力トレーニングゲーム。本質→一次影響→相対優位→二次影響→逆シナリオ→検証ポイントの型を、クイズ形式で楽しく身につける。">
@@ -33,7 +38,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fonts/local.css">
-<link rel="stylesheet" href="style.css?v=e2dadb38">
+<link rel="stylesheet" href="style.css?v=28574fe1">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#fdece5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -56,37 +61,6 @@
 }catch(e){}})();
 </script>
 
-<!-- Google Consent Mode v2 の初期値。
-     いまは同意バナー（CMP）を置いていないため、解析のみ既定で許可し、
-     広告系は常に拒否する。CMPを入れるときは analytics_storage を "denied" に変え、
-     同意取得後に gtag('consent','update',{analytics_storage:'granted'}) を呼ぶだけでよい。 -->
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('consent', 'default', {
-  ad_storage: 'denied',
-  ad_user_data: 'denied',
-  ad_personalization: 'denied',
-  analytics_storage: 'granted',
-  wait_for_update: 500
-});
-</script>
-
-<!-- Google Tag Manager
-     コンテナ GTM-5LCBKQHC（GA4測定ID G-1BF5N4Z58E をGTM側のタグで設定）。
-     何を送るかの判断はすべてGTM側にあるため、計測の追加・停止でこのファイルは触らない。
-     GTM_ID が未設定（GTM-XXXXXXX）のときは読み込まないガードを残している。
-     このアプリはJavaScript必須のため、noscript版のiframeは置いていない。 -->
-<script>
-window.GTM_ID = "GTM-5LCBKQHC";
-(function(w,d,s,l,i){
-  if(!i||/^GTM-X+$/.test(i))return;
-  w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
-  var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
-  j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-  f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer',window.GTM_ID);
-</script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -162,6 +136,6 @@ window.GTM_ID = "GTM-5LCBKQHC";
     <p class="copy">&copy;<a class="cplink" href="https://wonder-bros.com" target="_blank" rel="noopener noreferrer">WONDER BROTHERS INC.</a></p>
   </footer>
 </div>
-<script src="app.js?v=924ae17c"></script>
+<script src="app.js?v=31bfe94b"></script>
 </body>
 </html>

@@ -3,9 +3,14 @@
    - api/ は「ネットワーク優先・失敗時キャッシュ」で常に最新を見せつつ、オフラインでも既読を閲覧可能にする
    - 新しい版が出たら自動で切り替えず、アプリ側のトーストからユーザーが更新を選ぶ
    CACHE_VERSION は build_static.py がビルドごとに自動で書き換える */
-const CACHE_VERSION = "ab7afb4a58cc";
+const CACHE_VERSION = "29840555ab9e";
 const SHELL_CACHE = `rensou-shell-${CACHE_VERSION}`;
 const DATA_CACHE = `rensou-data-${CACHE_VERSION}`;
+/* Cookie 同意バナー（wb-consent.js）を入れた版への切り替えは、ユーザーの「更新する」を待たずに1度だけ行う。
+   古い版の index.html は同意なしで GTM を読み込むため、キャッシュに残し続けられないから。
+   この印（キャッシュ名）が無い＝同意バナー以前の版から来た、と判断して skipWaiting する。
+   印は activate の掃除でも消さないので、以後の更新はこれまでどおりトーストから選ぶ形に戻る。 */
+const CONSENT_MIGRATION = "rensou-consent-v1";
 
 const SHELL_ASSETS = [
   "./",
@@ -13,6 +18,7 @@ const SHELL_ASSETS = [
   "./app.js",
   "./style.css",
   "./manifest.json",
+  "./wb-consent.js",
   "./favicon.ico",
   "./images/logo.svg",
   "./images/logo-dark.svg",
@@ -28,7 +34,12 @@ self.addEventListener("install", ev => {
   ev.waitUntil((async () => {
     const cache = await caches.open(SHELL_CACHE);
     await Promise.all(SHELL_ASSETS.map(u => cache.add(u).catch(() => null)));
-    // skipWaiting はしない（ユーザーがトーストで更新を選んだときだけ切り替える）
+    // skipWaiting はしない（ユーザーがトーストで更新を選んだときだけ切り替える）。
+    // 例外は同意バナー導入時の1回だけ（CONSENT_MIGRATION の説明を参照）
+    if (!(await caches.has(CONSENT_MIGRATION))) {
+      await caches.open(CONSENT_MIGRATION);
+      await self.skipWaiting();
+    }
   })());
 });
 
@@ -36,7 +47,7 @@ self.addEventListener("activate", ev => {
   ev.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(keys
-      .filter(k => k !== SHELL_CACHE && k !== DATA_CACHE)
+      .filter(k => k !== SHELL_CACHE && k !== DATA_CACHE && k !== CONSENT_MIGRATION)
       .map(k => caches.delete(k)));
     await self.clients.claim();
   })());

@@ -278,7 +278,7 @@ def stamp_sw():
     if not os.path.exists(sw):
         return
     h = hashlib.md5()
-    for name in (*PAGES, "app.js", "style.css"):
+    for name in (*PAGES, *ASSETS):
         p = os.path.join(BASE, name)
         if os.path.exists(p):
             h.update(open(p, "rb").read())
@@ -314,6 +314,29 @@ def stamp_assets():
 # （キャッシュ用クエリの更新と、sw.js の版数計算の両方がこの一覧を見る）
 PAGES = ("index.html", "privacy.html")
 
+# ?v= を付けるアセット（sw.js の版数計算もこの一覧を見る）。
+# wb-consent.js は Cookie 同意（3サイト共通）。正本は ../corporate-site/src/scripts/wb-consent.js
+ASSETS = ("app.js", "style.css", "wb-consent.js")
+
+
+def sync_consent():
+    """Cookie 同意スクリプトを正本（corporate-site）から写す。
+
+    wb-consent.js は wonder-bros.com・64モンスターズ・連想ゲームで共通。各サイトが自分の
+    ドメインから配信する（1サイトが落ちても他に波及しない）ためのコピーなので、ここを手で直さない。
+    隣に corporate-site が無い環境（GitHub Actions の株価更新など）では、いまのコピーをそのまま使う。
+    """
+    src = os.path.join(BASE, "..", "corporate-site", "src", "scripts", "wb-consent.js")
+    dst = os.path.join(BASE, "wb-consent.js")
+    if not os.path.exists(src):
+        return
+    a = open(src, "rb").read()
+    if os.path.exists(dst) and open(dst, "rb").read() == a:
+        return
+    with open(dst, "wb") as fp:
+        fp.write(a)
+    print("✓ wb-consent.js を正本（corporate-site）から更新")
+
 
 def _stamp_page(page):
     index = os.path.join(BASE, page)
@@ -322,7 +345,7 @@ def _stamp_page(page):
     html = open(index, encoding="utf-8").read()
     before = html
 
-    for asset in ("app.js", "style.css"):
+    for asset in ASSETS:
         path = os.path.join(BASE, asset)
         if not os.path.exists(path):
             continue
@@ -334,7 +357,7 @@ def _stamp_page(page):
         )
 
     # 属性の外に asset?v= が漏れていたら、置換の巻き込みが起きている
-    stray = re.search(r'(?<!["/])\b(?:app\.js|style\.css)\?v=', html)
+    stray = re.search(r'(?<!["/])\b(?:app\.js|style\.css|wb-consent\.js)\?v=', html)
     if stray:
         raise SystemExit(
             f"✗ {page}: 属性の外に ?v= が付いています（置換の巻き込み）: "
@@ -482,6 +505,7 @@ def main():
 
     write_sitemap(sessions)
     stamp_version()
+    sync_consent()
     stamp_assets()
     stamp_sw()   # ← app.js/style.css のハッシュ更新後に実行する
 

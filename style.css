@@ -908,6 +908,11 @@ div.skl{display:block;}
 .setrow.setlink:hover{background:rgba(var(--pri-rgb),.08);}
 .setrow.setlink:hover .chev{transform:translateX(3px);}
 .setrow.setlink:focus-visible{outline:2px solid var(--pri);outline-offset:2px;}
+/* 設定モーダル: 「Cookie設定」行は画面を開くボタンなので <button> で .setlink を使う。
+   ボタンの既定の見た目だけを外す（区切り線は .setrow+.setrow と同じもの） */
+button.setrow.setlink{-webkit-appearance:none;appearance:none;width:100%;margin:0;background:none;border:0;
+  font:inherit;text-align:left;cursor:pointer;}
+.setrow+button.setrow.setlink{border-top:1px solid rgba(var(--fill),.12);}
 @media(max-width:420px){
   .setrow.confirm .crow{width:100%;justify-content:flex-end;}
 }
@@ -1012,3 +1017,27 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
 :root[data-theme="dark"] .csrow:hover{border-color:rgba(255,255,255,.28);}
 :root[data-theme="dark"] .gnav-item:hover{background:rgba(255,255,255,.07);}
 :root[data-theme="dark"] .gnav-item.active{background:rgba(255,255,255,.12);}
+
+/* ===== Cookie 同意バナー／Cookie設定（wb-consent.js・3サイト共通） =====
+   仕組みと文言は共通。ここでは見た目のトークンだけをこのアプリに合わせる。
+   色は意味変数を使うので、ダークモードでもそのまま切り替わる。
+   ボタンは .btn と同じカプセル型。許可＝プライマリ／拒否＝白地で、大きさは同じにしてある。
+   z-index はボトムナビ（70）より上、モーダル（.calov 78）とトースト（80）より下 */
+.wbc{
+  --wbc-bg:var(--paper); --wbc-fg:var(--ink); --wbc-muted:var(--ink-2); --wbc-line:rgba(var(--fill),.12);
+  --wbc-accent:var(--pri); --wbc-accent-fg:var(--on-color); --wbc-switch-off:rgba(var(--fill),.18);
+  --wbc-border:1px solid rgba(var(--fill),.10); --wbc-radius:18px; --wbc-btn-radius:999px;
+  --wbc-shadow:0 14px 36px rgba(var(--sh),.22); --wbc-backdrop:var(--ov);
+  --wbc-font:inherit; --wbc-fs:calc(12.5px * var(--fs)); --wbc-z:76; --wbc-focus:var(--sup);
+}
+.wbc .wbc-btn{font-weight:800;font-size:calc(13.5px * var(--fs));border:none;}
+.wbc .wbc-btn--primary{box-shadow:0 5px 0 var(--pri-deep);}
+.wbc .wbc-btn--secondary{background:var(--paper);color:var(--ink);box-shadow:inset 0 0 0 2px rgba(var(--fill),.22);}
+.wbc .wbc-switch[aria-checked="true"] .wbc-track{background:var(--pos);}   /* 設定の .swi と同じ色 */
+.wbc .wbc-title{font-weight:800;}
+/* 同意バナーが出ているあいだは、トーストをバナーの上へ逃がす（下部固定どうしの重なりを防ぐ） */
+html.wbc-banner-open .toastbox{bottom:calc(var(--wbc-banner-h, 0px) + 10px);}
+@media(max-width:640px){
+  /* ボトムナビの上に出す（保存告知バナー .notice と同じ高さ） */
+  .wbc-banner{padding-bottom:96px;}
+}
