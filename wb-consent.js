@@ -254,7 +254,10 @@
     /* スイッチのフォーカス枠は、ボタン全体の四角ではなくトラック（丸いつまみの溝）の形に出す */
     ":where(.wbc) .wbc-switch:focus-visible{outline:none;}" +
     ":where(.wbc-switch:focus-visible) :where(.wbc-track){outline:2px solid var(--wbc-focus,var(--wbc-accent,#1a1a1a));outline-offset:2px;}" +
-    ":where(.wbc) .wbc-dialog:focus,:where(.wbc) .wbc-dialog:focus-visible{outline:none;}" +
+    /* dialog は showModal() で開くと dialog 自身にフォーカスが入る。
+       サイト側の :focus-visible の枠が本来の枠の外側にもう一本出てしまうので消す。
+       .wbc と .wbc-dialog は同じ要素に付くので、子孫セレクタ（空白）ではなく続けて書く。 */
+    ":where(.wbc).wbc-dialog:focus,:where(.wbc).wbc-dialog:focus-visible{outline:none;}" +
     "@media (max-width:640px){:where(.wbc-banner) :where(.wbc-card){flex-direction:column;align-items:stretch;}" +
       ":where(.wbc-actions){width:100%;} :where(.wbc-actions) :where(.wbc-act){min-width:0;}}" +
     ":where(.wbc-dialog){box-sizing:border-box;width:min(480px,calc(100vw - 2 * var(--wbc-gutter,16px)));max-width:none;" +
