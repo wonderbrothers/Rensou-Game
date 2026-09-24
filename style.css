@@ -1021,7 +1021,9 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
 /* ===== Cookie 同意バナー／Cookie設定（wb-consent.js・3サイト共通） =====
    仕組みと文言は共通。ここでは見た目のトークンだけをこのアプリに合わせる。
    色は意味変数を使うので、ダークモードでもそのまま切り替わる。
-   ボタンは .btn と同じカプセル型。許可＝プライマリ／拒否＝白地で、大きさは同じにしてある。
+   ボタンは共通ボタンそのもの（許可・保存＝.btn.primary／拒否＝.btn.ghost。index.html / privacy.html の
+   data-btn-* で指定）。ここでボタンの見た目を上書きしないこと（他の画面のボタンとずれる）。
+   面は設定モーダル（.calbox）・トーストと同じ --paper。拒否の .btn.ghost は、設定モーダルの「やめる」と同じ見え方になる。
    z-index はボトムナビ（70）より上、モーダル（.calov 78）とトースト（80）より下 */
 .wbc{
   --wbc-bg:var(--paper); --wbc-fg:var(--ink); --wbc-muted:var(--ink-2); --wbc-line:rgba(var(--fill),.12);
@@ -1030,9 +1032,6 @@ body.has-notice .toastbox{bottom:calc(96px + env(safe-area-inset-bottom));}
   --wbc-shadow:0 14px 36px rgba(var(--sh),.22); --wbc-backdrop:var(--ov);
   --wbc-font:inherit; --wbc-fs:calc(12.5px * var(--fs)); --wbc-z:76; --wbc-focus:var(--sup);
 }
-.wbc .wbc-btn{font-weight:800;font-size:calc(13.5px * var(--fs));border:none;}
-.wbc .wbc-btn--primary{box-shadow:0 5px 0 var(--pri-deep);}
-.wbc .wbc-btn--secondary{background:var(--paper);color:var(--ink);box-shadow:inset 0 0 0 2px rgba(var(--fill),.22);}
 .wbc .wbc-switch[aria-checked="true"] .wbc-track{background:var(--pos);}   /* 設定の .swi と同じ色 */
 .wbc .wbc-title{font-weight:800;}
 /* 同意バナーが出ているあいだは、トーストをバナーの上へ逃がす（下部固定どうしの重なりを防ぐ） */

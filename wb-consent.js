@@ -1,4 +1,4 @@
-/*! wb-consent.js v1.0.0 — WONDER BROTHERS 共通 Cookie 同意 + Google Consent Mode v2（Basic）
+/*! wb-consent.js v1.1.0 — WONDER BROTHERS 共通 Cookie 同意 + Google Consent Mode v2（Basic）
  *
  * ■ 正本と配置
  *   正本は corporate-site/src/scripts/wb-consent.js（このファイル）。
@@ -12,6 +12,10 @@
  *   <script src="…/wb-consent.js" data-gtm="GTM-XXXXXXX" data-privacy="/privacy/"></script>
  *     data-gtm      GTM のコンテナID。空なら計測もバナーも出さない
  *     data-privacy  バナーと設定画面から開くプライバシーポリシーのURL（同じタブで開く）
+ *     data-btn-primary / data-btn-secondary（任意）
+ *                   ボタンに付けるサイト共通ボタンのクラス（例: "btn primary" / "btn ghost"）。
+ *                   指定するとこのファイルのボタンの見た目は使わず、サイトのボタンそのものになる。
+ *                   許可・保存＝primary、拒否＝secondary。
  *   「Cookie設定」を開く入口は、任意の要素に data-wb-consent-open を付けるだけ。
  *
  * ■ 挙動（Basic Consent Mode）
@@ -39,7 +43,7 @@
   if (w.WBConsent) return; /* 二重読み込みの保険 */
 
   /* ---------------- 設定 ---------------- */
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
   var COOKIE_NAME = "wb_consent_v1";
   var OLD_COOKIES = [];              /* 版を上げたら、ここに古い名前を足す（例: "wb_consent_v1"） */
   var MAX_AGE = 180 * 24 * 60 * 60;  /* 180日 = 15552000 秒 */
@@ -52,6 +56,7 @@
   var GTM_ID = attr("data-gtm").trim();
   var PRIVACY_URL = attr("data-privacy") || "/privacy/";
   if (!/^GTM-[A-Z0-9]+$/.test(GTM_ID)) GTM_ID = ""; /* 未設定・書き損じは「計測なし」として扱う */
+  var BTN = { primary: attr("data-btn-primary").trim(), secondary: attr("data-btn-secondary").trim() };
 
   /* ---------------- Consent Mode v2 ---------------- */
   var dl = (w.dataLayer = w.dataLayer || []);
@@ -238,7 +243,7 @@
     "@keyframes wbc-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}" +
     ":where(.wbc-text){margin:0;flex:1 1 auto;min-width:0;}" +
     ":where(.wbc-link){color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;white-space:nowrap;}" +
-    ":where(.wbc-actions){display:flex;gap:10px;flex:none;}" +
+    ":where(.wbc-actions){display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px;flex:none;}" + /* 2つのボタンは常に同じ幅 */
     ":where(.wbc) .wbc-btn{-webkit-appearance:none;appearance:none;box-sizing:border-box;min-width:112px;min-height:44px;margin:0;" +
       "padding:0 20px;border-radius:var(--wbc-btn-radius,999px);font:inherit;font-weight:700;line-height:1.2;cursor:pointer;" +
       "border:var(--wbc-btn-border-width,1.5px) solid var(--wbc-accent,#1a1a1a);}" +
@@ -247,7 +252,7 @@
     ":where(.wbc) .wbc-btn:hover{opacity:.86;}" +
     ":where(.wbc-btn:focus-visible,.wbc-switch:focus-visible,.wbc-x:focus-visible,.wbc-link:focus-visible){outline:2px solid var(--wbc-focus,var(--wbc-accent,#1a1a1a));outline-offset:2px;}" +
     "@media (max-width:640px){:where(.wbc-banner) :where(.wbc-card){flex-direction:column;align-items:stretch;}" +
-      ":where(.wbc-actions){width:100%;} :where(.wbc-actions) :where(.wbc-btn){flex:1 1 0;min-width:0;}}" +
+      ":where(.wbc-actions){width:100%;} :where(.wbc-actions) :where(.wbc-act){min-width:0;}}" +
     ":where(.wbc-dialog){box-sizing:border-box;width:min(480px,calc(100vw - 2 * var(--wbc-gutter,16px)));max-width:none;" +
       "max-height:calc(100vh - 2 * var(--wbc-gutter,16px));overflow:auto;margin:auto;padding:0;" +
       "background:var(--wbc-bg,#fff);color:var(--wbc-fg,#1a1a1a);border:var(--wbc-border,1px solid rgba(0,0,0,.14));" +
@@ -276,12 +281,17 @@
     ":where(.wbc-switch[aria-checked=\"true\"]) :where(.wbc-knob){transform:translateX(18px);}" +
     ":where(.wbc-state){min-width:2.2em;text-align:left;}" +
     ":where(.wbc-foot){margin:14px 0 0;color:var(--wbc-muted,#555);font-size:.88em;line-height:1.65;}" +
-    ":where(.wbc-panel) :where(.wbc-actions){justify-content:flex-end;margin-top:18px;}" +
+    ":where(.wbc-panel) :where(.wbc-actions){justify-content:end;margin-top:18px;}" +
     "@media (prefers-reduced-motion:reduce){:where(.wbc-banner) :where(.wbc-card){animation:none;}" +
       ":where(.wbc-track),:where(.wbc-knob){transition:none;}}" +
     "@media print{:where(.wbc-banner){display:none;}}";
 
   var banner = null, dialog = null, sw = null, lastFocus = null, ro = null;
+
+  /* ボタンのクラス。サイトのボタンクラスが指定されていればそれを使い、無ければこのファイルの見た目を使う */
+  function btnClass(kind) {
+    return "wbc-act " + (BTN[kind] || "wbc-btn wbc-btn--" + kind);
+  }
 
   function injectCss() {
     if (d.getElementById("wbc-style")) return;
@@ -318,8 +328,8 @@
         '<p class="wbc-text">' + esc(TEXT.banner) +
           ' <a class="wbc-link" href="' + esc(PRIVACY_URL) + '">' + esc(TEXT.privacy) + "</a></p>" +
         '<div class="wbc-actions">' +
-          '<button type="button" class="wbc-btn wbc-btn--secondary" data-wbc="deny">' + esc(TEXT.deny) + "</button>" +
-          '<button type="button" class="wbc-btn wbc-btn--primary" data-wbc="grant">' + esc(TEXT.grant) + "</button>" +
+          '<button type="button" class="' + btnClass("secondary") + '" data-wbc="deny">' + esc(TEXT.deny) + "</button>" +
+          '<button type="button" class="' + btnClass("primary") + '" data-wbc="grant">' + esc(TEXT.grant) + "</button>" +
         "</div>" +
       "</div>";
     banner.addEventListener("click", function (e) {
@@ -366,7 +376,7 @@
             '<span class="wbc-state" aria-hidden="true">OFF</span></button></div>' +
         '<p class="wbc-foot">' + esc(TEXT.shared) +
           ' <a class="wbc-link" href="' + esc(PRIVACY_URL) + '">' + esc(TEXT.privacy) + "</a></p>" +
-        '<div class="wbc-actions"><button type="button" class="wbc-btn wbc-btn--primary" data-wbc="save">' + esc(TEXT.save) + "</button></div>" +
+        '<div class="wbc-actions"><button type="button" class="' + btnClass("primary") + '" data-wbc="save">' + esc(TEXT.save) + "</button></div>" +
       "</div>";
     sw = dialog.querySelector(".wbc-switch");
     dialog.addEventListener("click", function (e) {

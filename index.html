@@ -6,8 +6,9 @@
 <!-- Cookie 同意 + Google Consent Mode v2（Basic）。3サイト共通の wb-consent.js（正本は corporate-site）。
      「アクセス解析を許可した人」にだけ GTM（GTM-5LCBKQHC／GA4 G-1BF5N4Z58E はGTM側で設定）を読み込む。
      未選択・拒否のときは GTM も GA も読み込まず、Google へは何も送らない。
+     ボタンは共通ボタン（.btn.primary／.btn.ghost）をそのまま使う（data-btn-*）。
      dataLayer を触るどのスクリプトより前に置くこと。GTM のスニペットをここに直接書かないこと。 -->
-<script src="wb-consent.js?v=54fec248" data-gtm="GTM-5LCBKQHC" data-privacy="privacy"></script>
+<script src="wb-consent.js?v=d26e6acb" data-gtm="GTM-5LCBKQHC" data-privacy="privacy" data-btn-primary="btn primary" data-btn-secondary="btn ghost"></script>
 <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
 <title>連想ゲーム｜ニュース連想力トレーニングゲーム</title>
 <meta name="description" content="最新の経済ニュースから市場への波及を6ステップで読み解く連想力トレーニングゲーム。本質→一次影響→相対優位→二次影響→逆シナリオ→検証ポイントの型を、クイズ形式で楽しく身につける。">
@@ -38,7 +39,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fonts/local.css">
-<link rel="stylesheet" href="style.css?v=28574fe1">
+<link rel="stylesheet" href="style.css?v=40b921c0">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#fdece5">
 <meta name="apple-mobile-web-app-capable" content="yes">
