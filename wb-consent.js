@@ -1,4 +1,4 @@
-/*! wb-consent.js v1.1.1 — WONDER BROTHERS 共通 Cookie 同意 + Google Consent Mode v2（Basic）
+/*! wb-consent.js v1.2.0 — WONDER BROTHERS 共通 Cookie 同意 + Google Consent Mode v2（Basic）
  *
  * ■ 正本と配置
  *   正本は corporate-site/src/scripts/wb-consent.js（このファイル）。
@@ -43,7 +43,7 @@
   if (w.WBConsent) return; /* 二重読み込みの保険 */
 
   /* ---------------- 設定 ---------------- */
-  var VERSION = "1.1.1";
+  var VERSION = "1.2.0";
   var COOKIE_NAME = "wb_consent_v1";
   var OLD_COOKIES = [];              /* 版を上げたら、ここに古い名前を足す（例: "wb_consent_v1"） */
   var MAX_AGE = 180 * 24 * 60 * 60;  /* 180日 = 15552000 秒 */
@@ -230,6 +230,25 @@
     shared: "この設定は、株式会社ワンダーブラザースが運営する wonder-bros.com・64モンスターズ・連想ゲームで共通です。",
     save: "設定を保存"
   };
+  /* 英語のページ（<html lang="en…">）では英語で表示する（v1.2.0〜） */
+  if (/^en/i.test(d.documentElement.lang || "")) {
+    TEXT = {
+      banner: "We use Google Analytics to understand how this site is used and to improve our services. " +
+        "No analytics data is collected unless you choose \u201cAllow.\u201d",
+      privacy: "Privacy Policy",
+      deny: "Decline",
+      grant: "Allow",
+      title: "Cookie settings",
+      close: "Close",
+      needH: "Essential",
+      needNote: "Required to provide our services, such as displaying pages, security, sending inquiries, and saving assessment and game records and settings.",
+      always: "Always on",
+      anH: "Analytics",
+      anNote: "We use Google Analytics to measure how our services are used so we can improve them.",
+      shared: "This setting is shared across wonder-bros.com, 64MONSTERS, and RENSOU GAME, operated by WONDER BROTHERS INC.",
+      save: "Save settings"
+    };
+  }
 
   var CSS =
     ":where(.wbc-banner){position:fixed;left:0;right:0;bottom:0;z-index:var(--wbc-z,2147483000);" +
