@@ -1626,6 +1626,8 @@ async function loadCalls() {
         if (c.eval) {
           h += `<p class="verdict evalline">${fmtWin(c.eval.t5, "T+5", c.bench, c.direction)}<br>${fmtWin(c.eval.t20, "T+20", c.bench, c.direction)}</p>`;
         }
+      } else if (c.status === "pending") {
+        h += pendingVerdictHTML(c);
       } else {
         h += `<p class="verdict err">${ic("warning")} 株価を取得できませんでした（${tickerLabel(c.ticker)}）</p>`;
       }
@@ -1747,6 +1749,12 @@ function buildOneChart(c) {
     <div class="chead2"><b class="ct2">${ic("show_chart")} 騰落率（ニュース日の終値 = 0%）</b>${chgBadge}</div>
     ${svg}${legend}
   </div>`;
+}
+
+/* 基準待ち: ニュース日（休場ならその後の営業日）の終値がまだ反映されていない。
+   手前の日を基準にした数字は誤りなので、サーバーは騰落率・系列・評価を出さない */
+function pendingVerdictHTML(c) {
+  return `<p class="verdict rec">${ic("sync")} 基準待ち: ニュース日（${c.called_at}）以降の終値がまだ反映されていません。次の株価更新で騰落率が表示されます。</p>`;
 }
 
 /* ---------- 成績表 ---------- */
@@ -2056,6 +2064,7 @@ function csDetailHTML(r) {
   if (!c) return "";
   let h = `<div class="csdetail">`;
   if (c.basis) h += `<p class="basis">${ic("psychology")} ${c.basis}</p>`;
+  if (c.status === "pending") h += pendingVerdictHTML(c);
   if (c.status === "error") {
     // 黙って空欄にすると「グラフが出ない」だけに見えて原因が分からない
     h += `<p class="verdict err">${ic("warning")} 株価を取得できませんでした（${tickerLabel(c.ticker)}）</p>`;

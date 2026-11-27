@@ -92,7 +92,7 @@ def classify_bad_ticker(ticker):
         return "unknown"
 
 
-def write_build_report(bad_calls, blocking, generated_at):
+def write_build_report(bad_calls, blocking, generated_at, pending=()):
     """検査結果をファイルに残す。
 
     Claudeのサンドボックスからは Yahoo Finance に到達できず、実在確認は
@@ -122,7 +122,15 @@ def write_build_report(bad_calls, blocking, generated_at):
                   "基準価格は未記録のまま残るので、次回のビルドで自動的に再取得されます。", ""]
         for sid, ticker, name, msg in transient:
             lines.append(f"- `{ticker}` {name} … `{sid}`")
-    if not bad_calls:
+    if pending:
+        lines += ["## 基準待ちの銘柄（対応不要）", "",
+                  "ニュース日（休場ならその後の営業日）の終値がまだ反映されていません。",
+                  "手前の日を基準にした数字は誤りになるため、騰落率・グラフ・T+5/T+20は出していません。",
+                  "次回のビルド（または株価の定期更新）で行が揃えば自動的に表示されます。", ""]
+        for sid, ticker, name, _ in pending:
+            lines.append(f"- `{ticker}` {name} … `{sid}`")
+        lines.append("")
+    if not bad_calls and not pending:
         lines.append("すべての銘柄で株価を取得できました。")
     with open(path, "w", encoding="utf-8") as fp:
         fp.write("\n".join(lines) + "\n")
@@ -494,6 +502,7 @@ def main():
     stats_rows = []  # api/callstats 用（通算成績の集計を1リクエストで済ませる）
     built = {}       # sid -> payload（callstatsはCIフォールバック確定後に集計する）
     bad_calls = []   # 株価を取得できなかった銘柄（push前に潰すための警告用）
+    pending_calls = []  # 基準待ち（ニュース日以降の終値が未反映。実在の疑いではない）
     for d in sessions:
         sid = d.get("id")
         if not sid:
@@ -517,7 +526,10 @@ def main():
             ok += 1
             print(f"✓ api/calls/{sid}")
             for c in payload.get("calls", []):
-                if c.get("status") == "error" or not c.get("series"):
+                if c.get("status") == "pending":
+                    # 履歴は取れている（基準の行だけが未反映）ので実在判定にかけない
+                    pending_calls.append((sid, c.get("ticker", "?"), c.get("name", ""), ""))
+                elif c.get("status") == "error" or not c.get("series"):
                     bad_calls.append((sid, c.get("ticker", "?"),
                                       c.get("name", ""), c.get("message", "")))
         except Exception as e:
@@ -605,7 +617,7 @@ def main():
         print("   公開を停止します（上の ✗ 行を確認）。")
         sys.exit(1)
 
-    report = write_build_report(bad_calls, blocking, generated_at)
+    report = write_build_report(bad_calls, blocking, generated_at, pending_calls)
     print(f"\n検査レポート: {os.path.relpath(report, BASE)}")
 
     if blocking:
@@ -630,6 +642,15 @@ def main():
             print(f"   △ {ticker}  {name}  … {sid}")
         print("  履歴自体は取れているため、市場休場・データ反映待ちと判断しました。")
         print("  基準価格は未記録のまま残り、次回のビルドで自動的に再取得されます。")
+        print("-" * 60)
+
+    if pending_calls:
+        print("\n" + "-" * 60)
+        print(f"⏳ 基準待ちの銘柄が {len(pending_calls)} 件あります（対応不要）:")
+        for sid, ticker, name, _ in pending_calls:
+            print(f"   ⏳ {ticker}  {name}  … {sid}")
+        print("  ニュース日以降の終値がまだ無いため、騰落率は出していません。")
+        print("  行が揃えば次回のビルド（または株価の定期更新）で自動的に表示されます。")
         print("-" * 60)
 
     prune_stale()

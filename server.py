@@ -290,8 +290,15 @@ def baseline_index(isos, called_at):
     時間が経つほど両者がずれ、表示される騰落率が壊れていた
     （2026-09-21に実測: 773件中の半数が0.5pt以上ずれ、AVBは -63.71% と
      表示されていたが実際は +1.35% だった）。
+
+    **ニュース日以降の行が1本も無ければ None を返す（＝基準待ち）。**
+    以前は先頭の行（ニュース日の7日前ごろ）に落ちていたため、ニュース日の
+    終値がまだ反映されていない銘柄が数日前を基準に計算されていた
+    （2026-11-27: IMB.L は26日の終値がNaN、MO は26日が感謝祭の休場で
+     27日の行が未反映。どちらも11/19基準になり +9.35% / +2.14% と誤表示）。
+    呼び出し側は None のとき騰落率・系列・評価を出さないこと。
     """
-    return next((i for i, s in enumerate(isos) if s >= called_at), 0)
+    return next((i for i, s in enumerate(isos) if s >= called_at), None)
 
 
 def rate_series(hist, p0):
@@ -310,6 +317,8 @@ def compute_eval(hist, bhist, called_at):
     """T+5 / T+20 営業日の絶対・相対（対ベンチマーク）リターンを計算"""
     isos = [h["iso"] for h in hist]
     ni = baseline_index(isos, called_at)
+    if ni is None:
+        return None                     # 基準待ち（ニュース日以降の終値が未反映）
     p0 = hist[ni]["p"]
 
     def bench_at(iso):
@@ -391,7 +400,15 @@ def calls_payload(sid):
             if not hist:
                 raise RuntimeError(f"history unavailable: {c['ticker']}")
             isos = [h["iso"] for h in hist]
-            p0 = hist[baseline_index(isos, news_date)]["p"]
+            ni = baseline_index(isos, news_date)
+            if ni is None:
+                # 基準待ち: ニュース日（休場ならその後の営業日）の終値がまだ無い。
+                # 手前の日を基準にした数字は誤りなので、騰落率・系列・評価は出さない。
+                # 次のビルドで行が揃えば自動的に checked/recorded へ移る
+                r["status"] = "pending"
+                results.append(r)
+                continue
+            p0 = hist[ni]["p"]
 
             r["series"] = rate_series(hist, p0)
             # サマリー表示用の現在の騰落率。系列(3桁)を再度丸めると二重丸めで
@@ -412,8 +429,10 @@ def calls_payload(sid):
                 r["bench"] = bname
                 if bhist:
                     bisos = [b["iso"] for b in bhist]
-                    b0 = bhist[baseline_index(bisos, news_date)]["p"]
-                    r["bench_series"] = rate_series(bhist, b0)
+                    bi = baseline_index(bisos, news_date)
+                    # ベンチマーク側だけ未反映なら、参考線は次のビルドまで出さない
+                    if bi is not None:
+                        r["bench_series"] = rate_series(bhist, bhist[bi]["p"])
             except Exception:
                 pass
         except Exception as e:
